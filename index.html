@@ -1,487 +1,516 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Munimo Lite — Live Cashbook & Attendance App for Business | Try It Now</title>
-<meta name="description" content="Munimo makes business software for India — free khata app, simple business app, construction ERP with GST billing, payroll and site P&L, and custom ERP. AI entries in English, Hindi, Marathi, Tamil, Telugu, Gujarati, Bengali. 15 days free. Launch prices.">
-<meta name="keywords" content="khata app, udhar khata app, billing software India, construction ERP software, GST billing software, Tally alternative, labour attendance app, site accounting software, बिलिंग सॉफ्टवेयर, खाता ऐप, कंस्ट्रक्शन सॉफ्टवेयर">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Munimo — Custom software built around your business</title>
+<meta name="description" content="Custom ERP, accounting, school and field software, built around how your business works. Try every product live in your browser. Own it or subscribe.">
+<meta name="keywords" content="custom software development company, bespoke business software, custom ERP development, perpetual licence software, legacy software replacement, business process automation, try ERP without signup">
 <link rel="canonical" href="https://munimo.online/">
-<meta property="og:title" content="Munimo — Business Software for India. One-Time Price.">
-<meta property="og:description" content="Khata app to full construction ERP. AI entries in 7 Indian languages. Try the live demo — no signup.">
-<meta property="og:image" content="https://munimo.online/assets/dashboard.jpg">
-<meta property="og:url" content="https://munimo.online/">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
+<meta name="theme-color" content="#070a09">
+<meta name="author" content="Munimo Software">
+
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#0a0f0d">
-<link rel="icon" type="image/svg+xml" href="assets/munimo-icon.svg">
-<link rel="apple-touch-icon" href="assets/favicon-180.png">
-<link rel="stylesheet" href="assets/site.css">
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Organization","name":"Munimo","url":"https://munimo.online","logo":"https://munimo.online/assets/munimo-icon.svg","email":"hello@munimo.online","telephone":"+91-9599942248","address":{"@type":"PostalAddress","addressCountry":"IN"}}
-</script>
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Munimo ConstructPro","applicationCategory":"BusinessApplication","operatingSystem":"Windows, Web, Android","description":"Construction ERP with GST billing, payroll, labour muster, site P&L and AI bookkeeping. One-time price.","offers":{"@type":"Offer","priceCurrency":"INR","price":"0","description":"One-time price set by your budget. No yearly rental."},"inLanguage":["en","hi","mr","ta","te","gu","bn"],"url":"https://munimo.online/constructpro.html"}
-</script>
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"Which is the best free khata app in India?","acceptedAnswer":{"@type":"Answer","text":"Munimo Khata is a free-to-try digital khata app. It tracks udhar (credit) and payments, sends WhatsApp reminders, works offline, and understands entries typed in Hindi or English."}},
-{"@type":"Question","name":"Is there a construction ERP software with GST billing in India?","acceptedAnswer":{"@type":"Answer","text":"Yes. Munimo ConstructPro is a construction ERP made in India. It covers GST invoices, RA bills, payroll, labour muster, purchases, site-wise profit and loss, and an AI bookkeeper. It comes at a one-time price with no yearly rental."}},
-{"@type":"Question","name":"What is a good Tally alternative with a one-time price?","acceptedAnswer":{"@type":"Answer","text":"Munimo is a Tally alternative built for small Indian businesses. You pay once, based on your budget. There is no yearly rental, it works on phone and computer, and it supports entries in 7 Indian languages."}},
-{"@type":"Question","name":"क्या Munimo हिंदी में काम करता है? (Does Munimo work in Hindi?)","acceptedAnswer":{"@type":"Answer","text":"हाँ। Munimo में आप हिंदी में लिख सकते हैं — जैसे 'रमेश को 500 दिए' — और AI सही entry बना देता है। हिंदी, मराठी, தமிழ், తెలుగు, ગુજરાતી और বাংলা सब चलती हैं।"}},
-{"@type":"Question","name":"Munimo தமிழில் வேலை செய்யுமா? (Does Munimo work in Tamil?)","acceptedAnswer":{"@type":"Answer","text":"ஆம். Munimo-வில் தமிழில் தட்டச்சு செய்யலாம் — AI சரியான கணக்கு பதிவை உருவாக்கும். தமிழ், இந்தி, மராத்தி, தெலுங்கு, குஜராத்தி, வங்காளம் அனைத்தும் ஆதரிக்கப்படுகின்றன."}},
-{"@type":"Question","name":"Munimo मराठीत चालतं का? (Does Munimo work in Marathi?)","acceptedAnswer":{"@type":"Answer","text":"हो. Munimo मध्ये तुम्ही मराठीत लिहू शकता — 'आज मजुरी 4500 दिली' — आणि AI योग्य नोंद करतो. मराठी, हिंदी, तमिळ, तेलुगू, गुजराती आणि बंगाली सर्व भाषा चालतात."}},
-{"@type":"Question","name":"Is there a labour attendance app for construction sites?","acceptedAnswer":{"@type":"Answer","text":"Yes. Munimo Lite is the field app for construction sites. Site staff mark labour attendance, add expenses with a photo of the bill, and send them for approval — all from a phone, even offline. It syncs with ConstructPro ERP."}}
-]}
-</script>
-<style>
-.hero{min-height:100svh;display:flex;align-items:center;padding:100px 0 50px;position:relative;overflow:hidden}
-.hero .glow{width:900px;height:600px;top:-220px;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(16,185,129,.18),transparent 65%)}
-.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:clamp(26px,4vw,56px);align-items:center;width:100%}
-@media(max-width:960px){.hero-grid{grid-template-columns:1fr;text-align:center}.hero{padding-top:90px}}
-/* live phone (real Lite app in an iframe) */
-.livephone-wrap{position:relative;display:flex;justify-content:center;perspective:1600px}
-.liveglow{position:absolute;width:80%;height:70%;top:12%;left:10%;background:radial-gradient(ellipse,rgba(16,185,129,.28),transparent 68%);filter:blur(60px);pointer-events:none}
-.livephone{position:relative;width:min(360px,86vw);aspect-ratio:400/812;border-radius:44px;background:#04110b;border:1px solid #2a3a32;padding:12px 10px;box-shadow:0 50px 110px rgba(0,0,0,.7),0 0 0 7px #060a08,0 0 90px rgba(16,185,129,.18);transform:rotateY(-9deg) rotateX(3deg);transition:transform .5s var(--ease)}
-.livephone:hover{transform:rotateY(0) rotateX(0)}
-.livephone::before{content:'';position:absolute;top:20px;left:50%;transform:translateX(-50%);width:90px;height:20px;background:#04110b;border-radius:12px;z-index:3}
-.livephone iframe{width:100%;height:100%;border:0;border-radius:34px;background:#070b0a;display:block}
-.livedot{position:absolute;top:-12px;right:18px;z-index:5;background:#0c1512;border:1px solid rgba(16,185,129,.6);color:var(--em2);font-size:10.5px;font-weight:800;letter-spacing:.1em;padding:5px 11px;border-radius:20px;box-shadow:0 4px 16px rgba(0,0,0,.5)}
-.livehint{text-align:center;margin-top:18px;font-size:13px;color:var(--em3);font-weight:700}
-.livehint b{color:var(--t)}
-@media(max-width:960px){.livephone{transform:none}.livephone:hover{transform:none}}
-.hero-sub{display:block;font-size:clamp(17px,2.2vw,24px);color:var(--m);font-weight:600;letter-spacing:-.01em;margin-top:16px;line-height:1.5}
-.flipw{color:var(--gold);perspective:600px}
-.hero-ctas{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
-@media(max-width:960px){.hero-ctas{justify-content:center}}
-.hero-trust{margin-top:20px;font-size:13.5px;color:var(--f);font-weight:600;letter-spacing:.02em}
-/* laptop + live phone composition */
-.combo{position:relative;padding-bottom:34px}
-.combo .laptop{width:100%;max-width:640px;margin:0 auto}
-.combo .laptop-screen img{width:100%;display:block}
-.combo .phonewrap{position:absolute;right:clamp(-6px,1vw,10px);bottom:10px;z-index:4;perspective:1200px}
-.combo .phone{width:clamp(150px,17vw,208px);aspect-ratio:340/700;border-radius:26px;box-shadow:0 30px 70px rgba(0,0,0,.75),0 0 0 5px #060a08,0 0 60px rgba(16,185,129,.14)}
-.combo .phone::before{width:66px;height:16px;top:8px}
-@media(max-width:960px){
-  .combo{max-width:560px;margin:0 auto}
-  .combo .phonewrap{right:0;bottom:8px}
-  .combo .phone{width:clamp(140px,34vw,180px)}
-}
-.combo-caption{display:flex;justify-content:flex-start;gap:22px;margin-top:26px;font-size:12.5px;color:var(--f);font-weight:700;flex-wrap:wrap;max-width:60%}
-@media(max-width:960px){.combo-caption{max-width:56%;justify-content:center}}
-.combo-caption b{color:var(--em2)}
-.demo-ov{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(180deg,rgba(7,11,10,.2),rgba(7,11,10,.7));cursor:pointer;transition:opacity .4s,visibility .4s}
-.demo-ov.gone{opacity:0;visibility:hidden}
-.demo-ov img{width:100%;height:100%;object-fit:cover;object-position:top;position:absolute;inset:0;z-index:-1}
-.playring{width:56px;height:56px;border-radius:50%;background:rgba(16,185,129,.94);display:flex;align-items:center;justify-content:center;animation:pulse 2s infinite}
-@keyframes pulse{70%{box-shadow:0 0 0 18px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
-.playring svg{width:20px;height:20px;fill:#04110b;margin-left:2px}
-.demo-ov b{font-size:12px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.8);text-align:center;padding:0 10px}
-.lfeat{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.lfeat span{font-size:11px;font-weight:700;color:var(--m);border:1px solid var(--hair2);border-radius:14px;padding:3px 10px}
-.who{font-size:12px;color:var(--gold);font-weight:700;margin-top:2px}
-.ai-proof{border-radius:16px;overflow:hidden;border:1px solid var(--hair2);box-shadow:0 30px 70px rgba(0,0,0,.5)}
-.closer{background:linear-gradient(180deg,var(--ink) 0%,#0d1a14 60%,#0f241a 100%);text-align:center}
-.faq{max-width:800px;margin:0 auto}
-.faq details{background:var(--surface);border:1px solid var(--hair);border-radius:14px;margin-bottom:10px;overflow:hidden}
-.faq summary{padding:17px 22px;font-weight:700;font-size:15px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:'+';color:var(--em2);font-size:20px;font-weight:400;flex-shrink:0}
-.faq details[open] summary::after{content:'−'}
-.faq .fa{padding:0 22px 18px;color:var(--m);font-size:14.5px}
-/* ─── WEB hero: the real web Cash Book in a laptop, phone tucked in corner ─── */
-.webhero{position:relative;display:flex;justify-content:center;perspective:1800px}
-.webglow{position:absolute;width:88%;height:78%;top:6%;left:6%;background:radial-gradient(ellipse,rgba(16,185,129,.26),transparent 66%);filter:blur(64px);pointer-events:none}
-.laptop3d{position:relative;width:min(660px,94vw);transform:rotateX(6deg) rotateY(-5deg);transform-style:preserve-3d;transition:transform .6s var(--ease)}
-.webhero:hover .laptop3d{transform:rotateX(0) rotateY(0)}
-@media(max-width:960px){.laptop3d{transform:none}.webhero:hover .laptop3d{transform:none}}
-.lidbar{height:26px;background:linear-gradient(180deg,#11201a,#0a1512);border:1px solid #26362e;border-bottom:0;border-radius:14px 14px 0 0;display:flex;align-items:center;gap:7px;padding:0 14px}
-.lidbar i{width:10px;height:10px;border-radius:50%;display:block}
-.lidbar .r{background:#ff5f57}.lidbar .y{background:#febc2e}.lidbar .g{background:#28c840}
-.urlbar{margin-left:12px;flex:1;height:15px;background:#0c1512;border:1px solid #26362e;border-radius:8px;display:flex;align-items:center;gap:6px;padding:0 9px;font-size:9.5px;color:var(--em3);font-weight:700;letter-spacing:.02em;overflow:hidden;white-space:nowrap}
-.urlbar svg{width:9px;height:9px;flex-shrink:0}
-.screen{position:relative;background:#070b0a;border:1px solid #26362e;border-top:0;aspect-ratio:1280/820;overflow:hidden}
-.screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#0a0f0d}
-.screen .poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top left}
-.laptop3d::after{content:'';display:block;height:15px;margin:0 -34px;background:linear-gradient(180deg,#1a2a23,#0c1512);border:1px solid #26362e;border-radius:0 0 16px 16px;box-shadow:0 40px 90px rgba(0,0,0,.7)}
-.webdot{position:absolute;top:-13px;left:16px;z-index:6;background:#0c1512;border:1px solid rgba(16,185,129,.6);color:var(--em2);font-size:10.5px;font-weight:800;letter-spacing:.09em;padding:5px 12px;border-radius:20px;box-shadow:0 4px 16px rgba(0,0,0,.5)}
-.launch{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;background:linear-gradient(180deg,rgba(7,11,10,.28),rgba(7,11,10,.62));transition:opacity .4s,visibility .4s;padding-right:26%}
-@media(max-width:520px){.launch{padding-right:0}}
-.launch.gone{opacity:0;visibility:hidden}
-.launch .ring{width:64px;height:64px;border-radius:50%;background:rgba(16,185,129,.96);display:flex;align-items:center;justify-content:center;animation:pulse 2.2s infinite;box-shadow:0 12px 40px rgba(16,185,129,.4)}
-.launch .ring svg{width:24px;height:24px;fill:#04110b;margin-left:3px}
-.launch b{font-size:14px;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.85)}
-.launch small{font-size:11.5px;color:#bfe9d6;font-weight:700}
-/* phone tucked into the laptop's lower-right */
-.webhero .miniphone{position:absolute;right:clamp(-34px,-3.4vw,-16px);bottom:-14px;z-index:7;width:clamp(116px,14vw,156px);aspect-ratio:340/720;border-radius:24px;background:#04110b;border:1px solid #2a3a32;padding:8px 6px;box-shadow:0 30px 66px rgba(0,0,0,.78),0 0 0 5px #060a08,0 0 54px rgba(16,185,129,.16);transform:rotate(2deg)}
-.webhero .miniphone::before{content:'';position:absolute;top:14px;left:50%;transform:translateX(-50%);width:52px;height:13px;background:#04110b;border-radius:9px;z-index:3}
-.webhero .miniphone iframe{width:100%;height:100%;border:0;border-radius:18px;background:#070b0a;display:block}
-.webhero .miniphone .plabel{position:absolute;top:-11px;right:8px;z-index:5;background:#0c1512;border:1px solid var(--hair2);color:var(--em2);font-size:8.5px;font-weight:800;letter-spacing:.08em;padding:3px 8px;border-radius:14px}
-@media(max-width:520px){.webhero .miniphone{display:none}}
-.webhint{text-align:center;margin-top:22px;font-size:13px;color:var(--em3);font-weight:700}
-.webhint b{color:var(--t)}
-</style>
+<meta property="og:site_name" content="Munimo">
+<meta property="og:url" content="https://munimo.online/">
+<meta property="og:title" content="Munimo — Custom software built around your business">
+<meta property="og:description" content="Custom ERP, accounting, school and field software, built around how your business works. Try every product live in your browser. Own it or subscribe.">
+<meta property="og:image" content="https://munimo.online/assets/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Munimo — Custom software built around your business">
+<meta name="twitter:description" content="Custom ERP, accounting, school and field software, built around how your business works. Try every product live in your browser. Own it or subscribe.">
+<meta name="twitter:image" content="https://munimo.online/assets/og-cover.png">
+
+<link rel="icon" href="/assets/munimo-icon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/favicon-180.png">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/motion.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://munimo.online/#org","name":"Munimo Software","url":"https://munimo.online","logo":"https://munimo.online/assets/munimo-logo.svg","description":"Custom software development studio. We build ERP, accounting, school management and field applications tailored to each business, available as a perpetual licence or a subscription.","email":"hello@munimo.online","telephone":"+919599942248","areaServed":"Worldwide","knowsAbout":["Custom software development","ERP development","Business process automation","Legacy software migration","School management systems","Accounting software"]},{"@type":"WebSite","@id":"https://munimo.online/#site","url":"https://munimo.online","name":"Munimo","publisher":{"@id":"https://munimo.online/#org"}},{"@type":"Service","name":"Custom software development","provider":{"@id":"https://munimo.online/#org"},"areaServed":"Worldwide","description":"Custom business software built on proven engines: ERP, accounting, school management, field and mobile applications. Perpetual licence or subscription, with three years of maintenance included.","hasOfferCatalog":{"@type":"OfferCatalog","name":"Software we build","itemListElement":[{"@type":"Offer","itemOffered":{"@type":"SoftwareApplication","name":"Full business ERP","applicationCategory":"BusinessApplication","operatingSystem":"Web"}},{"@type":"Offer","itemOffered":{"@type":"SoftwareApplication","name":"Cash Book","applicationCategory":"FinanceApplication","operatingSystem":"Web"}},{"@type":"Offer","itemOffered":{"@type":"SoftwareApplication","name":"School ERP","applicationCategory":"BusinessApplication","operatingSystem":"Web"}},{"@type":"Offer","itemOffered":{"@type":"SoftwareApplication","name":"Mobile field app","applicationCategory":"BusinessApplication","operatingSystem":"Android, iOS, Web"}}]}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What exactly does Munimo do?","acceptedAnswer":{"@type":"Answer","text":"We are a custom software company. We design and build the systems a business runs on — accounting and cash books, full ERP, school management, field and mobile apps, and one-off tools for a process nobody else has. We start from working engines we already own, then shape them to your business, which is why a custom build with us takes weeks rather than years."}},{"@type":"Question","name":"Can I try the software before I commit anything?","acceptedAnswer":{"@type":"Answer","text":"Yes, and you should. Every product on this site runs live in your browser with sample data. Nothing to install, no account, no sales call. Open the software page, click into any product and use it properly — add an entry, change a record, run a report."}},{"@type":"Question","name":"How much does it cost?","acceptedAnswer":{"@type":"Answer","text":"We price to your budget and your scope, not from a fixed rate card. Tell us what the software has to do and what you can spend, and we will tell you honestly what fits, what has to wait, and what we would not charge you for. Small additions to a system we have already built are usually a one-time charge."}},{"@type":"Question","name":"Do I own the software or rent it?","acceptedAnswer":{"@type":"Answer","text":"Your choice. Take a perpetual licence and the software is yours to keep and run for as long as you like. Or subscribe monthly if you would rather keep costs low and flexible. Either way you are not locked in, and your data is exportable at any time."}},{"@type":"Question","name":"What is included after the software goes live?","acceptedAnswer":{"@type":"Answer","text":"Three years of annual maintenance is included at no extra cost — bug fixes, security updates, small changes and support. Most companies charge fifteen to twenty per cent of the licence value every year for this. We do not, for the first three years."}},{"@type":"Question","name":"We already have old software. Is moving worth the disruption?","acceptedAnswer":{"@type":"Answer","text":"Usually yes, and it is less disruptive than people expect. We import your existing data, run both systems side by side until you trust the new one, and only then switch. This page walks through what staying on legacy software actually costs and how a migration runs."}},{"@type":"Question","name":"Do you work with companies outside India?","acceptedAnswer":{"@type":"Answer","text":"Yes. The software handles multiple currencies, tax rules, languages and time zones, and we work with clients remotely as standard. Nothing on this site is India-only."}},{"@type":"Question","name":"How quickly can you add something we need?","acceptedAnswer":{"@type":"Answer","text":"Small changes to an existing build usually land in days. A new module is typically two to four weeks. Because we build on our own engines rather than from a blank page, most of what you ask for is configuration and interface work rather than new foundations."}}]}]}</script>
 </head>
 <body>
-
 <header class="hd">
   <div class="hd-in">
-    <a class="logo" href="index.html"><img class="logo-m" src="assets/munimo-icon.svg" alt="Munimo logo"> Munimo</a>
-    <nav class="nav">
-      <a href="khata.html">Lite</a>
-      <a href="constructpro.html">Full ERP</a>
-      <a href="schools.html">Schools</a>
-      <a href="custom.html">Custom</a>
-      <a href="ai.html">AI</a>
-      <a href="pricing.html">Pricing</a>
-    </nav>
+    <a class="logo" href="/" aria-label="Munimo home">
+      <img class="logo-m" src="/assets/munimo-icon.svg" alt="" width="31" height="31"> Munimo
+    </a>
+    <nav class="nav" aria-label="Main"><a href="/software.html">Software</a><a href="/custom-software.html">Custom build</a><a href="/engines.html">Engines</a><a href="/legacy-vs-custom.html">Why custom</a><a href="/clients.html">Clients</a></nav>
     <div class="hd-cta">
-      <a class="btn btn-ghost" href="pricing.html">Pricing</a>
-      <a class="btn btn-em" href="start.html?plan=book">Start free</a>
+      <a class="btn btn-ghost" href="/software.html">Try the software</a>
+      <a class="btn btn-em" href="/contact.html">Get a quote</a>
+      <button class="burger" aria-label="Menu" aria-expanded="false" aria-controls="mnav"><i></i><i></i><i></i></button>
     </div>
   </div>
 </header>
+<div class="mnav" id="mnav">
+  <a href="/software.html">Software</a>
+  <a href="/custom-software.html">Custom build</a>
+  <a href="/engines.html">Engines</a>
+  <a href="/legacy-vs-custom.html">Why custom</a>
+  <a href="/clients.html">Clients</a>
+  <a href="/contact.html">Contact</a>
+  <a class="btn btn-em" href="/contact.html">Get a quote</a>
+</div>
 
-<!-- ═══ HERO — the real WEB Cash Book, running live in the browser ═══ -->
-<section class="hero">
-  <div class="glow"></div>
-  <div class="wrap hero-grid">
-    <div>
-      <span class="pill">The real software · running live on this page →</span>
-      <h1 class="h1" style="margin-top:18px">Your whole business,<br>one clean<br><span class="gold">Cash Book.</span></h1>
-      <span class="hero-sub"><b style="color:var(--t)">This is the real Munimo web app — not a picture.</b> Money in, money out, who owes you, GST alerts, worker attendance. Use it right here before you sign up. Your own account starts empty and private.</span>
-      <div class="hero-ctas">
-        <a class="btn btn-em btn-big" href="start.html?plan=book">Start 15-day free trial</a>
-        <a class="btn btn-ghost btn-big" href="https://demo.munimo.online/app/app.html" target="_blank" rel="noopener">Open the live demo ↗</a>
+<!-- ══════════ HERO — animation 1: a requirement becomes software ══════════ -->
+<section class="sec" style="padding:clamp(94px,10vw,116px) 0 clamp(50px,6vw,72px);overflow:hidden">
+  <div class="glow" style="width:1000px;height:620px;top:-260px;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(18,185,129,.17),transparent 66%)"></div>
+  <div class="wrap" style="position:relative;z-index:1">
+    <div class="center" style="max-width:860px;margin:0 auto">
+      <span class="pill rv">Custom software studio</span>
+      <h1 class="h-display rv rv2" style="margin-top:17px">
+        Software built around your business.<br><span class="gold">Not the other way round.</span>
+      </h1>
+      <p class="lead rv rv3" style="margin:19px auto 0;max-width:640px;font-size:clamp(15.5px,1.8vw,19px)">
+        <b style="color:var(--t);font-weight:700">We are a custom software company.</b>
+        We build the systems service businesses run on: accounting, ERP, school management,
+        field apps, and the one-off tool nobody sells. Every product below is live on this
+        page &mdash; open it before you speak to us.
+      </p>
+      <div class="rv rv4" style="display:flex;gap:12px;justify-content:center;margin-top:26px;flex-wrap:wrap">
+        <a class="btn btn-em btn-big" href="/software.html">Use the software now</a>
+        <a class="btn btn-ghost btn-big" href="/contact.html">Tell us what you need</a>
       </div>
-      <div class="hero-trust">Runs in any browser &amp; on phone · your team's logins · from ₹1,999/mo · 15 days free · no card</div>
+      <p class="faint rv rv5" style="margin-top:15px;font-size:13px">
+        Priced to your budget &middot; own the licence or subscribe &middot; three years maintenance included
+      </p>
     </div>
-    <div>
-      <div class="webhero">
-        <div class="webglow"></div>
-        <div class="laptop3d">
-          <span class="webdot">● LIVE DEMO</span>
-          <div class="lidbar"><i class="r"></i><i class="y"></i><i class="g"></i>
-            <span class="urlbar"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.4"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>demo.munimo.online/app</span>
-          </div>
-          <div class="screen" id="webScreen">
-            <iframe id="webdemo" title="Munimo web Cash Book — live demo" loading="lazy" allow="clipboard-write"></iframe>
-            <div class="launch" id="webLaunch" role="button" tabindex="0" aria-label="Launch the live web Cash Book">
-              <img class="poster" src="assets/web/cashbook-hero.png" alt="Munimo web Cash Book — live dashboard with real figures" style="position:absolute;inset:0;z-index:-1">
-              <span class="ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
-              <b>Launch the live Cash Book</b>
-              <small>Real software · real data · no sign-up</small>
-            </div>
-          </div>
+
+    <!-- the animation: a sentence a client actually said, becoming software -->
+    <div class="stage rv rv5" style="margin-top:clamp(34px,4vw,48px)" data-typer='[
+      "We need to know what every site spent, by Friday, without chasing anyone.",
+      "Our accountant is the only one who understands the file. That has to stop.",
+      "Fees, receipts and attendance for 1,200 students. One system.",
+      "Our supervisors have no signal on site. It still has to work."
+    ]'>
+      <div class="prompt">
+        <span class="prompt-dot"></span>
+        <span class="typer-text"></span>
+        <span class="prompt-tag">What a client asked for</span>
+      </div>
+      <div class="assemble" aria-hidden="true">
+        <div class="ab ab-w4 ab-em"><div class="ab-k">In bank</div><div class="ab-v num">53,57,500</div><div class="ab-s">Across 4 accounts</div></div>
+        <div class="ab ab-w4 ab-gold"><div class="ab-k">To collect</div><div class="ab-v num">2,31,75,200</div><div class="ab-s">8 parties &middot; 8 overdue</div></div>
+        <div class="ab ab-w4 ab-red"><div class="ab-k">To pay</div><div class="ab-v num">16,28,635</div><div class="ab-s">7 bills due</div></div>
+        <div class="ab ab-w7">
+          <div class="ab-k">Today's entries</div>
+          <div class="ab-row"><span>Client receipt &middot; Eastern Railway</span><b class="em">+48,38,000</b></div>
+          <div class="ab-row"><span>Vendor payment &middot; cement</span><b style="color:var(--red)">−1,51,680</b></div>
+          <div class="ab-row"><span>Labour wages &middot; week 31</span><b style="color:var(--red)">−1,92,000</b></div>
         </div>
-        <div class="miniphone">
-          <span class="plabel">● SAME ON PHONE</span>
-          <iframe src="lite-app/?demo=1" title="Munimo on phone — live" loading="eager"></iframe>
+        <div class="ab ab-w5">
+          <div class="ab-k">Month progress</div>
+          <div class="ab-v" style="font-size:19px">Books closed to 31 Jul</div>
+          <div class="ab-s">Nothing pending approval</div>
+          <div class="ab-bar" style="--w:86%"><i></i></div>
         </div>
       </div>
-      <div class="webhint">↑ The office view runs on your computer · the <b>same books</b> on every phone on site</div>
     </div>
   </div>
 </section>
-<script>
-/* Launch the real web app inside the laptop frame on click (or when it scrolls
-   into view on desktop). Click-to-load keeps the hero instant and means the
-   poster stays crisp until a real person asks for the live app. */
-(function () {
-  var ln = document.getElementById('webLaunch'), fr = document.getElementById('webdemo'),
-      sc = document.getElementById('webScreen');
-  if (!ln || !fr || !sc) return;
-  var SRC = 'https://demo.munimo.online/app/app.html';
-  var loaded = false;
-  function go() { if (loaded) return; loaded = true; fr.src = SRC; ln.classList.add('gone'); }
-  // Bind to the whole screen container so a click anywhere on the laptop screen
-  // launches the live app (the overlay is a child, and clicks land on the
-  // container). Keyboard support stays on the focusable overlay.
-  sc.addEventListener('click', go);
-  ln.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-})();
-</script>
 
-<!-- ═══ POSTURE STATS ═══ -->
-<section class="sec-tight">
+<!-- ══════════ WHAT WE ARE, IN ONE LINE ══════════ -->
+<section class="sec-tight sec-alt">
   <div class="wrap">
-    <div class="stats">
-      <div class="stat rv"><div class="sv">Live</div><div class="sl">The real app runs on this page</div></div>
-      <div class="stat rv rv2"><div class="sv num">15<span style="font-size:.5em"> days</span></div><div class="sl">Free trial · no card</div></div>
-      <div class="stat rv rv3"><div class="sv">7</div><div class="sl">Languages for AI entries</div></div>
-      <div class="stat rv rv4"><div class="sv">Offline</div><div class="sl">Works without internet</div></div>
+    <div class="grid g4">
+      <div class="rv"><div class="h2 em num" data-count="3" data-suf=" yrs">3 yrs</div><p class="muted" style="font-size:14.5px;margin-top:6px">Maintenance included free after go-live</p></div>
+      <div class="rv rv2"><div class="h2 num" data-count="100" data-suf="%">100%</div><p class="muted" style="font-size:14.5px;margin-top:6px">Ownership option — keep the licence for good</p></div>
+      <div class="rv rv3"><div class="h2 gold">Days</div><p class="muted" style="font-size:14.5px;margin-top:6px">Typical turnaround for a change you ask for</p></div>
+      <div class="rv rv4"><div class="h2">Any nation</div><p class="muted" style="font-size:14.5px;margin-top:6px">Multi-currency, multi-tax, multi-language</p></div>
     </div>
   </div>
 </section>
 
-<!-- ═══ THE LADDER ═══ -->
-<section class="sec" id="products">
+<!-- ══════════ WHAT WE BUILD ══════════ -->
+<section class="sec" id="software">
   <div class="wrap">
-    <div class="sechead center">
-      <span class="eyebrow">One Munimo · Four sizes</span>
-      <h2 class="h1 rv">Munimo Lite is just the start.<br>Grow without changing software.</h2>
-      <p class="lead rv rv2" style="margin-top:16px">Your data moves up with you — from the Lite cashbook to the full ERP. No re-entry, ever.</p>
+    <div class="sechead">
+      <span class="eyebrow">What we build</span>
+      <h2 class="h1 rv">Four systems we have already built.<br>And whatever you need next.</h2>
+      <p class="lead rv rv2">
+        These are real, finished products running real businesses today. They are also our
+        starting point — we reshape them to your process instead of charging you to invent
+        the same foundations again. Click any one and use it right now.
+      </p>
     </div>
-    <div class="ladder">
-      <a class="lcard rv" href="khata.html">
-        <div class="shotwrap"><img src="assets/book/book-home.png" alt="Munimo Book — real app screenshot" loading="lazy" style="object-position:top"></div>
-        <div class="lbody">
-          <span class="lstep">Munimo Lite · Hero product</span>
-          <h3>Munimo Lite</h3>
-          <p class="who">₹1,999/mo <span class="slash" style="font-size:12px">₹3,999</span> · 15 days free</p>
-          <p>Money in, money out, voice entry, worker attendance, owner approvals. The live app in the hero above.</p>
-          <div class="lfeat"><span>Voice + AI entry</span><span>Attendance</span><span>Approvals</span></div>
-          <span class="larrow">Open Munimo Lite →</span>
-        </div>
+    <div class="grid g2">
+      
+      <a class="card rv " href="/full-erp.html">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></div>
+        <h3 class="h3">Full business ERP</h3>
+        <p class="muted" style="margin-top:9px;font-size:15px">Invoicing, purchases, stock, payroll, tax filing, receivables, profit and loss. The whole office in one system.</p>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:16px"><span class="tag">Any industry</span><span class="tag">Multi-branch</span><span class="tag">Role permissions</span></div>
+        <div class="em" style="margin-top:18px;font-weight:700;font-size:14.5px">Open it live &rarr;</div>
       </a>
-      <a class="lcard rv rv2" href="constructpro.html">
-        <div class="shotwrap"><img src="assets/dashboard.jpg" alt="Munimo Full ERP dashboard" loading="lazy"></div>
-        <div class="lbody">
-          <span class="lstep">Munimo Full ERP</span>
-          <h3>The whole office</h3>
-          <p class="who">₹2,999/mo <span class="slash" style="font-size:12px">₹5,999</span> · 15 days free</p>
-          <p>GST billing, payroll, employees, purchases, stock, P&L, AI bookkeeper — for any business. Construction-proven.</p>
-          <div class="lfeat"><span>GST & TDS</span><span>Payroll</span><span>Stock</span><span>AI</span></div>
-          <span class="larrow">Take the tour →</span>
-        </div>
+      <a class="card rv rv2" href="/cash-book.html">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7M8 15h4"/></svg></div>
+        <h3 class="h3">Cash Book</h3>
+        <p class="muted" style="margin-top:9px;font-size:15px">Money in, money out, who owes you, who you owe. The daily book, kept honest, on web and phone together.</p>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:16px"><span class="tag">Web + phone</span><span class="tag">Bank balances</span><span class="tag">Approvals</span></div>
+        <div class="em" style="margin-top:18px;font-weight:700;font-size:14.5px">Open it live &rarr;</div>
       </a>
-      <a class="lcard rv rv3" href="schools.html">
-        <div class="shotwrap"><img src="assets/demo/school-dashboard.jpg" alt="Munimo for Schools dashboard" loading="lazy"></div>
-        <div class="lbody">
-          <span class="lstep">Munimo for Schools</span>
-          <h3>Schools</h3>
-          <p class="who">Fees · students · attendance</p>
-          <p>Admissions to fees with WhatsApp receipts. Live demo on the site — click through it yourself.</p>
-          <div class="lfeat"><span>Fees & dues</span><span>Students</span><span>Reports</span></div>
-          <span class="larrow">See the demo →</span>
-        </div>
+      <a class="card rv rv3" href="/school-erp.html">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="m12 3 10 5-10 5L2 8z"/><path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5"/></svg></div>
+        <h3 class="h3">School ERP</h3>
+        <p class="muted" style="margin-top:9px;font-size:15px">Admissions, attendance, fee collection with receipts, exams and results, staff payroll, parent communication.</p>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:16px"><span class="tag">Fees + receipts</span><span class="tag">Exams</span><span class="tag">Parent portal</span></div>
+        <div class="em" style="margin-top:18px;font-weight:700;font-size:14.5px">Open it live &rarr;</div>
       </a>
-      <a class="lcard rv rv4" href="custom.html" style="border-style:dashed">
-        <div class="shotwrap"><img src="assets/demo/school-dashboard.jpg" alt="Custom ERP example — school management" loading="lazy"></div>
-        <div class="lbody">
-          <span class="lstep">Munimo Custom</span>
-          <h3>Custom ERP</h3>
-          <p class="who">Schools, clinics, coaching, retail…</p>
-          <p>Tell us how your business runs. We build it on the same trusted core. Feature additions on any plan — small one-time charge.</p>
-          <div class="lfeat"><span>Your workflow</span><span>Your budget</span><span>One-time price</span></div>
-          <span class="larrow">Talk to us →</span>
-        </div>
+      <a class="card rv rv4" href="/mobile-app.html">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.6"/><path d="M11 18h2"/></svg></div>
+        <h3 class="h3">Mobile field app</h3>
+        <p class="muted" style="margin-top:9px;font-size:15px">For the people away from a desk. Works with no signal and syncs when it finds one. Office approves from the back.</p>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:16px"><span class="tag">Works offline</span><span class="tag">Photo proof</span><span class="tag">Site attendance</span></div>
+        <div class="em" style="margin-top:18px;font-weight:700;font-size:14.5px">Open it live &rarr;</div>
       </a>
     </div>
   </div>
 </section>
 
-<!-- ═══ DEMO THEATRE ═══ -->
-<section class="sec" style="background:var(--ink2)">
+<!-- ══════════ TOUCH THE REAL SOFTWARE ══════════ -->
+<section class="sec sec-alt">
   <div class="wrap">
     <div class="sechead center">
-      <span class="eyebrow">These are not pictures. This is the real software.</span>
-      <h2 class="h1 rv">See it from the inside.</h2>
+      <span class="eyebrow">Not a video. Not a screenshot.</span>
+      <h2 class="h1 rv">Use the real thing, right here.</h2>
+      <p class="lead rv rv2">
+        This is the actual software, loaded with sample data for a company that does not exist.
+        Add an entry. Change a record. Run a report. Break something. It resets when you reload,
+        and it never touches a real customer's books.
+      </p>
     </div>
-    <div class="ttabs rv" data-ttabs>
-      <button class="ttab on" data-show="th-con" data-pool=".th-pane">Office — web ERP</button>
-      <button class="ttab" data-show="th-site" data-pool=".th-pane">Site — field app</button>
-      <button class="ttab" data-show="th-school" data-pool=".th-pane">School — custom ERP</button>
-    </div>
-
-    <div class="th-pane rv" id="th-con">
-      <div class="browser" data-theatre>
-        <div class="browser-bar"><span class="bdot" style="background:#f87171"></span><span class="bdot" style="background:#fbbf24"></span><span class="bdot" style="background:#34d399"></span><span class="burl">app.munimo.online — Verma Construction, Guwahati (demo data)</span></div>
-        <div class="theatre-vp">
-          <div class="shot on" data-cap="Dashboard — the whole business on one screen" data-sub="₹2.32 Cr receivables · ₹53.58 L cash · live"><img src="assets/dashboard.jpg" alt="Construction ERP dashboard" loading="lazy"><span class="hotspot" style="left:30%;top:22%"></span></div>
-          <div class="shot" data-cap="GST invoice — ready in 30 seconds" data-sub="GSTR-ready · e-invoice · print & WhatsApp"><img src="assets/invoices.jpg" alt="GST invoices" loading="lazy"><span class="hotspot" style="left:78%;top:14%"></span></div>
-          <div class="shot" data-cap="Labour muster — wages calculate themselves" data-sub="Attendance → weekly wages → advances, all linked"><img src="assets/labour.jpg" alt="Labour muster and wages" loading="lazy"><span class="hotspot" style="left:52%;top:38%"></span></div>
-          <div class="shot" data-cap="GST & TDS — compliance handled" data-sub="GSTR-1, GSTR-2B match, TDS 194C — one click"><img src="assets/gst.jpg" alt="GST and TDS module" loading="lazy"><span class="hotspot" style="left:40%;top:30%"></span></div>
-          <div class="shot" data-cap="Reports — trial balance to site P&L" data-sub="Send to your CA. Tally export included."><img src="assets/reports-trialbalance.jpg" alt="Trial balance report" loading="lazy"><span class="hotspot" style="left:60%;top:26%"></span></div>
-        </div>
-        <div class="theatre-cap">
-          <div><div class="tc-txt"></div><div class="tc-sub"></div></div>
-          <div style="display:flex;align-items:center;gap:14px"><div class="tdots"><span class="tdot on"></span><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>
-          <button class="btn btn-ghost" data-next style="padding:8px 14px;font-size:13px">Next →</button></div>
-        </div>
+    <div class="rv rv3" style="max-width:1080px;margin:0 auto;position:relative">
+      <div class="glow" style="width:80%;height:70%;top:10%;left:10%;background:radial-gradient(ellipse,rgba(18,185,129,.2),transparent 66%)"></div>
+      <div style="position:relative">
+        
+<div class="browser ">
+  <div class="browser-bar"><i class="r"></i><i class="y"></i><i class="g"></i>
+    <span class="browser-url">
+      <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      munimo.online/web-app
+    </span>
+  </div>
+</div>
+<div class="screen screen-16x10" data-launch="/web-app/app.html">
+  <span class="livedot">LIVE</span>
+  <iframe title="Start the live ERP" loading="lazy"></iframe>
+  <div class="launch" aria-label="Start Start the live ERP">
+    <img class="poster" src="/assets/web/cashbook-hero.png" alt="Start the live ERP" loading="lazy">
+    <span class="ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+    <b>Start the live ERP</b>
+    <small>Real software, sample data, no sign-up</small>
+  </div>
+</div>
       </div>
-      <p class="center" style="margin-top:18px"><a class="btn btn-em" href="constructpro.html">Full ConstructPro tour →</a></p>
     </div>
-
-    <div class="th-pane" id="th-site" style="display:none">
-      <div class="browser" data-theatre>
-        <div class="browser-bar"><span class="bdot" style="background:#f87171"></span><span class="bdot" style="background:#fbbf24"></span><span class="bdot" style="background:#34d399"></span><span class="burl">Munimo Lite — the field app, on the site manager's phone</span></div>
-        <div class="theatre-vp" style="aspect-ratio:16/9">
-          <div class="shot on" data-cap="7:00 AM — attendance from the site" data-sub="22 of 24 present · submitted in one tap"><img src="assets/demo/lite-attendance.jpg" alt="Labour attendance app" loading="lazy" style="object-fit:contain;background:#070b0a"></div>
-          <div class="shot" data-cap="1:30 PM — expense with a photo of the bill" data-sub="Diesel ₹3,200 · photo → entry fills itself"><img src="assets/demo/lite-expenses.jpg" alt="Site expense entry" loading="lazy" style="object-fit:contain;background:#070b0a"></div>
-          <div class="shot" data-cap="6:00 PM — approved from the office" data-sub="The owner approves. The site never waits."><img src="assets/demo/lite-approvals.jpg" alt="Expense approvals" loading="lazy" style="object-fit:contain;background:#070b0a"></div>
-        </div>
-        <div class="theatre-cap">
-          <div><div class="tc-txt"></div><div class="tc-sub"></div></div>
-          <div style="display:flex;align-items:center;gap:14px"><div class="tdots"><span class="tdot on"></span><span class="tdot"></span><span class="tdot"></span></div>
-          <button class="btn btn-ghost" data-next style="padding:8px 14px;font-size:13px">Next →</button></div>
-        </div>
-      </div>
-      <p class="center" style="margin-top:18px"><a class="btn btn-em" href="demo/lite/">Run the Lite live demo →</a></p>
-    </div>
-
-    <div class="th-pane" id="th-school" style="display:none">
-      <div class="browser" data-theatre>
-        <div class="browser-bar"><span class="bdot" style="background:#f87171"></span><span class="bdot" style="background:#fbbf24"></span><span class="bdot" style="background:#34d399"></span><span class="burl">Munimo for Schools — one example of a custom ERP</span></div>
-        <div class="theatre-vp">
-          <div class="shot on" data-cap="School dashboard — admissions to fees" data-sub="Built on your workflow, not ours"><img src="assets/demo/school-dashboard.jpg" alt="School ERP dashboard" loading="lazy"></div>
-          <div class="shot" data-cap="Fees — who is due, how much, since when" data-sub="WhatsApp receipt to the parent"><img src="assets/demo/school-fees.jpg" alt="School fees module" loading="lazy"></div>
-          <div class="shot" data-cap="Students & attendance" data-sub="Class-wise records, reports in one click"><img src="assets/demo/school-students.jpg" alt="Student records" loading="lazy"></div>
-        </div>
-        <div class="theatre-cap">
-          <div><div class="tc-txt"></div><div class="tc-sub"></div></div>
-          <div style="display:flex;align-items:center;gap:14px"><div class="tdots"><span class="tdot on"></span><span class="tdot"></span><span class="tdot"></span></div>
-          <button class="btn btn-ghost" data-next style="padding:8px 14px;font-size:13px">Next →</button></div>
-        </div>
-      </div>
-      <p class="center" style="margin-top:18px"><a class="btn btn-em" href="demo/school/">Run the school demo →</a></p>
-    </div>
+    <p class="center faint rv rv4" style="margin-top:22px;font-size:13.5px">
+      Runs entirely in your browser. Nothing you type here is sent anywhere.
+    </p>
   </div>
 </section>
 
-<!-- ═══ AI ═══ -->
+<!-- ══════════ ENGINES — animation 2 ══════════ -->
 <section class="sec">
-  <div class="wrap grid2">
-    <div>
-      <span class="eyebrow">AI entries · 7 languages</span>
-      <h2 class="h1 rv">Type it your way.<br><span class="gold">The entry makes itself.</span></h2>
-      <p class="lead rv rv2" style="margin-top:16px">English, हिन्दी, मराठी, தமிழ், తెలుగు, ગુજરાતી, বাংলা. Type the way you speak. The AI finds the party, the amount and the right ledger.</p>
-      <ul class="checks rv rv3">
-        <li><span class="ck"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span><span><b>AI Bookkeeper</b> — finds duplicates and mistakes, fixes them in one tap</span></li>
-        <li><span class="ck"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span><span><b>Smart Entry</b> — “Paid Ramesh 500” becomes a correct ledger entry</span></li>
-        <li><span class="ck"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span><span><b>Private</b> — the AI runs on your server. Your data never leaves.</span></li>
-      </ul>
-      <p style="margin-top:26px" class="rv rv4"><a class="btn btn-em" href="ai.html">See all AI features →</a></p>
+  <div class="wrap">
+    <div class="sechead center">
+      <span class="eyebrow">Why we are fast</span>
+      <h2 class="h1 rv">Custom software, without paying<br>to rebuild the foundations.</h2>
+      <p class="lead rv rv2">
+        Most of any business system is the same underneath: a ledger that has to balance, tax that
+        has to be filed, people who have to be paid, approvals that have to hold. We already own
+        those engines, tested and in production. Your build starts on top of them, so the money
+        goes into what makes your business different.
+      </p>
+    </div>
+    <div class="engines rv rv3" data-scrub="0.08 0.50">
+      <div class="eng-core">
+        <div class="eng-grid">
+          
+          <div class="eng" style="--ex:-190px;--ey:-70px;--er:-24deg">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7M8 15h4"/></svg></div>
+            <h4>Double-entry ledger</h4>
+            <p>Every figure traces to an entry. Balances that always tally.</p>
+          </div>
+          <div class="eng" style="--ex:0px;--ey:-120px;--er:0deg">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 7h6M9 12h6M9 17h3"/><rect x="4" y="3" width="16" height="18" rx="2"/></svg></div>
+            <h4>Tax and compliance</h4>
+            <p>Tax rules, returns and statutory formats, per country.</p>
+          </div>
+          <div class="eng" style="--ex:190px;--ey:-70px;--er:24deg">
+            <div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 11a3 3 0 1 0-1.5-5.6M18 20a6 6 0 0 0-3-5.2"/></svg></div>
+            <h4>People and payroll</h4>
+            <p>Attendance, wages, advances, salary runs, leave.</p>
+          </div>
+          <div class="eng" style="--ex:-190px;--ey:70px;--er:-24deg">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M5 12.5a5 5 0 0 1 8.5-3.6M19 15.5A4 4 0 0 0 16 9h-.6"/><path d="M3 3l18 18"/><path d="M7 19h9"/></svg></div>
+            <h4>Offline sync</h4>
+            <p>Keeps working with no signal, reconciles cleanly after.</p>
+          </div>
+          <div class="eng" style="--ex:0px;--ey:120px;--er:0deg">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M20 7 10 17l-5-5"/></svg></div>
+            <h4>Approval workflow</h4>
+            <p>Who may raise it, who must approve it, what it locks.</p>
+          </div>
+          <div class="eng" style="--ex:190px;--ey:70px;--er:24deg">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.4"/></svg></div>
+            <h4>Natural language entry</h4>
+            <p>Type or speak a line, get a correct posted entry back.</p>
+          </div>
+        </div>
+        <div class="eng-weld"></div>
+      </div>
+      <p class="eng-label">One system. Your rules on top.</p>
+    </div>
+    <div class="center rv rv4" style="margin-top:38px">
+      <a class="btn btn-ghost" href="/engines.html">See what each engine does &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ LEGACY VS CUSTOM — animation 3 ══════════ -->
+<section class="sec sec-alt">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">The honest comparison</span>
+      <h2 class="h1 rv">What old software costs you<br>while you keep putting up with it.</h2>
+      <p class="lead rv rv2">
+        Legacy systems rarely fail outright. They just quietly tax you — an export here, a
+        re-keyed number there, one person who is the only one who understands the file.
+        Scroll and watch the same screen change hands.
+      </p>
+    </div>
+    <div class="shift rv rv3" data-scrub="0.16 0.70">
+      <div class="shift-pane shift-old">
+        <div class="shift-head"><span class="shift-t">LEDGER_2019_FINAL_v4.xls</span><span class="shift-chip">Legacy</span></div>
+        <div class="shift-line">SUM(H4:H92) &mdash; #REF! error<b>?</b></div>
+        <div class="shift-line">last saved by: accounts_pc<b>14 Mar</b></div>
+        <div class="shift-line">site_3_expenses_FINAL(2).xls<b>not merged</b></div>
+        <div class="shift-line">manual entry &mdash; awaiting Ravi<b>6 days</b></div>
+        <div class="shift-line">tax working &mdash; separate file<b>unreconciled</b></div>
+      </div>
+      <div class="shift-pane shift-new">
+        <div class="shift-head"><span class="shift-t">Your books, live</span><span class="shift-chip">Custom</span></div>
+        <div class="shift-line">Cash and bank, all accounts<b>Tallied</b></div>
+        <div class="shift-line">Every entry traced to a person<b>Audited</b></div>
+        <div class="shift-line">All sites, one view<b>Live</b></div>
+        <div class="shift-line">Approvals cleared<b>Today</b></div>
+        <div class="shift-line">Tax return ready to file<b>Generated</b></div>
+      </div>
+      <div class="shift-seam"></div>
+      <div class="shift-cap">
+        <span class="a">Everyone works around the software</span>
+        <span class="b">The software works the way you do</span>
+      </div>
+    </div>
+    <div class="center rv rv4" style="margin-top:38px">
+      <a class="btn btn-ghost" href="/legacy-vs-custom.html">Read the full comparison &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ CLIENTS ══════════ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">Clients</span>
+      <h2 class="h1 rv">The people who trusted us first.</h2>
+    </div>
+    <div class="rv rv2" style="max-width:880px">
+      <div class="card-flat" style="padding:clamp(26px,3.4vw,40px);border-color:var(--hair3)">
+        <div style="display:flex;align-items:center;gap:3px;margin-bottom:18px" aria-label="5 out of 5">
+          <svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+          <span class="muted" style="font-size:13.5px;font-weight:700;margin-left:9px">5.0</span>
+        </div>
+        <p style="font-size:clamp(17px,2.2vw,22px);font-weight:600;line-height:1.55;letter-spacing:-.01em">
+          &ldquo;What surprised us was the speed. We would mention something on a call and it would be
+          in the software the same week — not after a change request, a quotation and three months.
+          It stopped feeling like buying software and started feeling like having our own team.&rdquo;
+        </p>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:24px;padding-top:22px;border-top:1px solid var(--hair)">
+          <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--em),var(--emdk));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#04110b;flex-shrink:0">NP</div>
+          <div>
+            <div style="font-weight:800">Niptu Paul</div>
+            <div class="muted" style="font-size:14px">Adidev Commercials</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="center rv rv3" style="margin-top:36px">
+      <a class="btn btn-ghost" href="/clients.html">See who else we build for &rarr;</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ OWNERSHIP + BUDGET ══════════ -->
+<section class="sec sec-alt">
+  <div class="wrap">
+    <div class="sechead center">
+      <span class="eyebrow">Commercials</span>
+      <h2 class="h1 rv">You set the budget. We tell you<br>honestly what fits inside it.</h2>
+      <p class="lead rv rv2">
+        We do not publish a rate card, because we have never met two businesses that needed the
+        same thing. Tell us what the software has to do and what you can spend. We will tell you
+        what fits, what should wait for phase two, and what we would not charge you for at all.
+      </p>
+    </div>
+    <div class="grid g3" style="max-width:1000px;margin:0 auto">
+      <div class="card rv">
+        <div class="ico ico-gold"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+        <h3 class="h3">Own it outright</h3>
+        <p class="muted" style="margin-top:9px;font-size:15px">
+          A perpetual licence. The software is yours to keep and run for as long as you want,
+          with no monthly fee hanging over it. Best when you want the cost to end.
+        </p>
+      </div>
+      <div class="card rv rv2">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></svg></div>
+        <h3 class="h3">Or subscribe</h3>
+        <p class="muted" style="margin-top:9px;font-size:15px">
+          A monthly fee instead of a capital outlay, hosting and updates included.
+          Best when you would rather keep cash free and stay flexible.
+        </p>
+      </div>
+      <div class="card rv rv3">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.4 8.2-8 9.4C7.4 20.2 4 17 4 12V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <h3 class="h3">Three years of AMC, free</h3>
+        <p class="muted" style="margin-top:9px;font-size:15px">
+          Fixes, security updates, small changes and support for three years after go-live,
+          at no extra charge. The industry norm is fifteen to twenty per cent a year.
+        </p>
+      </div>
+    </div>
+    <div class="center rv rv4" style="margin-top:34px">
+      <a class="btn btn-em btn-big" href="/contact.html">Get a price for your scope</a>
+      <p class="faint" style="margin-top:16px;font-size:13.5px">
+        Already running something of ours? Adding a feature is usually a one-time charge, not a new plan.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ HOW WE WORK ══════════ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">How a build runs</span>
+      <h2 class="h1 rv">Four steps. No mystery.</h2>
+    </div>
+    <div class="grid g4">
+      
+      <div class="rv ">
+        <div class="mono em" style="font-size:13px;font-weight:800;letter-spacing:.1em">01</div>
+        <h3 class="h4" style="margin:11px 0 8px">We watch you work</h3>
+        <p class="muted" style="font-size:14.5px">A call or a visit. We map what actually happens today, including the workarounds nobody admits to. This is where most projects are won or lost.</p>
+      </div>
+      <div class="rv rv2">
+        <div class="mono em" style="font-size:13px;font-weight:800;letter-spacing:.1em">02</div>
+        <h3 class="h4" style="margin:11px 0 8px">You see it early</h3>
+        <p class="muted" style="font-size:14.5px">A working version in front of you in weeks, not a document. You use it, you tell us where it is wrong, we change it while it is still cheap to change.</p>
+      </div>
+      <div class="rv rv3">
+        <div class="mono em" style="font-size:13px;font-weight:800;letter-spacing:.1em">03</div>
+        <h3 class="h4" style="margin:11px 0 8px">We move your data</h3>
+        <p class="muted" style="font-size:14.5px">Your existing records come across. Both systems run together until you trust the new one. Nobody switches on a promise.</p>
+      </div>
+      <div class="rv rv4">
+        <div class="mono em" style="font-size:13px;font-weight:800;letter-spacing:.1em">04</div>
+        <h3 class="h4" style="margin:11px 0 8px">It keeps growing</h3>
+        <p class="muted" style="font-size:14.5px">Three years of maintenance included. New requirements get added as they come up, usually in days.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FAQ ══════════ -->
+<section class="sec sec-alt">
+  <div class="wrap-n">
+    <div class="sechead center">
+      <span class="eyebrow">Questions</span>
+      <h2 class="h1 rv">Straight answers.</h2>
     </div>
     <div class="rv rv2">
-      <div class="chat" data-ai>
-        <div class="langchips"></div>
-        <div class="bubble-u"><span class="caret"></span></div>
-        <div class="ai-entry">
-          <div class="ae-top">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></svg>
-            Entry created by the AI
-          </div>
-          <div class="ae-rows"></div>
-        </div>
+<div class="faq">
+  <details><summary>What exactly does Munimo do?</summary><div class="fa">We are a custom software company. We design and build the systems a business runs on — accounting and cash books, full ERP, school management, field and mobile apps, and one-off tools for a process nobody else has. We start from working engines we already own, then shape them to your business, which is why a custom build with us takes weeks rather than years.</div></details>
+  <details><summary>Can I try the software before I commit anything?</summary><div class="fa">Yes, and you should. Every product on this site runs live in your browser with sample data. Nothing to install, no account, no sales call. Open <a href="/software.html">the software page</a>, click into any product and use it properly — add an entry, change a record, run a report.</div></details>
+  <details><summary>How much does it cost?</summary><div class="fa">We price to your budget and your scope, not from a fixed rate card. Tell us what the software has to do and what you can spend, and we will tell you honestly what fits, what has to wait, and what we would not charge you for. Small additions to a system we have already built are usually a one-time charge.</div></details>
+  <details><summary>Do I own the software or rent it?</summary><div class="fa">Your choice. Take a perpetual licence and the software is yours to keep and run for as long as you like. Or subscribe monthly if you would rather keep costs low and flexible. Either way you are not locked in, and your data is exportable at any time.</div></details>
+  <details><summary>What is included after the software goes live?</summary><div class="fa">Three years of annual maintenance is included at no extra cost — bug fixes, security updates, small changes and support. Most companies charge fifteen to twenty per cent of the licence value every year for this. We do not, for the first three years.</div></details>
+  <details><summary>We already have old software. Is moving worth the disruption?</summary><div class="fa">Usually yes, and it is less disruptive than people expect. We import your existing data, run both systems side by side until you trust the new one, and only then switch. <a href="/legacy-vs-custom.html">This page</a> walks through what staying on legacy software actually costs and how a migration runs.</div></details>
+  <details><summary>Do you work with companies outside India?</summary><div class="fa">Yes. The software handles multiple currencies, tax rules, languages and time zones, and we work with clients remotely as standard. Nothing on this site is India-only.</div></details>
+  <details><summary>How quickly can you add something we need?</summary><div class="fa">Small changes to an existing build usually land in days. A new module is typically two to four weeks. Because we build on our own engines rather than from a blank page, most of what you ask for is configuration and interface work rather than new foundations.</div></details>
+</div></div>
+  </div>
+</section>
+
+
+<section class="sec" style="background:linear-gradient(180deg,var(--ink),#0c1a14)">
+  <div class="wrap center">
+    <div class="glow" style="width:760px;height:400px;top:0;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(18,185,129,.16),transparent 65%)"></div>
+    <div style="position:relative;z-index:1">
+      <h2 class="h1 rv">Tell us what your business needs.</h2>
+      <p class="lead rv rv2" style="margin:18px auto 0;max-width:620px">Describe the problem in your own words. We will tell you whether we are the right people for it — and if we are not, we will say so.</p>
+      <div class="rv rv3" style="display:flex;gap:12px;justify-content:center;margin-top:32px;flex-wrap:wrap">
+        <a class="btn btn-em btn-big" href="/contact.html">Tell us what you need</a>
+        <a class="btn btn-ghost btn-big" href="/software.html">Try the software first</a>
       </div>
+      <p class="faint rv rv4" style="margin-top:20px;font-size:13.5px">
+        No sales call needed to look around. Every product on this site is live and usable right now.
+      </p>
     </div>
   </div>
 </section>
 
-<!-- ═══ AI proof ═══ -->
-<section class="sec-tight">
-  <div class="wrap">
-    <div class="ai-proof rv"><img src="assets/ai-bookkeeper.jpg" alt="Munimo AI Bookkeeper — found 4 issues, fixed 2 in one tap" loading="lazy"></div>
-    <p class="center muted" style="font-size:13px;margin-top:12px">A real screen. The AI Bookkeeper found 4 issues and fixed 2 in one tap. This is shipped software, not a promise.</p>
-  </div>
-</section>
 
-<!-- ═══ PRICE ═══ -->
-<section class="sec" style="background:var(--ink2)" id="pricing">
-  <div class="wrap">
-    <div class="sechead center">
-      <span class="eyebrow">Launch prices · 15 days free</span>
-      <h2 class="h1 rv">Book ₹1,999. Full ERP ₹2,999.<br><span class="gold">Half price, for now.</span></h2>
-      <p class="lead rv rv2" style="margin-top:14px">Launch offer for early businesses — <span class="slash">₹3,999</span> ₹1,999/mo and <span class="slash">₹5,999</span> ₹2,999/mo. Every plan starts with 15 days free, account created instantly. Prefer one-time? Offers below.</p>
-    </div>
-    <div class="cmp rv">
-      <div class="cmp-row"><div></div><div>Desktop accounting</div><div class="hide-m">Cloud SaaS</div><div class="mu">Munimo</div></div>
-      <div class="cmp-row"><div>Price</div><div class="bad">₹18,000+ to start</div><div class="bad hide-m">₹8–15,000 every year</div><div class="mu good">₹1,999/mo · 15 days free</div></div>
-      <div class="cmp-row"><div>Free trial</div><div class="bad">—</div><div class="bad hide-m">7 days, card first</div><div class="mu good">15 days, no card</div></div>
-      <div class="cmp-row"><div>Indian language AI entry</div><div>—</div><div class="hide-m">—</div><div class="mu good">7 languages</div></div>
-      <div class="cmp-row"><div>Phone + computer</div><div class="bad">Computer only</div><div class="hide-m">Needs internet</div><div class="mu good">Both — offline too</div></div>
-      <div class="cmp-row"><div>Support</div><div class="bad">Through dealers</div><div class="hide-m">Tickets & email</div><div class="mu good">Direct WhatsApp, same day</div></div>
-    </div>
-
-    <div class="budget rv" style="margin-top:26px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
-        <h3 class="h3">Prefer one-time? Name your budget</h3>
-        <div class="h2 gold num" id="budget-val">₹50,000</div>
-      </div>
-      <input type="range" id="budget-range" min="5000" max="500000" step="5000" value="50000" aria-label="Budget">
-      <p class="lead" id="budget-desc" style="font-size:16px;min-height:52px">ConstructPro core — billing, GST, labour, site P&L</p>
-      <a class="btn btn-wa btn-big" id="budget-wa" style="margin-top:10px" href="https://wa.me/919599942248" target="_blank" rel="noopener">Send this budget on WhatsApp →</a>
-      <p class="muted" style="font-size:12.5px;margin-top:12px">One-time buyers get offers — free migration, first-year updates free, multi-business discounts. Straight answers only.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ FAQ (SEO) ═══ -->
-<section class="sec">
-  <div class="wrap">
-    <div class="sechead center">
-      <span class="eyebrow">Common questions — in your language</span>
-      <h2 class="h1 rv">People ask. We answer.</h2>
-    </div>
-    <div class="faq rv">
-      <details><summary>Which is the best free khata app for my shop?</summary><div class="fa">Munimo Khata. It tracks udhar and payments, shows who owes you, sends WhatsApp reminders, and works offline. You can try it right now in the <a href="demo/khata/" style="color:var(--em2)">live demo</a> — no signup.</div></details>
-      <details><summary>Is there a construction ERP with GST billing in India?</summary><div class="fa">Yes — Munimo ConstructPro. GST invoices, RA bills, payroll, labour muster, purchases, site-wise P&L and an AI bookkeeper. One-time price. <a href="constructpro.html" style="color:var(--em2)">Take the tour</a>.</div></details>
-      <details><summary>What is a good Tally alternative with a one-time price?</summary><div class="fa">Munimo. You pay once, based on your budget. No yearly rental. It runs on phone and computer, works offline, and your CA still gets Tally exports.</div></details>
-      <details><summary>क्या Munimo हिंदी में काम करता है?</summary><div class="fa">हाँ। आप हिंदी में लिखिए — “रमेश को 500 दिए” — और AI सही entry बना देता है। हिंदी, मराठी, தமிழ், తెలుగు, ગુજરાતી, বাংলা सब चलती हैं।</div></details>
-      <details><summary>Munimo मराठीत चालतं का?</summary><div class="fa">हो. “आज मजुरी 4500 दिली” असं मराठीत लिहा — AI योग्य नोंद करतो. सातही भाषा चालतात.</div></details>
-      <details><summary>Munimo தமிழில் வேலை செய்யுமா?</summary><div class="fa">ஆம். தமிழில் தட்டச்சு செய்யுங்கள் — AI சரியான கணக்குப் பதிவை உருவாக்கும். <a href="ai.html" style="color:var(--em2)">AI அம்சங்களைப் பாருங்கள்</a>.</div></details>
-      <details><summary>Is there a labour attendance app for construction sites?</summary><div class="fa">Yes — Munimo Lite, the field app. Attendance, expenses with bill photos, approvals — from the site, even offline. It syncs with ConstructPro. <a href="demo/lite/" style="color:var(--em2)">Try the demo</a>.</div></details>
-      <details><summary>Where does my data live? Is it safe?</summary><div class="fa">With you. On your computer (desktop) or your own server (cloud). Backups are encrypted. The AI also runs on your server — nothing is sent to outside AI services.</div></details>
-    </div>
-  </div>
-</section>
-
-<!-- ═══ CLOSER ═══ -->
-<section class="sec closer">
-  <div class="wrap">
-    <p class="eyebrow rv">Made in India · Priced for India · Supported on WhatsApp</p>
-    <h2 class="h-display rv rv2" style="margin:10px 0 26px">15 days free.<br><span class="gold">Your books get better today.</span></h2>
-    <p class="rv rv3" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><a class="btn btn-em btn-big" href="start.html">Start free trial</a><a class="btn btn-wa btn-big" href="https://wa.me/919599942248?text=Hi%20Munimo!" target="_blank" rel="noopener">WhatsApp: 95999 42248</a></p>
-    <p class="rv rv4" style="margin-top:20px"><a href="mailto:hello@munimo.online" class="muted" style="font-size:15px">hello@munimo.online</a></p>
-  </div>
-</section>
-
-<!-- ═══ FOOTER ═══ -->
 <footer class="ft">
   <div class="wrap">
     <div class="ft-grid">
       <div>
-        <a class="logo" href="index.html" style="margin-bottom:14px"><img class="logo-m" src="assets/munimo-icon.svg" alt="Munimo logo"> Munimo</a>
-        <p class="muted" style="font-size:13.5px;max-width:280px;margin-top:12px">Business software for India. Khata app to full ERP — one-time price, no yearly fees.</p>
+        <a class="logo" href="/"><img class="logo-m" src="/assets/munimo-icon.svg" alt="" width="31" height="31"> Munimo</a>
+        <p class="muted" style="margin-top:14px;font-size:14.5px;max-width:330px">
+          We build custom software for businesses that have outgrown spreadsheets and
+          off-the-shelf tools. Own it outright or subscribe. Three years of maintenance included.
+        </p>
+        <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+          <a class="btn btn-wa" href="https://wa.me/919599942248" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn btn-ghost" href="mailto:hello@munimo.online">Email</a>
+        </div>
       </div>
       <div>
-        <h4>Products</h4>
-        <a href="khata.html">Munimo Lite</a>
-        <a href="constructpro.html">Full ERP</a>
-        <a href="schools.html">Schools</a>
-        <a href="custom.html">Custom ERP</a>
+        <h5>Software</h5>
+        <a href="/full-erp.html">Full business ERP</a>
+        <a href="/cash-book.html">Cash Book</a>
+        <a href="/school-erp.html">School ERP</a>
+        <a href="/mobile-app.html">Mobile field app</a>
+        <a href="/software.html">Try everything live</a>
       </div>
       <div>
-        <h4>Try it</h4>
-        <a href="start.html">Start free trial</a>
-        <a href="demo/khata/">Khata playground</a>
-        <a href="demo/school/">School demo</a>
-        <a href="ai.html">AI features</a>
+        <h5>Services</h5>
+        <a href="/custom-software.html">Custom software build</a>
+        <a href="/engines.html">Our engines</a>
+        <a href="/legacy-vs-custom.html">Legacy vs custom</a>
+        <a href="/ownership.html">Own it or subscribe</a>
       </div>
       <div>
-        <h4>Company</h4>
-        <a href="pricing.html">Pricing</a>
-        <a href="about.html">About</a>
-        <a href="https://wa.me/919599942248" target="_blank" rel="noopener">WhatsApp us</a>
+        <h5>Company</h5>
+        <a href="/clients.html">Clients</a>
+        <a href="/contact.html">Contact</a>
+        <a href="https://wa.me/919599942248" target="_blank" rel="noopener">+91 95999 42248</a>
         <a href="mailto:hello@munimo.online">hello@munimo.online</a>
       </div>
     </div>
-    <div class="made">
-      <span class="tri"><i style="background:#f97316"></i><i style="background:#fff"></i><i style="background:#0e9f6e"></i>&nbsp; Made in India, by Indians, for Indian business.</span>
-      <span>© 2026 Munimo · munimo.online</span>
+    <div class="ft-btm">
+      <span>&copy; <span data-year>2026</span> Munimo Software. All rights reserved.</span>
+      <span>Built for businesses worldwide.</span>
     </div>
   </div>
 </footer>
-
-<div class="mbar">
-  <a class="btn btn-ghost" href="pricing.html">Pricing</a>
-  <a class="btn btn-em" href="start.html">Start free →</a>
-</div>
-
-<a class="wafloat" href="https://wa.me/919599942248?text=Hi%20Munimo!" target="_blank" rel="noopener" aria-label="WhatsApp Munimo">
-  <svg viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.15.2 2.1 3.2 5.1 4.49.71.3 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.3.17-1.42-.07-.12-.27-.2-.57-.35zM12.05 21.6h-.01a9.6 9.6 0 01-4.89-1.34l-.35-.21-3.64.95.97-3.55-.23-.36a9.57 9.57 0 01-1.47-5.11c0-5.3 4.31-9.6 9.62-9.6a9.55 9.55 0 016.8 2.82 9.55 9.55 0 012.81 6.8c0 5.3-4.31 9.6-9.61 9.6zm8.18-17.78A11.5 11.5 0 0012.05 .44C5.68.44.5 5.6.5 11.98c0 2.03.53 4.01 1.54 5.76L.4 23.56l5.96-1.56a11.53 11.53 0 005.68 1.49h.01c6.37 0 11.55-5.17 11.55-11.54 0-3.08-1.2-5.98-3.37-8.13z"/></svg>
+<a class="wafloat" href="https://wa.me/919599942248" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.16c-.24.68-1.42 1.31-1.95 1.35-.5.05-.97.23-3.26-.68-2.74-1.08-4.5-3.86-4.63-4.04-.14-.18-1.11-1.48-1.11-2.82s.7-2 .95-2.27c.25-.27.54-.34.72-.34.18 0 .36 0 .52.01.17.01.39-.06.61.47.23.54.77 1.88.84 2.02.07.14.11.3.02.48-.09.18-.14.3-.27.46-.14.16-.29.36-.41.48-.14.14-.28.29-.12.56.16.27.71 1.17 1.53 1.9 1.05.94 1.94 1.23 2.21 1.37.27.14.43.11.59-.07.16-.18.68-.79.86-1.07.18-.27.36-.23.61-.14.25.09 1.58.75 1.85.88.27.14.45.2.52.32.07.11.07.66-.17 1.34z"/></svg>
 </a>
-
-<script src="assets/site.js" defer></script>
+<script src="/assets/site.js" defer></script>
 </body>
 </html>

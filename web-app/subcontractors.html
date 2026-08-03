@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Subcontractors</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;font-size:14px}
+.header{background:#fff;border-bottom:1px solid #e2e8f0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
+.header-actions{display:flex;gap:8px}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.btn-primary{background:#3b82f6;color:#fff}.btn-primary:hover{background:#2563eb}
+.btn-secondary{background:#f8fafc;border:1px solid #e2e8f0;color:#374151}.btn-secondary:hover{background:#f1f5f9}
+.btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}.btn-danger:hover{background:#fecaca}
+.btn-success{background:#dcfce7;color:#16a34a;border:1px solid #86efac}.btn-success:hover{background:#bbf7d0}
+.btn-orange{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
+.btn-sm{padding:5px 10px;font-size:12px}
+.tabs{display:flex;border-bottom:2px solid #e2e8f0;background:#fff;padding:0 24px}
+.tab{padding:12px 20px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;color:#64748b;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab.active{color:#3b82f6;border-bottom-color:#3b82f6}
+.content{padding:24px}
+.panel{display:none}.panel.active{display:block}
+.toolbar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.search-box{position:relative;flex:1;min-width:180px}
+.search-box input{width:100%;padding:8px 12px 8px 36px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;outline:none}
+.search-box input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.search-box .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8}
+.filter-select,.filter-input{padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;cursor:pointer;outline:none}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e8f0}
+.stat-card .label{font-size:11px;color:#64748b;font-weight:500;margin-bottom:4px}
+.stat-card .value{font-size:20px;font-weight:700;color:#1e293b}
+.table-wrap{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:#f8fafc;padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
+td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:13px}
+tr:hover td{background:#f8fafc}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:#dcfce7;color:#16a34a}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-red{background:#fee2e2;color:#dc2626}
+.badge-yellow{background:#fef3c7;color:#059669}
+.badge-gray{background:#f1f5f9;color:#64748b}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;width:640px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #e2e8f0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.form-group textarea{resize:vertical;min-height:60px}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0}
+.ra-bill-line{display:grid;grid-template-columns:1fr 80px 100px 100px 80px;gap:8px;align-items:end;margin-bottom:8px}
+.ra-bill-line input{padding:7px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px}
+.ra-bill-line label{font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;margin-bottom:2px}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:#f8fafc;border-radius:8px;margin-top:12px;font-size:12px}
+.summary-row{display:flex;justify-content:space-between;align-items:center}
+.summary-row.total{font-weight:700;font-size:13px;color:#1e293b;padding-top:6px;border-top:1px solid #e2e8f0}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#16a34a}.toast.error{background:#dc2626}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><i data-lucide="building-2" style="width:20px;height:20px;color:#8b5cf6"></i> Subcontractors</h1>
+  <div class="header-actions">
+    <button class="btn btn-secondary" onclick="exportData()"><i data-lucide="download" style="width:14px;height:14px"></i> Export</button>
+    <button class="btn btn-primary" id="addBtn" onclick="openAddModal()"><i data-lucide="plus" style="width:14px;height:14px"></i> Add</button>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab active" data-tab="sc" onclick="showTab('sc','Subcontractors')">Subcontractors</button>
+  <button class="tab" data-tab="wo" onclick="showTab('wo','Work Orders')">Work Orders</button>
+  <button class="tab" data-tab="ra" onclick="showTab('ra','RA Bills')">RA Bills</button>
+  <button class="tab" data-tab="boq" onclick="showTab('boq','BOQ / Measurement')">BOQ / Measurement</button>
+  <button class="tab" data-tab="tds" onclick="showTab('tds','TDS 194C')">TDS 194C</button>
+</div>
+<div class="content">
+
+<!-- Subcontractors Tab -->
+<div class="panel active" id="tabSc">
+  <div class="stats-row">
+    <div class="stat-card"><div class="label">Total Subcontractors</div><div class="value" id="scTotal">0</div></div>
+    <div class="stat-card"><div class="label">Active</div><div class="value" id="scActive" style="color:#16a34a">0</div></div>
+    <div class="stat-card"><div class="label">With GST</div><div class="value" id="scGst" style="color:#3b82f6">0</div></div>
+    <div class="stat-card"><div class="label">TDS Applicable</div><div class="value" id="scTds" style="color:#059669">0</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" class="si" style="width:16px;height:16px"></i>
+      <input type="text" id="scSearch" placeholder="Search subcontractors..." oninput="renderSC()">
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Contact</th><th>Trade/Work</th><th>GSTIN</th><th>PAN</th><th>TDS</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="scTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Work Orders Tab -->
+<div class="panel" id="tabWo">
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" class="si" style="width:16px;height:16px"></i>
+      <input type="text" id="woSearch" placeholder="Search work orders..." oninput="renderWO()">
+    </div>
+    <select class="filter-select" id="woSC" onchange="renderWO()">
+      <option value="">All Subcontractors</option>
+    </select>
+    <select class="filter-select" id="woSite" onchange="renderWO()">
+      <option value="">All Sites</option>
+    </select>
+    <select class="filter-select" id="woStatus" onchange="renderWO()">
+      <option value="">All Status</option>
+      <option value="draft">Draft</option>
+      <option value="active">Active</option>
+      <option value="completed">Completed</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>WO No.</th><th>Subcontractor</th><th>Site</th><th>Description</th><th>Contract Amt</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="woTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- RA Bills Tab -->
+<div class="panel" id="tabRa">
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" class="si" style="width:16px;height:16px"></i>
+      <input type="text" id="raSearch" placeholder="Search RA bills..." oninput="renderRA()">
+    </div>
+    <select class="filter-select" id="raWO" onchange="renderRA()">
+      <option value="">All Work Orders</option>
+    </select>
+    <select class="filter-select" id="raStatus" onchange="renderRA()">
+      <option value="">All Status</option>
+      <option value="draft">Draft</option>
+      <option value="submitted">Submitted</option>
+      <option value="approved">Approved</option>
+      <option value="paid">Paid</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>RA Bill No.</th><th>Work Order</th><th>Subcontractor</th><th>Bill Date</th><th>Gross Amt</th><th>Retention</th><th>TDS</th><th>Net Payable</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="raTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- BOQ / Measurement Book Tab -->
+<div class="panel" id="tabBoq">
+  <div class="toolbar">
+    <select class="filter-select" id="boqWO" onchange="loadBoqForWO()" style="min-width:280px">
+      <option value="">-- Select a Work Order to manage its BOQ --</option>
+    </select>
+    <button class="btn btn-primary btn-sm" id="boqAddBtn" onclick="openBoqModal()" style="display:none">
+      <i data-lucide="plus" style="width:12px;height:12px"></i> Add BOQ Item
+    </button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:20px">
+    <table>
+      <thead><tr><th>Item No.</th><th>Description</th><th>HSN/SAC</th><th>Unit</th><th>Contract Qty</th><th>Rate</th><th>Amount</th><th>Measured</th><th>Billed</th><th>Actions</th></tr></thead>
+      <tbody id="boqTable"><tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8">Select a work order above to view or build its BOQ</td></tr></tbody>
+    </table>
+  </div>
+  <div id="mbSection" style="display:none">
+    <div class="toolbar">
+      <label style="font-size:13px;font-weight:700;color:#1e293b">Measurement Book Entries</label>
+      <button class="btn btn-secondary btn-sm" onclick="openMbModal()"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Measurement</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>BOQ Item</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Remarks</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="mbTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TDS 194C Tab -->
+<div class="panel" id="tabTds">
+  <div class="toolbar">
+    <div>
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">FINANCIAL YEAR</label>
+      <select class="filter-select" id="tdsFY" onchange="loadTDS()">
+        <option value="2025-26">2025-26</option>
+        <option value="2024-25">2024-25</option>
+      </select>
+    </div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:auto" onclick="loadTDS()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i></button>
+    <button class="btn btn-orange btn-sm" style="margin-top:auto" onclick="exportTDS()"><i data-lucide="file-spreadsheet" style="width:12px;height:12px"></i> Export TDS</button>
+  </div>
+  <div class="stats-row" id="tdsStats"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Subcontractor</th><th>PAN</th><th>Type</th><th>Gross Payments</th><th>TDS Rate</th><th>TDS Deducted</th><th>Net Paid</th><th>Section</th></tr></thead>
+      <tbody id="tdsTable"></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<!-- SC Modal -->
+<div class="modal-overlay" id="scModal">
+  <div class="modal">
+    <h2 id="scModalTitle">Add Subcontractor</h2>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Company / Name *</label>
+        <input type="text" id="scfName" placeholder="Subcontractor name" required>
+      </div>
+      <div class="form-group">
+        <label>Contact Person</label>
+        <input type="text" id="scfContact" placeholder="Contact name">
+      </div>
+      <div class="form-group">
+        <label>Mobile</label>
+        <input type="tel" id="scfMobile" placeholder="9XXXXXXXXX">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="scfEmail" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label>Trade / Type of Work</label>
+        <select id="scfTrade">
+          <option value="">-- Select --</option>
+          <option>Civil Work</option><option>Structural</option><option>Electrical</option>
+          <option>Plumbing</option><option>HVAC</option><option>Painting</option>
+          <option>Tiling / Flooring</option><option>Roofing</option><option>Fabrication</option>
+          <option>Landscaping</option><option>IT / Networking</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>GSTIN</label>
+        <input type="text" id="scfGstin" placeholder="22AAAAA0000A1Z5" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label>PAN</label>
+        <input type="text" id="scfPan" placeholder="AAAAA0000A" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label>TDS Applicable</label>
+        <select id="scfTdsApplicable">
+          <option value="1">Yes — Section 194C</option>
+          <option value="0">No</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>TDS Rate (%)</label>
+        <select id="scfTdsRate">
+          <option value="1">1% (Individual/HUF)</option>
+          <option value="2">2% (Others)</option>
+          <option value="0">0%</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Bank Name</label>
+        <input type="text" id="scfBank" placeholder="Bank name">
+      </div>
+      <div class="form-group">
+        <label>Account No.</label>
+        <input type="text" id="scfAccNo" placeholder="Account number">
+      </div>
+      <div class="form-group">
+        <label>IFSC Code</label>
+        <input type="text" id="scfIfsc" placeholder="SBIN0001234" style="text-transform:uppercase">
+      </div>
+      <div class="form-group full">
+        <label>Address</label>
+        <textarea id="scfAddress" rows="2" placeholder="Full address"></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('scModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSC()"><i data-lucide="save" style="width:14px;height:14px"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Work Order Modal -->
+<div class="modal-overlay" id="woModal">
+  <div class="modal">
+    <h2 id="woModalTitle">Create Work Order</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>WO Number *</label>
+        <input type="text" id="wofNo" placeholder="WO-2025-001" required>
+      </div>
+      <div class="form-group">
+        <label>Date *</label>
+        <input type="date" id="wofDate" required>
+      </div>
+      <div class="form-group full">
+        <label>Subcontractor *</label>
+        <select id="wofSC" required>
+          <option value="">-- Select --</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Site *</label>
+        <select id="wofSite" required>
+          <option value="">-- Select --</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Description of Work</label>
+        <textarea id="wofDesc" rows="3" placeholder="Scope of work..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Contract Amount (₹)</label>
+        <input type="number" id="wofAmt" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Retention (%)</label>
+        <input type="number" id="wofRetention" placeholder="5" min="0" max="100" step="0.5">
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="wofStart">
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" id="wofEnd">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="wofStatus">
+          <option value="draft">Draft</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Terms & Conditions</label>
+        <textarea id="wofTerms" rows="2" placeholder="Payment terms, penalty clauses..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('woModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWO()"><i data-lucide="save" style="width:14px;height:14px"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- RA Bill Modal -->
+<div class="modal-overlay" id="raModal">
+  <div class="modal" style="width:700px">
+    <h2 id="raModalTitle">Create RA Bill</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>RA Bill No. *</label>
+        <input type="text" id="rafNo" placeholder="RA-001" required>
+      </div>
+      <div class="form-group">
+        <label>Bill Date *</label>
+        <input type="date" id="rafDate" required>
+      </div>
+      <div class="form-group full">
+        <label>Work Order *</label>
+        <select id="rafWO" required onchange="loadWOForRA()">
+          <option value="">-- Select Work Order --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Period From</label>
+        <input type="date" id="rafFrom">
+      </div>
+      <div class="form-group">
+        <label>Period To</label>
+        <input type="date" id="rafTo">
+      </div>
+      <div class="form-group full">
+        <label>Previous RA Bills Amount (₹)</label>
+        <input type="number" id="rafPrevAmt" value="0" min="0" oninput="calcRA()">
+      </div>
+    </div>
+    <div style="margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center">
+      <label style="font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.4px">ITEMS / WORK DONE</label>
+      <button class="btn btn-secondary btn-sm" onclick="toggleMbPicker()"><i data-lucide="clipboard-list" style="width:12px;height:12px"></i> Pull from Measurement Book</button>
+    </div>
+    <div id="raMbPicker" style="display:none;margin-bottom:12px;border:1px solid #e2e8f0;border-radius:8px;padding:10px;background:#f8fafc"></div>
+    <div id="raItems"></div>
+    <button class="btn btn-secondary btn-sm" onclick="addRAItem()" style="margin-bottom:12px"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Item</button>
+    <div class="summary-grid" id="raSummary"></div>
+    <div class="form-grid" style="margin-top:16px">
+      <div class="form-group">
+        <label>Retention %</label>
+        <input type="number" id="rafRetPct" value="5" min="0" max="100" step="0.5" oninput="calcRA()">
+      </div>
+      <div class="form-group">
+        <label>TDS Rate (%)</label>
+        <input type="number" id="rafTdsPct" value="2" min="0" max="10" step="0.5" oninput="calcRA()">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="rafStatus">
+          <option value="draft">Draft</option>
+          <option value="submitted">Submitted</option>
+          <option value="approved">Approved</option>
+          <option value="paid">Paid</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Payment Date</label>
+        <input type="date" id="rafPayDate">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('raModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRA()"><i data-lucide="save" style="width:14px;height:14px"></i> Save RA Bill</button>
+    </div>
+  </div>
+</div>
+
+<!-- RA Bill Payment Modal -->
+<div class="modal-overlay" id="raPayModal">
+  <div class="modal" style="width:560px">
+    <h2>Pay Subcontractor</h2>
+    <div id="raPaySummary" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Payment Date *</label>
+        <input type="date" id="rpDate" required>
+      </div>
+      <div class="form-group">
+        <label>Amount (₹) *</label>
+        <input type="number" id="rpAmt" min="0" step="0.01" required>
+      </div>
+      <div class="form-group">
+        <label>Mode</label>
+        <select id="rpMode" onchange="onRpMode()">
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Cheque">Cheque</option>
+          <option value="UPI">UPI</option>
+          <option value="Cash">Cash</option>
+        </select>
+      </div>
+      <div class="form-group" id="rpBankWrap">
+        <label>Paid From (Bank) *</label>
+        <select id="rpBank"></select>
+      </div>
+      <div class="form-group">
+        <label>Cheque / Ref No.</label>
+        <input type="text" id="rpRef" placeholder="optional">
+      </div>
+      <div class="form-group full">
+        <label>Notes</label>
+        <input type="text" id="rpNotes" placeholder="optional">
+      </div>
+    </div>
+    <div id="rpHistory" style="margin-top:14px"></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('raPayModal')">Close</button>
+      <button class="btn btn-primary" onclick="confirmRaPay()"><i data-lucide="check" style="width:14px;height:14px"></i> Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- RA Retention Release Modal -->
+<div class="modal-overlay" id="raRetModal">
+  <div class="modal" style="width:520px">
+    <h2>Release Retention</h2>
+    <div id="raRetSummary" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px"></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Release Date *</label>
+        <input type="date" id="rrDate" required>
+      </div>
+      <div class="form-group">
+        <label>Amount (₹) *</label>
+        <input type="number" id="rrAmt" min="0" step="0.01" required>
+      </div>
+      <div class="form-group">
+        <label>Mode</label>
+        <select id="rrMode" onchange="onRrMode()">
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Cheque">Cheque</option>
+          <option value="UPI">UPI</option>
+          <option value="Cash">Cash</option>
+        </select>
+      </div>
+      <div class="form-group" id="rrBankWrap">
+        <label>Paid From (Bank) *</label>
+        <select id="rrBank"></select>
+      </div>
+      <div class="form-group full">
+        <label>Notes</label>
+        <input type="text" id="rrNotes" placeholder="optional">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('raRetModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRaRetention()"><i data-lucide="unlock" style="width:14px;height:14px"></i> Release</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOQ Item Modal -->
+<div class="modal-overlay" id="boqModal">
+  <div class="modal">
+    <h2 id="boqModalTitle">Add BOQ Item</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Item No.</label>
+        <input type="text" id="boqfNo" placeholder="1.1">
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <input type="text" id="boqfUnit" placeholder="Cum / Sqm / Nos" value="Nos">
+      </div>
+      <div class="form-group full">
+        <label>Description *</label>
+        <textarea id="boqfDesc" rows="2" placeholder="Item description as per contract scope"></textarea>
+      </div>
+      <div class="form-group">
+        <label>HSN/SAC</label>
+        <input type="text" id="boqfHsn" placeholder="995411">
+      </div>
+      <div class="form-group">
+        <label>Contract Qty *</label>
+        <input type="number" id="boqfQty" min="0" step="0.01" value="0" oninput="calcBoqAmt()">
+      </div>
+      <div class="form-group">
+        <label>Rate (₹) *</label>
+        <input type="number" id="boqfRate" min="0" step="0.01" value="0" oninput="calcBoqAmt()">
+      </div>
+      <div class="form-group">
+        <label>Amount</label>
+        <input type="number" id="boqfAmt" readonly style="background:#f8fafc">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('boqModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBoq()"><i data-lucide="save" style="width:14px;height:14px"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Measurement Book Entry Modal -->
+<div class="modal-overlay" id="mbModal">
+  <div class="modal">
+    <h2>Add Measurement</h2>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>BOQ Item *</label>
+        <select id="mbfItem" required></select>
+      </div>
+      <div class="form-group">
+        <label>Date *</label>
+        <input type="date" id="mbfDate" required>
+      </div>
+      <div class="form-group">
+        <label>Measured Qty *</label>
+        <input type="number" id="mbfQty" min="0" step="0.01" value="0">
+      </div>
+      <div class="form-group full">
+        <label>Measured By</label>
+        <input type="text" id="mbfBy" placeholder="Site engineer / surveyor name">
+      </div>
+      <div class="form-group full">
+        <label>Remarks</label>
+        <textarea id="mbfRemarks" rows="2" placeholder="Location, reference, page no., etc."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('mbModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMb()"><i data-lucide="save" style="width:14px;height:14px"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+lucide.createIcons();
+let allSC=[], allWO=[], allRA=[], allSites=[], allBanks=[], currentTab='sc', editSCId=null, editWOId=null, editRAId=null, payRAId=null;
+let allBOQ=[], allMB=[], boqWOId=null, editBoqId=null;
+let lastSC={}, lastWO={};
+try{lastSC=JSON.parse(localStorage.getItem('sc_lastUsed')||'{}');}catch(_){}
+try{lastWO=JSON.parse(localStorage.getItem('wo_lastUsed')||'{}');}catch(_){}
+function saveLastSC(d){lastSC={trade:d.trade,tds_applicable:d.tds_applicable,tds_rate:d.tds_rate};try{localStorage.setItem('sc_lastUsed',JSON.stringify(lastSC));}catch(_){}}
+function saveLastWO(d){lastWO={site_id:d.site_id,retention_pct:d.retention_pct};try{localStorage.setItem('wo_lastUsed',JSON.stringify(lastWO));}catch(_){}}
+
+function fmt(n){return'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type==='error'?'error':'success');setTimeout(()=>t.classList.remove('show'),3000)}
+
+function showTab(name,label){
+  currentTab=name;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
+  document.querySelector(`.tab[data-tab="${name}"]`)?.classList.add('active');
+  const addBtn=document.getElementById('addBtn');
+  if(name==='sc'){addBtn.style.display='';addBtn.innerHTML='<i data-lucide="plus" style="width:14px;height:14px"></i> Add SC';addBtn.onclick=openAddModal;}
+  else if(name==='wo'){addBtn.style.display='';addBtn.innerHTML='<i data-lucide="plus" style="width:14px;height:14px"></i> New Work Order';addBtn.onclick=()=>openWOModal();}
+  else if(name==='ra'){addBtn.style.display='';addBtn.innerHTML='<i data-lucide="plus" style="width:14px;height:14px"></i> New RA Bill';addBtn.onclick=()=>openRAModal();}
+  else{addBtn.style.display='none';}
+  if(name==='tds')loadTDS();
+  lucide.createIcons();
+}
+
+async function loadData(){
+  const [sr,scr,wor,rar,bkr]=await Promise.all([
+    window.erp.getSites(),window.erp.getSubcontractors(),
+    window.erp.getWorkOrders(),window.erp.getRaBills(),
+    window.erp.getBanks?window.erp.getBanks():Promise.resolve({success:false})
+  ]);
+  allSites=sr.success?sr.data:[];
+  allSC=scr.success?scr.data:[];
+  allWO=wor.success?wor.data:[];
+  allRA=rar.success?rar.data:[];
+  allBanks=bkr.success?bkr.data:[];
+  populateSelects();
+  updateSCStats();
+  renderSC();renderWO();renderRA();
+}
+
+function populateSelects(){
+  const siteArr=['woSite','wofSite'];
+  const scArr=['woSC','wofSC'];
+  const woArr=['raWO','rafWO','boqWO'];
+  siteArr.forEach(id=>{
+    const el=document.getElementById(id);const first=el.options[0];
+    el.innerHTML='';if(first)el.appendChild(first);
+    allSites.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;el.appendChild(o)});
+  });
+  scArr.forEach(id=>{
+    const el=document.getElementById(id);const first=el.options[0];
+    el.innerHTML='';if(first)el.appendChild(first);
+    allSC.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;el.appendChild(o)});
+  });
+  woArr.forEach(id=>{
+    const el=document.getElementById(id);const first=el.options[0];
+    el.innerHTML='';if(first)el.appendChild(first);
+    allWO.forEach(w=>{const o=document.createElement('option');o.value=w.id;o.textContent=`${w.wo_number} — ${w.sc_name||''}`;el.appendChild(o)});
+  });
+}
+
+function updateSCStats(){
+  document.getElementById('scTotal').textContent=allSC.length;
+  document.getElementById('scActive').textContent=allSC.filter(s=>s.status==='active'||!s.status).length;
+  document.getElementById('scGst').textContent=allSC.filter(s=>s.gstin).length;
+  document.getElementById('scTds').textContent=allSC.filter(s=>s.tds_applicable).length;
+}
+
+function renderSC(){
+  const q=(document.getElementById('scSearch').value||'').toLowerCase();
+  const data=allSC.filter(s=>!q||(s.name||'').toLowerCase().includes(q)||(s.trade||'').toLowerCase().includes(q)||(s.gstin||'').toLowerCase().includes(q));
+  const tbody=document.getElementById('scTable');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">No subcontractors found</td></tr>';return}
+  tbody.innerHTML=data.map(s=>`<tr>
+    <td><strong>${esc(s.name)}</strong><br><span style="font-size:11px;color:#64748b">${esc(s.contact_person||'')} ${s.mobile?'• '+esc(s.mobile):''}</span></td>
+    <td>${esc(s.email||'—')}</td>
+    <td><span class="badge badge-blue">${esc(s.trade||'—')}</span></td>
+    <td>${s.gstin?`<code style="font-size:11px">${esc(s.gstin)}</code>`:'—'}</td>
+    <td>${s.pan?`<code style="font-size:11px">${esc(s.pan)}</code>`:'—'}</td>
+    <td>${s.tds_applicable?`<span class="badge badge-yellow">${s.tds_rate||2}%</span>`:'<span class="badge badge-gray">No</span>'}</td>
+    <td><span class="badge ${!s.status||s.status==='active'?'badge-green':'badge-gray'}">${!s.status||s.status==='active'?'Active':'Inactive'}</span></td>
+    <td>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-secondary btn-sm" onclick="openSCModal(${s.id})"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSC(${s.id},'${jsArg(s.name)}')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+      </div>
+    </td>
+  </tr>`).join('');
+  lucide.createIcons();
+}
+
+function renderWO(){
+  const q=(document.getElementById('woSearch').value||'').toLowerCase();
+  const scF=document.getElementById('woSC').value;
+  const siteF=document.getElementById('woSite').value;
+  const stF=document.getElementById('woStatus').value;
+  const data=allWO.filter(w=>{
+    const m=!q||(w.wo_number||'').toLowerCase().includes(q)||(w.sc_name||'').toLowerCase().includes(q)||(w.description||'').toLowerCase().includes(q);
+    return m&&(!scF||String(w.subcontractor_id)===scF)&&(!siteF||String(w.site_id)===siteF)&&(!stF||w.status===stF);
+  });
+  const stMap={draft:'badge-gray',active:'badge-green',completed:'badge-blue',cancelled:'badge-red'};
+  const tbody=document.getElementById('woTable');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">No work orders found</td></tr>';return}
+  tbody.innerHTML=data.map(w=>`<tr>
+    <td><strong>${esc(w.wo_number||'—')}</strong></td>
+    <td>${esc(w.sc_name||'—')}</td>
+    <td>${esc(w.site_name||'—')}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(w.description||'—')}</td>
+    <td>${fmt(w.contract_amount)}</td>
+    <td>${w.start_date||'—'}</td>
+    <td>${w.end_date||'—'}</td>
+    <td><span class="badge ${stMap[w.status]||'badge-gray'}">${w.status||'draft'}</span></td>
+    <td>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-secondary btn-sm" onclick="openWOModal(${w.id})"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="printWO(${w.id})" title="Print Work Order"><i data-lucide="printer" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="goToBoq(${w.id})" title="BOQ / Measurement Book"><i data-lucide="ruler" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-success btn-sm" onclick="openRAModal(null,${w.id})" title="New RA Bill"><i data-lucide="file-plus" style="width:12px;height:12px"></i></button>
+      </div>
+    </td>
+  </tr>`).join('');
+  lucide.createIcons();
+}
+
+function renderRA(){
+  const q=(document.getElementById('raSearch').value||'').toLowerCase();
+  const woF=document.getElementById('raWO').value;
+  const stF=document.getElementById('raStatus').value;
+  const data=allRA.filter(r=>{
+    const m=!q||(r.ra_number||'').toLowerCase().includes(q)||(r.sc_name||'').toLowerCase().includes(q)||(r.wo_number||'').toLowerCase().includes(q);
+    return m&&(!woF||String(r.work_order_id)===woF)&&(!stF||r.status===stF);
+  });
+  const stMap={draft:'badge-gray',submitted:'badge-yellow',approved:'badge-blue',paid:'badge-green'};
+  const tbody=document.getElementById('raTable');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8">No RA bills found</td></tr>';return}
+  tbody.innerHTML=data.map(r=>`<tr>
+    <td><strong>${esc(r.ra_number||'—')}</strong></td>
+    <td>${esc(r.wo_number||'—')}</td>
+    <td>${esc(r.sc_name||'—')}</td>
+    <td>${r.bill_date||'—'}</td>
+    <td>${fmt(r.gross_amount)}</td>
+    <td>${fmt(r.retention_amount)}</td>
+    <td>${fmt(r.tds_amount)}</td>
+    <td><strong>${fmt(r.net_payable)}</strong>${(r.paid_amount>0&&r.status!=='paid')?`<br><span style="font-size:10px;color:#dc2626">Bal ${fmt(r.balance_amount)}</span>`:''}</td>
+    <td><span class="badge ${stMap[r.status]||'badge-gray'}">${r.status||'draft'}</span></td>
+    <td>
+      <div style="display:flex;gap:4px">
+        ${(Number(r.net_payable)>0&&r.status!=='paid')?`<button class="btn btn-primary btn-sm" onclick="openRaPay(${r.id})" title="Record payment"><i data-lucide="wallet" style="width:12px;height:12px"></i> Pay</button>`:''}
+        ${(Number(r.retention_amount)>Number(r.retention_released||0)+0.5)?`<button class="btn btn-secondary btn-sm" onclick="openRaRetention(${r.id})" title="Release retention held back"><i data-lucide="unlock" style="width:12px;height:12px"></i> Retention</button>`:''}
+        <button class="btn btn-secondary btn-sm" onclick="openRAModal(${r.id})"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="printRA(${r.id})" title="Print"><i data-lucide="printer" style="width:12px;height:12px"></i></button>
+      </div>
+    </td>
+  </tr>`).join('');
+  lucide.createIcons();
+}
+
+function onRpMode(){
+  const cash=/cash/i.test(document.getElementById('rpMode').value);
+  document.getElementById('rpBankWrap').style.display=cash?'none':'';
+}
+async function openRaPay(id){
+  const r=allRA.find(x=>x.id===id);if(!r)return;
+  payRAId=id;
+  const net=Number(r.net_payable)||0, paid=Number(r.paid_amount)||0, bal=Number(r.balance_amount!=null?r.balance_amount:net-paid);
+  document.getElementById('raPaySummary').innerHTML=
+    `<strong>${esc(r.ra_number||'')}</strong> — ${esc(r.sc_name||'')}<br>`+
+    `Net payable ${fmt(net)} &nbsp;•&nbsp; Paid ${fmt(paid)} &nbsp;•&nbsp; <strong style="color:#dc2626">Balance ${fmt(bal)}</strong>`+
+    (r.retention_amount>0?`<br><span style="font-size:11px;color:#64748b">Retention ${fmt(r.retention_amount)} held back — released separately, not paid here.</span>`:'');
+  document.getElementById('rpDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('rpAmt').value=bal>0?bal.toFixed(2):'';
+  document.getElementById('rpMode').value='Bank Transfer';
+  document.getElementById('rpRef').value='';
+  document.getElementById('rpNotes').value='';
+  const bsel=document.getElementById('rpBank');
+  bsel.innerHTML=allBanks.length?allBanks.map(b=>`<option value="${b.id}">${esc(b.account_name||b.bank_name||('A/c '+b.id))}</option>`).join(''):'<option value="">No bank accounts</option>';
+  onRpMode();
+  await renderRpHistory(id);
+  document.getElementById('raPayModal').classList.add('open');
+  lucide.createIcons();
+}
+async function renderRpHistory(id){
+  const res=await window.erp.getRaBillPayments(id);
+  const rows=res.success?res.data:[];
+  const box=document.getElementById('rpHistory');
+  if(!rows.length){box.innerHTML='';return}
+  box.innerHTML=`<label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Payment History</label>
+    <table style="width:100%;font-size:12px;margin-top:6px">
+      <thead><tr style="text-align:left;color:#64748b"><th style="padding:4px">Date</th><th>Amount</th><th>Mode</th><th>Bank</th><th></th></tr></thead>
+      <tbody>${rows.map(p=>`<tr style="border-top:1px solid #f1f5f9">
+        <td style="padding:4px">${p.payment_date||'—'}</td>
+        <td>${fmt(p.amount)}</td>
+        <td>${esc(p.payment_mode||'')}</td>
+        <td>${esc(p.bank_name||(/cash/i.test(p.payment_mode||'')?'Cash':'—'))}</td>
+        <td><button class="btn btn-secondary btn-sm" onclick="voidRaPay(${p.id})" title="Void">✕</button></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+async function confirmRaPay(){
+  const amt=parseFloat(document.getElementById('rpAmt').value)||0;
+  if(amt<=0){toast('Enter a payment amount','error');return}
+  const mode=document.getElementById('rpMode').value;
+  const cash=/cash/i.test(mode);
+  const bankId=cash?null:parseInt(document.getElementById('rpBank').value)||null;
+  if(!cash&&!bankId){toast('Select the bank the payment is made from','error');return}
+  const payment={payment_date:document.getElementById('rpDate').value,amount:amt,payment_mode:mode,
+    bank_account_id:bankId,reference_no:document.getElementById('rpRef').value||null,notes:document.getElementById('rpNotes').value||null};
+  const res=await window.erp.payRaBill(payRAId,payment);
+  if(!res.success){toast(res.error||'Payment failed','error');return}
+  toast('Payment recorded');
+  await loadData();
+  await openRaPay(payRAId);
+}
+async function voidRaPay(paymentId){
+  if(!confirm('Void this subcontractor payment? This reverses the bank movement.'))return;
+  const res=await window.erp.voidRaBillPayment(paymentId);
+  if(!res.success){toast(res.error||'Void failed','error');return}
+  toast('Payment voided');
+  await loadData();
+  await openRaPay(payRAId);
+}
+
+function onRrMode(){
+  const cash=/cash/i.test(document.getElementById('rrMode').value);
+  document.getElementById('rrBankWrap').style.display=cash?'none':'';
+}
+function openRaRetention(id){
+  const r=allRA.find(x=>x.id===id);if(!r)return;
+  payRAId=id;
+  const held=Number(r.retention_amount)||0, released=Number(r.retention_released)||0, rem=held-released;
+  document.getElementById('raRetSummary').innerHTML=
+    `<strong>${esc(r.ra_number||'')}</strong> — ${esc(r.sc_name||'')}<br>`+
+    `Retention held ${fmt(held)} &nbsp;•&nbsp; Already released ${fmt(released)} &nbsp;•&nbsp; <strong style="color:#059669">Remaining ${fmt(rem)}</strong>`;
+  document.getElementById('rrDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('rrAmt').value=rem>0?rem.toFixed(2):'';
+  document.getElementById('rrMode').value='Bank Transfer';
+  document.getElementById('rrNotes').value='';
+  const bsel=document.getElementById('rrBank');
+  bsel.innerHTML=allBanks.length?allBanks.map(b=>`<option value="${b.id}">${esc(b.account_name||b.bank_name||('A/c '+b.id))}</option>`).join(''):'<option value="">No bank accounts</option>';
+  onRrMode();
+  document.getElementById('raRetModal').classList.add('open');
+  lucide.createIcons();
+}
+async function confirmRaRetention(){
+  const amt=parseFloat(document.getElementById('rrAmt').value)||0;
+  if(amt<=0){toast('Enter an amount','error');return}
+  const mode=document.getElementById('rrMode').value;
+  const cash=/cash/i.test(mode);
+  const bankId=cash?null:parseInt(document.getElementById('rrBank').value)||null;
+  if(!cash&&!bankId){toast('Select the bank the retention is paid from','error');return}
+  const res=await window.erp.releaseRaRetention({raBillId:payRAId,amount:amt,payment_date:document.getElementById('rrDate').value,
+    payment_mode:mode,bank_account_id:bankId,notes:document.getElementById('rrNotes').value||null});
+  if(!res.success){toast(res.error||'Release failed','error');return}
+  toast('Retention released');
+  closeModal('raRetModal');
+  await loadData();
+}
+
+async function loadTDS(){
+  const fy=document.getElementById('tdsFY').value;
+  const [fromYear]=fy.split('-');
+  const from=`${fromYear}-04-01`;
+  const to=`${parseInt(fromYear)+1}-03-31`;
+  // Aggregate from RA bills
+  const tdsMap={};
+  allRA.filter(r=>r.bill_date>=from&&r.bill_date<=to&&r.tds_amount>0).forEach(r=>{
+    if(!tdsMap[r.subcontractor_id])tdsMap[r.subcontractor_id]={name:r.sc_name,pan:'',gross:0,tds:0,net:0};
+    tdsMap[r.subcontractor_id].gross+=r.gross_amount||0;
+    tdsMap[r.subcontractor_id].tds+=r.tds_amount||0;
+    tdsMap[r.subcontractor_id].net+=r.net_payable||0;
+  });
+  // Add PAN from SC data
+  Object.keys(tdsMap).forEach(id=>{
+    const sc=allSC.find(s=>String(s.id)===String(id));
+    if(sc){tdsMap[id].pan=sc.pan||'';tdsMap[id].rate=sc.tds_rate||2;tdsMap[id].type=sc.pan&&sc.pan.charAt(3)==='P'?'Individual':'Company';}
+  });
+  const rows=Object.values(tdsMap);
+  const totGross=rows.reduce((a,r)=>a+r.gross,0);
+  const totTds=rows.reduce((a,r)=>a+r.tds,0);
+  document.getElementById('tdsStats').innerHTML=`
+    <div class="stat-card"><div class="label">Subcontractors (with TDS)</div><div class="value">${rows.length}</div></div>
+    <div class="stat-card"><div class="label">Total Payments</div><div class="value" style="font-size:16px">${fmt(totGross)}</div></div>
+    <div class="stat-card"><div class="label">Total TDS Deducted</div><div class="value" style="font-size:16px;color:#059669">${fmt(totTds)}</div></div>
+    <div class="stat-card"><div class="label">Net Paid</div><div class="value" style="font-size:16px;color:#16a34a">${fmt(totGross-totTds)}</div></div>
+  `;
+  const tbody=document.getElementById('tdsTable');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">No TDS transactions for '+fy+'</td></tr>';return}
+  tbody.innerHTML=rows.map(r=>`<tr>
+    <td><strong>${esc(r.name)}</strong></td>
+    <td><code style="font-size:11px">${esc(r.pan||'—')}</code></td>
+    <td>${esc(r.type||'—')}</td>
+    <td>${fmt(r.gross)}</td>
+    <td>${r.rate||2}%</td>
+    <td><strong style="color:#059669">${fmt(r.tds)}</strong></td>
+    <td>${fmt(r.net)}</td>
+    <td style="font-size:11px">194C</td>
+  </tr>`).join('');
+}
+
+function exportTDS(){
+  const rows=[['Subcontractor','PAN','Type','Gross Payments','TDS Rate %','TDS Deducted','Net Paid','Section']];
+  document.querySelectorAll('#tdsTable tr').forEach(tr=>{
+    const cells=Array.from(tr.querySelectorAll('td'));
+    if(cells.length)rows.push(cells.map(c=>c.textContent.trim()));
+  });
+  const csv=rows.map(r=>r.map(c=>'"'+c.replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='tds_194c.csv';a.click();URL.revokeObjectURL(url);
+  toast('TDS exported');
+}
+
+function exportData(){
+  if(currentTab==='sc'){
+    const rows=[['Name','Contact','Mobile','Email','Trade','GSTIN','PAN','TDS Rate%','Address']];
+    allSC.forEach(s=>rows.push([s.name,s.contact_person||'',s.mobile||'',s.email||'',s.trade||'',s.gstin||'',s.pan||'',s.tds_rate||0,s.address||'']));
+    const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='subcontractors.csv';a.click();URL.revokeObjectURL(url);
+    toast('Exported');
+  } else if(currentTab==='tds'){exportTDS();}
+}
+
+// ---- SC Modal ----
+function openAddModal(){openSCModal(null)}
+function openSCModal(id=null){
+  editSCId=id;
+  document.getElementById('scModalTitle').textContent=id?'Edit Subcontractor':'Add Subcontractor';
+  if(id){
+    const s=allSC.find(x=>x.id===id);if(!s)return;
+    document.getElementById('scfName').value=s.name||'';
+    document.getElementById('scfContact').value=s.contact_person||'';
+    document.getElementById('scfMobile').value=s.mobile||'';
+    document.getElementById('scfEmail').value=s.email||'';
+    document.getElementById('scfTrade').value=s.trade||'';
+    document.getElementById('scfGstin').value=s.gstin||'';
+    document.getElementById('scfPan').value=s.pan||'';
+    document.getElementById('scfTdsApplicable').value=s.tds_applicable?'1':'0';
+    document.getElementById('scfTdsRate').value=s.tds_rate||2;
+    document.getElementById('scfBank').value=s.bank_name||'';
+    document.getElementById('scfAccNo').value=s.account_no||'';
+    document.getElementById('scfIfsc').value=s.ifsc||'';
+    document.getElementById('scfAddress').value=s.address||'';
+  } else {
+    ['scfName','scfContact','scfMobile','scfEmail','scfGstin','scfPan','scfBank','scfAccNo','scfIfsc','scfAddress'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('scfTrade').value=lastSC.trade||'';
+    document.getElementById('scfTdsApplicable').value=lastSC.tds_applicable!==undefined?String(lastSC.tds_applicable):'1';
+    document.getElementById('scfTdsRate').value=lastSC.tds_rate||2;
+  }
+  document.getElementById('scModal').classList.add('open');
+}
+
+async function saveSC(){
+  const name=document.getElementById('scfName').value.trim();
+  if(!name){toast('Name is required','error');return}
+  const data={id:editSCId||undefined,name,contact_person:document.getElementById('scfContact').value.trim(),mobile:document.getElementById('scfMobile').value.trim(),email:document.getElementById('scfEmail').value.trim(),trade:document.getElementById('scfTrade').value,gstin:document.getElementById('scfGstin').value.trim().toUpperCase(),pan:document.getElementById('scfPan').value.trim().toUpperCase(),tds_applicable:document.getElementById('scfTdsApplicable').value==='1'?1:0,tds_rate:parseFloat(document.getElementById('scfTdsRate').value)||2,bank_name:document.getElementById('scfBank').value.trim(),account_no:document.getElementById('scfAccNo').value.trim(),ifsc:document.getElementById('scfIfsc').value.trim().toUpperCase(),address:document.getElementById('scfAddress').value.trim()};
+  const r=await window.erp.saveSubcontractor(data);
+  if(r.success){if(!editSCId)saveLastSC(data);toast(editSCId?'Updated':'Subcontractor added');closeModal('scModal');loadData();}
+  else toast(r.error||'Save failed','error');
+}
+
+async function deleteSC(id,name){
+  if(!confirm(`Delete "${name}"?`))return;
+  const r=await window.erp.deleteSubcontractor(id);
+  if(r.success){toast('Deleted');loadData();}
+  else toast(r.error||'Delete failed','error');
+}
+
+// ---- WO Modal ----
+function openWOModal(id=null){
+  editWOId=id;
+  document.getElementById('woModalTitle').textContent=id?'Edit Work Order':'Create Work Order';
+  document.getElementById('wofDate').value=new Date().toISOString().split('T')[0];
+  if(id){
+    const w=allWO.find(x=>x.id===id);if(!w)return;
+    document.getElementById('wofNo').value=w.wo_number||'';
+    document.getElementById('wofDate').value=w.date||'';
+    document.getElementById('wofSC').value=w.subcontractor_id||'';
+    document.getElementById('wofSite').value=w.site_id||'';
+    document.getElementById('wofDesc').value=w.description||'';
+    document.getElementById('wofAmt').value=w.contract_amount||'';
+    document.getElementById('wofRetention').value=w.retention_pct||5;
+    document.getElementById('wofStart').value=w.start_date||'';
+    document.getElementById('wofEnd').value=w.end_date||'';
+    document.getElementById('wofStatus').value=w.status||'draft';
+    document.getElementById('wofTerms').value=w.terms||'';
+  } else {
+    ['wofNo','wofDesc','wofAmt','wofStart','wofEnd','wofTerms'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('wofSC').value='';
+    document.getElementById('wofSite').value=lastWO.site_id||'';
+    document.getElementById('wofRetention').value=lastWO.retention_pct||5;
+    document.getElementById('wofStatus').value='active';
+    document.getElementById('wofNo').value='WO-'+new Date().getFullYear()+'-'+(allWO.length+1).toString().padStart(3,'0');
+  }
+  document.getElementById('woModal').classList.add('open');
+}
+
+async function saveWO(){
+  const sc=document.getElementById('wofSC').value;
+  const no=document.getElementById('wofNo').value.trim();
+  if(!sc||!no){toast('WO number and subcontractor are required','error');return}
+  const data={id:editWOId||undefined,wo_number:no,date:document.getElementById('wofDate').value,subcontractor_id:sc,site_id:document.getElementById('wofSite').value||null,description:document.getElementById('wofDesc').value.trim(),contract_amount:parseFloat(document.getElementById('wofAmt').value)||0,retention_pct:parseFloat(document.getElementById('wofRetention').value)||5,start_date:document.getElementById('wofStart').value||null,end_date:document.getElementById('wofEnd').value||null,status:document.getElementById('wofStatus').value,terms:document.getElementById('wofTerms').value.trim()};
+  const r=await window.erp.saveWorkOrder(data);
+  if(r.success){if(!editWOId)saveLastWO(data);toast(editWOId?'WO updated':'Work Order created');closeModal('woModal');loadData();}
+  else toast(r.error||'Save failed','error');
+}
+
+// ---- RA Bill Modal ----
+let raItemCount=0;
+function openRAModal(id=null,woId=null){
+  editRAId=id;raItemCount=0;
+  document.getElementById('raModalTitle').textContent=id?'Edit RA Bill':'New RA Bill';
+  document.getElementById('rafDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('raItems').innerHTML='';
+  document.getElementById('raSummary').innerHTML='';
+  if(id){
+    const r=allRA.find(x=>x.id===id);if(!r)return;
+    document.getElementById('rafNo').value=r.ra_number||'';
+    document.getElementById('rafDate').value=r.bill_date||'';
+    document.getElementById('rafWO').value=r.work_order_id||'';
+    document.getElementById('rafFrom').value=r.period_from||'';
+    document.getElementById('rafTo').value=r.period_to||'';
+    document.getElementById('rafPrevAmt').value=r.prev_amount||0;
+    document.getElementById('rafRetPct').value=r.retention_pct||5;
+    document.getElementById('rafTdsPct').value=r.tds_pct||2;
+    document.getElementById('rafStatus').value=r.status||'draft';
+    document.getElementById('rafPayDate').value=r.payment_date||'';
+    const items=r.items||[];
+    items.forEach(it=>addRAItem(it));
+  } else {
+    ['rafNo','rafFrom','rafTo','rafPayDate'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('rafPrevAmt').value=0;
+    document.getElementById('rafRetPct').value=5;
+    document.getElementById('rafTdsPct').value=2;
+    document.getElementById('rafStatus').value='draft';
+    if(woId)document.getElementById('rafWO').value=woId;
+    document.getElementById('rafNo').value='RA-'+String(allRA.length+1).padStart(3,'0');
+    addRAItem();
+  }
+  calcRA();
+  document.getElementById('raModal').classList.add('open');
+}
+
+function loadWOForRA(){
+  const woId=document.getElementById('rafWO').value;
+  const wo=allWO.find(w=>String(w.id)===woId);
+  if(wo){document.getElementById('rafRetPct').value=wo.retention_pct||5;calcRA();}
+}
+
+function addRAItem(item=null,mids=null){
+  raItemCount++;
+  const idx=raItemCount;
+  const div=document.createElement('div');
+  div.className='ra-bill-line';div.id='raItem'+idx;
+  if(mids)div.dataset.mids=JSON.stringify(mids);
+  const ro=mids?'readonly style="background:#f8fafc"':'';
+  div.innerHTML=`
+    <div><label>Description${mids?' <span style="color:#3b82f6">(MB)</span>':''}</label><input type="text" id="riDesc${idx}" value="${item?item.description||'':''}" placeholder="Work item description" oninput="calcRA()" ${ro}></div>
+    <div><label>Qty</label><input type="number" id="riQty${idx}" value="${item?item.qty||1:1}" min="0" step="0.01" oninput="calcRA()" ${ro}></div>
+    <div><label>Rate (₹)</label><input type="number" id="riRate${idx}" value="${item?item.rate||0:0}" min="0" step="0.01" oninput="calcRA()" ${ro}></div>
+    <div><label>Amount</label><input type="number" id="riAmt${idx}" value="${item?item.amount||0:0}" readonly style="background:#f8fafc"></div>
+    <div style="display:flex;align-items:flex-end"><button class="btn btn-danger btn-sm" onclick="removeRAItem(${idx})" style="margin-bottom:1px"><i data-lucide="x" style="width:12px;height:12px"></i></button></div>
+  `;
+  document.getElementById('raItems').appendChild(div);
+  lucide.createIcons();
+}
+function removeRAItem(idx){document.getElementById('raItem'+idx)?.remove();calcRA()}
+
+function calcRA(){
+  let gross=0;
+  for(let i=1;i<=raItemCount;i++){
+    const qty=parseFloat(document.getElementById('riQty'+i)?.value)||0;
+    const rate=parseFloat(document.getElementById('riRate'+i)?.value)||0;
+    const amt=qty*rate;
+    const amtEl=document.getElementById('riAmt'+i);
+    if(amtEl)amtEl.value=amt.toFixed(2);
+    gross+=amt;
+  }
+  const prev=parseFloat(document.getElementById('rafPrevAmt').value)||0;
+  const currentBill=gross-prev;
+  const retPct=parseFloat(document.getElementById('rafRetPct').value)||0;
+  const tdsPct=parseFloat(document.getElementById('rafTdsPct').value)||0;
+  const ret=currentBill*retPct/100;
+  const tds=currentBill*tdsPct/100;
+  const net=currentBill-ret-tds;
+  document.getElementById('raSummary').innerHTML=`
+    <div class="summary-row"><span>Gross Work Done</span><span>${fmt(gross)}</span></div>
+    <div class="summary-row"><span>Less: Previous Bills</span><span>- ${fmt(prev)}</span></div>
+    <div class="summary-row"><span>Current Bill Amount</span><span>${fmt(currentBill)}</span></div>
+    <div class="summary-row"><span>Retention @ ${retPct}%</span><span>- ${fmt(ret)}</span></div>
+    <div class="summary-row"><span>TDS 194C @ ${tdsPct}%</span><span>- ${fmt(tds)}</span></div>
+    <div class="summary-row total"><span>Net Payable</span><span style="color:#16a34a">${fmt(net)}</span></div>
+  `;
+}
+
+async function saveRA(){
+  const woId=document.getElementById('rafWO').value;
+  const no=document.getElementById('rafNo').value.trim();
+  if(!woId||!no){toast('WO and RA number are required','error');return}
+  const items=[];
+  const measurementIds=[];
+  for(let i=1;i<=raItemCount;i++){
+    const desc=document.getElementById('riDesc'+i)?.value?.trim();
+    if(!desc)continue;
+    const div=document.getElementById('raItem'+i);
+    const mids=div&&div.dataset.mids?JSON.parse(div.dataset.mids):null;
+    items.push({description:desc,qty:parseFloat(document.getElementById('riQty'+i)?.value)||1,rate:parseFloat(document.getElementById('riRate'+i)?.value)||0,amount:parseFloat(document.getElementById('riAmt'+i)?.value)||0});
+    if(mids)measurementIds.push(...mids);
+  }
+  const gross=items.reduce((a,x)=>a+x.amount,0);
+  const prev=parseFloat(document.getElementById('rafPrevAmt').value)||0;
+  const current=gross-prev;
+  const retPct=parseFloat(document.getElementById('rafRetPct').value)||0;
+  const tdsPct=parseFloat(document.getElementById('rafTdsPct').value)||0;
+  const ret=current*retPct/100;
+  const tds=current*tdsPct/100;
+  const net=current-ret-tds;
+  const data={id:editRAId||undefined,ra_number:no,bill_date:document.getElementById('rafDate').value,work_order_id:parseInt(woId),period_from:document.getElementById('rafFrom').value||null,period_to:document.getElementById('rafTo').value||null,prev_amount:prev,gross_amount:gross,current_amount:current,retention_pct:retPct,retention_amount:ret,tds_pct:tdsPct,tds_amount:tds,net_payable:net,status:document.getElementById('rafStatus').value,payment_date:document.getElementById('rafPayDate').value||null,items,measurement_ids:measurementIds};
+  const r=await window.erp.saveRaBill(data);
+  if(r.success){toast(editRAId?'RA Bill updated':'RA Bill created');closeModal('raModal');loadData();}
+  else toast(r.error||'Save failed','error');
+}
+
+// ---- Pull unbilled Measurement Book entries into the RA Bill being edited ----
+async function toggleMbPicker(){
+  const wrap=document.getElementById('raMbPicker');
+  if(wrap.style.display==='none'||!wrap.style.display){
+    const woId=document.getElementById('rafWO').value;
+    if(!woId){toast('Select a work order first','error');return}
+    const mr=await window.erp.getMeasurements({work_order_id:woId,unbilled_only:true});
+    const rows=mr.success?mr.data:[];
+    if(!rows.length){
+      wrap.innerHTML='<div style="color:#94a3b8;font-size:12px;padding:6px 2px">No unbilled measurements for this work order. Record entries under BOQ / Measurement first.</div>';
+    } else {
+      wrap.innerHTML=rows.map(m=>`
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;border-bottom:1px solid #e2e8f0">
+          <input type="checkbox" class="mbPick" data-id="${m.id}" data-boq="${m.boq_item_id}" data-desc="${esc(m.item_description)}" data-unit="${esc(m.unit||'')}" data-qty="${m.qty}" data-rate="${m.rate}">
+          <span style="flex:1">${esc(m.mb_date)} — ${esc(m.item_description)}</span>
+          <span>${Number(m.qty).toLocaleString('en-IN')} ${esc(m.unit||'')} × ${fmt(m.rate)} = ${fmt(m.amount)}</span>
+        </label>`).join('')
+        +'<button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="addPickedMeasurements()"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Selected to Bill</button>';
+      lucide.createIcons();
+    }
+    wrap.style.display='block';
+  } else {
+    wrap.style.display='none';
+  }
+}
+
+function addPickedMeasurements(){
+  const checked=[...document.querySelectorAll('.mbPick:checked')];
+  if(!checked.length){toast('Select at least one measurement','error');return}
+  // Drop any blank manual line (e.g. the empty row openRAModal seeds) so the
+  // pulled measurement lines are not mixed with an empty placeholder.
+  [...document.querySelectorAll('#raItems .ra-bill-line')].forEach(div=>{
+    const i=div.id.replace('raItem','');
+    const desc=document.getElementById('riDesc'+i)?.value?.trim();
+    if(!desc&&!div.dataset.mids)div.remove();
+  });
+  const byItem=new Map();
+  checked.forEach(cb=>{
+    const boqId=cb.dataset.boq;
+    const cur=byItem.get(boqId)||{description:cb.dataset.desc,unit:cb.dataset.unit,rate:parseFloat(cb.dataset.rate),qty:0,mids:[]};
+    cur.qty+=parseFloat(cb.dataset.qty);
+    cur.mids.push(parseInt(cb.dataset.id));
+    byItem.set(boqId,cur);
+  });
+  byItem.forEach(v=>{
+    addRAItem({description:v.description,qty:v.qty,rate:v.rate,amount:+(v.qty*v.rate).toFixed(2)},v.mids);
+  });
+  calcRA();
+  document.getElementById('raMbPicker').style.display='none';
+  document.getElementById('raMbPicker').innerHTML='';
+}
+
+// ---- BOQ (Bill of Quantities) & Measurement Book ----
+function goToBoq(woId){
+  showTab('boq','BOQ / Measurement');
+  document.getElementById('boqWO').value=woId;
+  loadBoqForWO();
+}
+
+function loadBoqForWO(){
+  boqWOId=document.getElementById('boqWO').value;
+  const addBtn=document.getElementById('boqAddBtn');
+  if(!boqWOId){
+    addBtn.style.display='none';
+    document.getElementById('boqTable').innerHTML='<tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8">Select a work order above to view or build its BOQ</td></tr>';
+    document.getElementById('mbSection').style.display='none';
+    return;
+  }
+  addBtn.style.display='';
+  document.getElementById('mbSection').style.display='';
+  refreshBoqAndMb();
+}
+
+async function refreshBoqAndMb(){
+  if(!boqWOId)return;
+  const [br,mr]=await Promise.all([
+    window.erp.getBoqItems({work_order_id:boqWOId}),
+    window.erp.getMeasurements({work_order_id:boqWOId}),
+  ]);
+  allBOQ=br.success?br.data:[];
+  allMB=mr.success?mr.data:[];
+  renderBoq();renderMb();
+}
+
+function renderBoq(){
+  const tbody=document.getElementById('boqTable');
+  if(!allBOQ.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8">No BOQ items yet. Add the priced scope of work for this contract.</td></tr>';return}
+  tbody.innerHTML=allBOQ.map(b=>`<tr>
+    <td>${esc(b.item_no||'—')}</td>
+    <td style="max-width:240px">${esc(b.description)}</td>
+    <td>${esc(b.hsn_sac||'—')}</td>
+    <td>${esc(b.unit||'—')}</td>
+    <td>${Number(b.qty||0).toLocaleString('en-IN')}</td>
+    <td>${fmt(b.rate)}</td>
+    <td>${fmt(b.amount)}</td>
+    <td>${Number(b.measured_qty||0).toLocaleString('en-IN')}</td>
+    <td>${Number(b.billed_qty||0).toLocaleString('en-IN')}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="openBoqModal(${b.id})"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button></td>
+  </tr>`).join('');
+  lucide.createIcons();
+}
+
+function renderMb(){
+  const tbody=document.getElementById('mbTable');
+  if(!allMB.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:#94a3b8">No measurements recorded yet</td></tr>';return}
+  tbody.innerHTML=allMB.map(m=>`<tr>
+    <td>${m.mb_date||'—'}</td>
+    <td>${esc(m.item_description||'—')}</td>
+    <td>${Number(m.qty||0).toLocaleString('en-IN')} ${esc(m.unit||'')}</td>
+    <td>${fmt(m.rate)}</td>
+    <td>${fmt(m.amount)}</td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.remarks||'—')}</td>
+    <td><span class="badge ${m.ra_bill_id?'badge-green':'badge-yellow'}">${m.ra_bill_id?'Billed':'Pending'}</span></td>
+    <td>${m.ra_bill_id?'—':`<button class="btn btn-danger btn-sm" onclick="deleteMb(${m.id})"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>`}</td>
+  </tr>`).join('');
+  lucide.createIcons();
+}
+
+function openBoqModal(id=null){
+  editBoqId=id;
+  document.getElementById('boqModalTitle').textContent=id?'Edit BOQ Item':'Add BOQ Item';
+  if(id){
+    const b=allBOQ.find(x=>x.id===id);if(!b)return;
+    document.getElementById('boqfNo').value=b.item_no||'';
+    document.getElementById('boqfUnit').value=b.unit||'Nos';
+    document.getElementById('boqfDesc').value=b.description||'';
+    document.getElementById('boqfHsn').value=b.hsn_sac||'';
+    document.getElementById('boqfQty').value=b.qty||0;
+    document.getElementById('boqfRate').value=b.rate||0;
+  } else {
+    document.getElementById('boqfNo').value='';
+    document.getElementById('boqfUnit').value='Nos';
+    document.getElementById('boqfDesc').value='';
+    document.getElementById('boqfHsn').value='';
+    document.getElementById('boqfQty').value=0;
+    document.getElementById('boqfRate').value=0;
+  }
+  calcBoqAmt();
+  document.getElementById('boqModal').classList.add('open');
+}
+
+function calcBoqAmt(){
+  const q=parseFloat(document.getElementById('boqfQty').value)||0;
+  const r=parseFloat(document.getElementById('boqfRate').value)||0;
+  document.getElementById('boqfAmt').value=(q*r).toFixed(2);
+}
+
+async function saveBoq(){
+  const desc=document.getElementById('boqfDesc').value.trim();
+  if(!boqWOId||!desc){toast('Description is required','error');return}
+  const data={id:editBoqId||undefined,work_order_id:parseInt(boqWOId),item_no:document.getElementById('boqfNo').value.trim()||null,description:desc,hsn_sac:document.getElementById('boqfHsn').value.trim()||null,unit:document.getElementById('boqfUnit').value.trim()||'Nos',qty:parseFloat(document.getElementById('boqfQty').value)||0,rate:parseFloat(document.getElementById('boqfRate').value)||0};
+  const r=await window.erp.saveBoqItem(data);
+  if(r.success){toast(editBoqId?'BOQ item updated':'BOQ item added');closeModal('boqModal');refreshBoqAndMb();}
+  else toast(r.error||'Save failed','error');
+}
+
+function openMbModal(){
+  if(!allBOQ.length){toast('Add at least one BOQ item before recording measurements','error');return}
+  document.getElementById('mbfDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('mbfQty').value=0;
+  document.getElementById('mbfBy').value='';
+  document.getElementById('mbfRemarks').value='';
+  const sel=document.getElementById('mbfItem');
+  sel.innerHTML=allBOQ.map(b=>`<option value="${b.id}">${esc(b.item_no?b.item_no+' — ':'')}${esc(b.description)} (${esc(b.unit||'')})</option>`).join('');
+  document.getElementById('mbModal').classList.add('open');
+}
+
+async function saveMb(){
+  const itemId=document.getElementById('mbfItem').value;
+  const date=document.getElementById('mbfDate').value;
+  const qty=parseFloat(document.getElementById('mbfQty').value)||0;
+  if(!itemId||!date||!qty){toast('BOQ item, date and a non-zero quantity are required','error');return}
+  const data={work_order_id:parseInt(boqWOId),boq_item_id:parseInt(itemId),mb_date:date,qty,measured_by:document.getElementById('mbfBy').value.trim()||null,remarks:document.getElementById('mbfRemarks').value.trim()||null};
+  const r=await window.erp.saveMeasurement(data);
+  if(r.success){toast('Measurement recorded');closeModal('mbModal');refreshBoqAndMb();}
+  else toast(r.error||'Save failed','error');
+}
+
+async function deleteMb(id){
+  if(!confirm('Delete this measurement entry?'))return;
+  const r=await window.erp.deleteMeasurement(id);
+  if(r.success){toast('Measurement deleted');refreshBoqAndMb();}
+  else toast(r.error||'Delete failed','error');
+}
+
+// Render a proper Running Account (RA) Bill payment certificate in its own
+// window — previously this just called window.print() on the whole dashboard,
+// so it printed the screen instead of the bill.
+async function printRA(id){
+  const r=allRA.find(x=>x.id===id);
+  if(!r){toast('RA bill not found','error');return;}
+  let co={name:'',city:'',state:'',gstin:''};
+  try{const cr=await window.erp.getCompany();if(cr&&cr.data)co=cr.data;}catch(e){}
+  const gross=r.gross_amount||0, prev=r.prev_amount||0;
+  const current=r.current_amount!=null?r.current_amount:(gross-prev);
+  const retPct=r.retention_pct||0, ret=r.retention_amount||0;
+  const tdsPct=r.tds_pct||0, tds=r.tds_amount||0;
+  const net=r.net_payable!=null?r.net_payable:(current-ret-tds);
+  const period=(r.period_from||r.period_to)?`${esc(r.period_from||'—')} to ${esc(r.period_to||'—')}`:'—';
+  const win=window.open('','_blank');
+  if(!win){toast('Allow pop-ups to print','error');return;}
+  win.document.write(`<html><head><title>RA Bill ${esc(r.ra_number||'')}</title><style>
+    body{font-family:'Segoe UI',Arial,sans-serif;padding:28px;color:#000;background:#fff;}
+    .doc{max-width:720px;margin:auto;}
+    .hd{display:flex;justify-content:space-between;border-bottom:2px solid #16a34a;padding-bottom:14px;margin-bottom:16px;}
+    .cn{font-size:20px;font-weight:800;color:#0f172a;}
+    .cs{font-size:11px;color:#64748b;}
+    .title{font-size:16px;font-weight:800;text-align:right;}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;margin-bottom:18px;font-size:13px;}
+    .grid .fl{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.4px;}
+    .grid .fv{font-weight:600;color:#0f172a;margin-bottom:6px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:8px;}
+    td{font-size:13px;padding:8px 10px;border-bottom:1px solid #eef2f7;}
+    td.r{text-align:right;}
+    .tot td{font-weight:800;background:#dcfce7;font-size:14px;}
+    .ded td{color:#b91c1c;}
+    .ft{border-top:1px solid #e2e8f0;margin-top:28px;padding-top:10px;font-size:11px;color:#94a3b8;text-align:center;}
+    .sign{display:flex;justify-content:space-between;margin-top:48px;font-size:12px;}
+  </style></head><body><div class="doc">
+    <div class="hd">
+      <div><div class="cn">${esc(co.name||'Company')}</div><div class="cs">${esc(co.city||'')}${co.state?', '+esc(co.state):''}${co.gstin?' | GSTIN: '+esc(co.gstin):''}</div></div>
+      <div><div class="title">RUNNING ACCOUNT BILL</div><div class="cs">${esc(r.ra_number||'')}</div></div>
+    </div>
+    <div class="grid">
+      <div><div class="fl">Subcontractor</div><div class="fv">${esc(r.sc_name||r.sub_name||'—')}</div></div>
+      <div><div class="fl">Work Order</div><div class="fv">${esc(r.wo_number||'—')}</div></div>
+      <div><div class="fl">Site / Project</div><div class="fv">${esc(r.site_name||'—')}</div></div>
+      <div><div class="fl">Bill Date</div><div class="fv">${esc(r.bill_date||'—')}</div></div>
+      <div><div class="fl">Period</div><div class="fv">${period}</div></div>
+      <div><div class="fl">Status</div><div class="fv">${esc((r.status||'draft').toUpperCase())}</div></div>
+    </div>
+    <table>
+      <tr><td>Gross Work Done (cumulative)</td><td class="r">${fmt(gross)}</td></tr>
+      <tr><td>Less: Previously Billed</td><td class="r">${fmt(prev)}</td></tr>
+      <tr><td><strong>Current Bill Value</strong></td><td class="r"><strong>${fmt(current)}</strong></td></tr>
+      <tr class="ded"><td>Less: Retention @ ${retPct}%</td><td class="r">- ${fmt(ret)}</td></tr>
+      <tr class="ded"><td>Less: TDS 194C @ ${tdsPct}%</td><td class="r">- ${fmt(tds)}</td></tr>
+      <tr class="tot"><td>NET PAYABLE THIS BILL</td><td class="r">${fmt(net)}</td></tr>
+    </table>
+    <div class="sign"><div>Prepared by: ____________</div><div>Approved by: ____________</div></div>
+    <div class="ft">This is a computer-generated Running Account bill certificate. | ${esc(co.name||'')}</div>
+  </div><script>window.onload=function(){window.print();}<\/script></body></html>`);
+  win.document.close();
+}
+
+async function printWO(id){
+  const w=allWO.find(x=>x.id===id);
+  if(!w){toast('Work order not found','error');return;}
+  let co={name:'',city:'',state:'',gstin:''};
+  try{const cr=await window.erp.getCompany();if(cr&&cr.data)co=cr.data;}catch(e){}
+  // The contracted BOQ for this work order, if any, lists the priced scope.
+  let boq=[];
+  try{const br=await window.erp.getBoqItems({work_order_id:id});if(br&&br.success)boq=br.data||[];}catch(e){}
+  const win=window.open('','_blank');
+  if(!win){toast('Allow pop-ups to print','error');return;}
+  const boqRows=boq.length?boq.map((b,i)=>`<tr><td>${i+1}</td><td>${esc(b.description||'')}</td><td>${esc(b.unit||'')}</td><td class="r">${(b.qty||0)}</td><td class="r">${fmt(b.rate)}</td><td class="r">${fmt(b.amount||((b.qty||0)*(b.rate||0)))}</td></tr>`).join(''):'';
+  const boqTotal=boq.reduce((a,b)=>a+(b.amount||((b.qty||0)*(b.rate||0))),0);
+  win.document.write(`<html><head><title>Work Order ${esc(w.wo_number||'')}</title><style>
+    body{font-family:'Segoe UI',Arial,sans-serif;padding:28px;color:#000;background:#fff;}
+    .doc{max-width:760px;margin:auto;}
+    .hd{display:flex;justify-content:space-between;border-bottom:2px solid #2563eb;padding-bottom:14px;margin-bottom:16px;}
+    .cn{font-size:20px;font-weight:800;color:#0f172a;}
+    .cs{font-size:11px;color:#64748b;}
+    .title{font-size:16px;font-weight:800;text-align:right;}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;margin-bottom:18px;font-size:13px;}
+    .grid .fl{color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.4px;}
+    .grid .fv{font-weight:600;color:#0f172a;margin-bottom:6px;}
+    .scope{font-size:13px;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:16px;white-space:pre-wrap;}
+    table{width:100%;border-collapse:collapse;margin-bottom:8px;}
+    th{font-size:10px;text-transform:uppercase;color:#64748b;text-align:left;padding:6px 10px;border-bottom:2px solid #e2e8f0;}
+    td{font-size:13px;padding:8px 10px;border-bottom:1px solid #eef2f7;}
+    td.r,th.r{text-align:right;}
+    .tot td{font-weight:800;background:#dbeafe;font-size:14px;}
+    .terms{font-size:12px;color:#334155;border-top:1px solid #e2e8f0;margin-top:14px;padding-top:10px;white-space:pre-wrap;}
+    .ft{border-top:1px solid #e2e8f0;margin-top:28px;padding-top:10px;font-size:11px;color:#94a3b8;text-align:center;}
+    .sign{display:flex;justify-content:space-between;margin-top:48px;font-size:12px;}
+  </style></head><body><div class="doc">
+    <div class="hd">
+      <div><div class="cn">${esc(co.name||'Company')}</div><div class="cs">${esc(co.city||'')}${co.state?', '+esc(co.state):''}${co.gstin?' | GSTIN: '+esc(co.gstin):''}</div></div>
+      <div><div class="title">WORK ORDER</div><div class="cs">${esc(w.wo_number||'')}</div></div>
+    </div>
+    <div class="grid">
+      <div><div class="fl">Subcontractor</div><div class="fv">${esc(w.sc_name||w.sub_name||'—')}</div></div>
+      <div><div class="fl">Site / Project</div><div class="fv">${esc(w.site_name||'—')}</div></div>
+      <div><div class="fl">WO Date</div><div class="fv">${esc(w.date||w.wo_date||'—')}</div></div>
+      <div><div class="fl">Contract Value</div><div class="fv">${fmt(w.contract_amount)}</div></div>
+      <div><div class="fl">Start Date</div><div class="fv">${esc(w.start_date||'—')}</div></div>
+      <div><div class="fl">End Date</div><div class="fv">${esc(w.end_date||'—')}</div></div>
+      <div><div class="fl">Retention</div><div class="fv">${(w.retention_pct||0)}%</div></div>
+      <div><div class="fl">Status</div><div class="fv">${esc((w.status||'draft').toUpperCase())}</div></div>
+    </div>
+    ${w.description?`<div class="fl" style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Scope of Work</div><div class="scope">${esc(w.description)}</div>`:''}
+    ${boq.length?`<div class="fl" style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Bill of Quantities (Contracted)</div>
+    <table><thead><tr><th>#</th><th>Description</th><th>Unit</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr></thead>
+    <tbody>${boqRows}<tr class="tot"><td colspan="5">BOQ TOTAL</td><td class="r">${fmt(boqTotal)}</td></tr></tbody></table>`:''}
+    ${w.terms?`<div class="terms"><strong>Terms &amp; Conditions</strong>\n${esc(w.terms)}</div>`:''}
+    <div class="sign"><div>For ${esc(co.name||'Company')}<br><br>Authorised Signatory</div><div>Accepted by Subcontractor<br><br>${esc(w.sc_name||'')}</div></div>
+    <div class="ft">This is a computer-generated Work Order. | ${esc(co.name||'')}</div>
+  </div><script>window.onload=function(){window.print();}<\/script></body></html>`);
+  win.document.close();
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+window.refreshPage = function(){ loadData(); };  // live auto-refresh from the app shell
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+(function boot(tries) {
+  if (window.erp) { loadData(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

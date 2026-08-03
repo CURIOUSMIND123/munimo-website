@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Management Entries</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;font-size:14px}
+.pin-screen{position:fixed;inset:0;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:200;flex-direction:column}
+.pin-card{background:#1e293b;border:1px solid #334155;border-radius:20px;padding:40px;width:360px;text-align:center}
+.pin-card .icon{width:64px;height:64px;background:#312e81;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.pin-card h2{color:#e2e8f0;font-size:20px;margin-bottom:6px}
+.pin-card p{color:#64748b;font-size:13px;margin-bottom:24px;line-height:1.5}
+.pin-input{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+.pin-input input{width:52px;height:60px;text-align:center;font-size:22px;font-weight:700;border:2px solid #334155;background:#0f172a;color:#e2e8f0;border-radius:10px;outline:none}
+.pin-input input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+.pin-btn{width:100%;padding:14px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;margin-bottom:12px}
+.pin-btn:hover{background:#4f46e5}
+.pin-btn.setup{background:linear-gradient(135deg,#10b981,#059669);color:#000}
+.pin-btn.setup:hover{opacity:.9}
+.pin-error{color:#ef4444;font-size:12px;margin-bottom:8px;min-height:18px}
+.pin-change-link{color:#6366f1;font-size:12px;cursor:pointer;margin-top:4px;display:inline-block}
+.pin-change-link:hover{text-decoration:underline}
+.no-pin-notice{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:14px;margin-bottom:20px;color:#34d399;font-size:12px;line-height:1.5}
+.header{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+.header-actions{display:flex;gap:8px;align-items:center}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#4f46e5}
+.btn-secondary{background:#f8fafc;border:1px solid #e2e8f0;color:#374151}.btn-secondary:hover{background:#f1f5f9}
+.btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}.btn-danger:hover{background:#fecaca}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-lock{background:#312e81;color:#c7d2fe;border:1px solid #4338ca}.btn-lock:hover{background:#3730a3}
+.btn-setup-pin{background:rgba(16,185,129,.12);color:#059669;border:1px solid rgba(16,185,129,.3)}.btn-setup-pin:hover{background:rgba(16,185,129,.2)}
+.content{padding:24px}
+.toolbar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.search-box{position:relative;flex:1;min-width:180px}
+.search-box input{width:100%;padding:8px 12px 8px 36px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;outline:none}
+.search-box input:focus{border-color:#6366f1}
+.search-box .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8}
+.filter-select,.filter-input{padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;outline:none}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e8f0}
+.stat-card .label{font-size:11px;color:#64748b;font-weight:500;margin-bottom:4px}
+.stat-card .value{font-size:20px;font-weight:700;color:#1e293b}
+.table-wrap{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:#f8fafc;padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
+td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:13px}
+tr:hover td{background:#f8fafc}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-income{background:#dcfce7;color:#16a34a}
+.badge-expense{background:#fee2e2;color:#dc2626}
+.badge-asset{background:#dbeafe;color:#1d4ed8}
+.badge-liability{background:#fef3c7;color:#059669}
+.badge-note{background:#f3e8ff;color:#7c3aed}
+.alert-banner{border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:13px}
+.alert-warning{background:#fef3c7;border:1px solid #fcd34d;color:#92400e}
+.alert-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #e2e8f0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.form-group textarea{resize:vertical;min-height:60px}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0}
+.pin-modal-inner{display:flex;flex-direction:column;gap:16px}
+.pin-modal-field{display:flex;flex-direction:column;gap:6px}
+.pin-modal-field label{font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.4px}
+.pin-modal-field input{font-size:18px;text-align:center;letter-spacing:6px;padding:12px;border:2px solid #e2e8f0;border-radius:8px;outline:none}
+.pin-modal-field input:focus{border-color:#6366f1}
+.pin-modal-error{color:#dc2626;font-size:12px;min-height:16px;text-align:center}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#16a34a}.toast.error{background:#dc2626}
+</style>
+</head>
+<body>
+
+<!-- PIN Screen -->
+<div class="pin-screen" id="pinScreen">
+  <div class="pin-card">
+    <div class="icon"><i data-lucide="shield-check" style="width:32px;height:32px;color:#a5b4fc"></i></div>
+    <h2 id="pinTitle">Management Access</h2>
+    <p id="pinSubtitle">This section is restricted to authorised management personnel. Enter your 4-digit PIN to continue.</p>
+    <div id="noPinNotice" class="no-pin-notice" style="display:none">
+      ⚠️ No PIN has been set yet. Enter any 4 digits to unlock, then set a secure PIN using "Change PIN" below.
+    </div>
+    <div class="pin-input">
+      <input type="password" maxlength="1" id="p1" oninput="pinNext(this,'p2')" onkeydown="pinBack(event,null,'p1')">
+      <input type="password" maxlength="1" id="p2" oninput="pinNext(this,'p3')" onkeydown="pinBack(event,'p1','p2')">
+      <input type="password" maxlength="1" id="p3" oninput="pinNext(this,'p4')" onkeydown="pinBack(event,'p2','p3')">
+      <input type="password" maxlength="1" id="p4" oninput="pinNext(this,null)" onkeydown="pinBack(event,'p3','p4')" onkeypress="if(event.key==='Enter')verifyPin()">
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <button class="pin-btn" id="pinUnlockBtn" onclick="verifyPin()">🔓 Unlock</button>
+    <span class="pin-change-link" onclick="showChangePinModal(false)">Change PIN</span>
+  </div>
+</div>
+
+<!-- Main App (hidden until PIN verified) -->
+<div id="mainApp" style="display:none">
+<div class="header">
+  <h1>
+    <i data-lucide="shield" style="width:20px;height:20px;color:#6366f1"></i>
+    Management Entries
+    <span style="font-size:12px;background:#312e81;color:#c7d2fe;padding:2px 8px;border-radius:20px;margin-left:8px;font-weight:500">CONFIDENTIAL</span>
+  </h1>
+  <div class="header-actions">
+    <button class="btn btn-setup-pin" id="setupPinBtn" onclick="showChangePinModal(true)" style="display:none">🔑 Set PIN</button>
+    <button class="btn btn-secondary btn-sm" onclick="exportEntries()"><i data-lucide="download" style="width:14px;height:14px"></i> Export</button>
+    <button class="btn btn-primary" onclick="openEntryModal()"><i data-lucide="plus" style="width:14px;height:14px"></i> New Entry</button>
+    <button class="btn btn-secondary btn-sm" onclick="showChangePinModal(true)"><i data-lucide="key" style="width:14px;height:14px"></i> Change PIN</button>
+    <button class="btn btn-lock" onclick="lockScreen()"><i data-lucide="lock" style="width:14px;height:14px"></i> Lock</button>
+  </div>
+</div>
+<div class="content">
+  <div id="noPinBanner" class="alert-banner alert-warning" style="display:none">
+    <i data-lucide="alert-triangle" style="width:18px;height:18px;min-width:18px"></i>
+    <span><strong>No PIN set.</strong> Your management data is currently unprotected. Click "Set PIN" above to secure this section.</span>
+  </div>
+  <div class="alert-banner alert-warning">
+    <i data-lucide="alert-triangle" style="width:18px;height:18px;min-width:18px"></i>
+    <span>This section contains confidential management information. Lock this section when done.</span>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="label">Total Entries</div><div class="value" id="mgTotal">0</div></div>
+    <div class="stat-card"><div class="label">Income Entries</div><div class="value" id="mgIncome" style="color:#16a34a">0</div></div>
+    <div class="stat-card"><div class="label">Expense Entries</div><div class="value" id="mgExpense" style="color:#dc2626">0</div></div>
+    <div class="stat-card"><div class="label">Net Amount</div><div class="value" id="mgAmt" style="font-size:16px">₹0</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" class="si" style="width:16px;height:16px"></i>
+      <input type="text" id="mgSearch" placeholder="Search entries..." oninput="renderEntries()">
+    </div>
+    <select class="filter-select" id="mgCatFilter" onchange="renderEntries()">
+      <option value="">All Categories</option>
+      <option value="income">Income</option>
+      <option value="expense">Expense</option>
+      <option value="asset">Asset</option>
+      <option value="liability">Liability</option>
+      <option value="note">Note</option>
+    </select>
+    <input type="month" class="filter-input" id="mgMonth" onchange="renderEntries()" title="Filter by month">
+    <input type="date" class="filter-input" id="mgFrom" onchange="renderEntries()" placeholder="From">
+    <input type="date" class="filter-input" id="mgTo" onchange="renderEntries()" placeholder="To">
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Category</th><th>Description</th><th>Party</th>
+          <th>Amount (₹)</th><th>Mode</th><th>Reference</th><th>Site</th><th>In Accounts?</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="mgTable"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- Entry Modal -->
+<div class="modal-overlay" id="entryModal">
+  <div class="modal">
+    <h2 id="entryModalTitle">New Management Entry</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Date *</label>
+        <input type="date" id="efDate" required>
+      </div>
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="efCat" required onchange="updateCatHint()">
+          <option value="">-- Select --</option>
+          <option value="income">💰 Income</option>
+          <option value="expense">💸 Expense</option>
+          <option value="asset">🏗️ Asset</option>
+          <option value="liability">📋 Liability</option>
+          <option value="note">📝 Note</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Description *</label>
+        <input type="text" id="efDesc" placeholder="What is this entry for?" required list="descSuggestions">
+        <datalist id="descSuggestions"></datalist>
+      </div>
+      <div class="form-group">
+        <label>Party / Name</label>
+        <input type="text" id="efParty" placeholder="Person or company" list="partySuggestions">
+        <datalist id="partySuggestions"></datalist>
+      </div>
+      <div class="form-group">
+        <label>Amount (₹)</label>
+        <input type="number" id="efAmt" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Payment Mode</label>
+        <select id="efMode">
+          <option value="">-- Select --</option>
+          <option value="Cash">Cash</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Cheque">Cheque</option>
+          <option value="UPI">UPI</option>
+          <option value="Demand Draft">Demand Draft</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Reference / Receipt No.</label>
+        <input type="text" id="efRef" placeholder="REF-001">
+      </div>
+      <div class="form-group">
+        <label>Site</label>
+        <select id="efSite">
+          <option value="">-- No Site --</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Remarks (Confidential)</label>
+        <textarea id="efRemarks" rows="3" placeholder="Private notes visible only here..."></textarea>
+      </div>
+      <div class="form-group full" style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;margin-top:4px;">
+        <label style="color:#15803d;display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;">
+          <input type="checkbox" id="efInclude" checked style="width:16px;height:16px;accent-color:#16a34a;cursor:pointer;">
+          <span>
+            <strong style="font-size:13px;">Include in Official Accounts</strong><br>
+            <span style="font-size:11px;font-weight:400;color:#166534;">When checked: this entry flows into P&amp;L, cashflow and balance sheet.<br>Uncheck to record as off-book / management-only (not reflected in official reports).</span>
+          </span>
+        </label>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeEntryModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry()" id="saveEntryBtn">
+        <i data-lucide="save" style="width:14px;height:14px"></i> Save Entry
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Change/Set PIN Modal -->
+<div class="modal-overlay" id="changePinModal">
+  <div class="modal" style="width:400px;text-align:center">
+    <h2 id="pinModalTitle">Change Management PIN</h2>
+    <p id="pinModalDesc" style="color:#64748b;font-size:13px;margin-bottom:24px;line-height:1.5"></p>
+    <div class="pin-modal-inner">
+      <div class="pin-modal-field" id="oldPinField">
+        <label>Current PIN</label>
+        <input type="password" id="cpOld" maxlength="4" placeholder="••••">
+      </div>
+      <div class="pin-modal-field">
+        <label>New PIN</label>
+        <input type="password" id="cpNew" maxlength="4" placeholder="••••">
+      </div>
+      <div class="pin-modal-field">
+        <label>Confirm New PIN</label>
+        <input type="password" id="cpConfirm" maxlength="4" placeholder="••••">
+      </div>
+      <div class="pin-modal-error" id="cpError"></div>
+    </div>
+    <div class="form-actions" style="justify-content:center;gap:12px;border:none;padding-top:0;margin-top:20px">
+      <button class="btn btn-secondary" onclick="closeChangePinModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewPin()">
+        <i data-lucide="key" style="width:14px;height:14px"></i> <span id="pinSaveBtnLabel">Set PIN</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+lucide.createIcons();
+
+let allEntries = [], allSites = [], currentPin = '', editEntryId = null;
+let hasPinSet = true; // assume yes until checked
+let changePinFromApp = false;
+
+// Rubber-banding: remember last used form values (UI preference only)
+let lastUsed = {};
+try { lastUsed = JSON.parse(localStorage.getItem('mgmt_lastUsed') || '{}'); } catch(_) {}
+
+function saveLastUsed(data) {
+  if (data.category)     lastUsed.category     = data.category;
+  if (data.payment_mode) lastUsed.payment_mode  = data.payment_mode;
+  if (data.site_id)      lastUsed.site_id       = data.site_id;
+  if (data.party)        lastUsed.party         = data.party;
+  try { localStorage.setItem('mgmt_lastUsed', JSON.stringify(lastUsed)); } catch(_) {}
+}
+
+function fmt(n) { return '₹' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + (type === 'error' ? 'error' : 'success');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const r = await window.erp.verifyManagementPin('');
+    hasPinSet = r.success ? (r.data.hasPinSet !== false) : true;
+    if (r.success && !hasPinSet) {
+      // No PIN set — this is a CONFIDENTIAL area, so we never auto-enter or show
+      // any data. Force the owner to create a PIN first.
+      document.getElementById('noPinNotice').style.display = 'block';
+      document.getElementById('pinUnlockBtn').textContent = '🔑 Set up PIN to continue';
+    } else {
+      document.getElementById('p1').focus();
+    }
+  } catch(e) {
+    // Bridge hiccup — keep the PIN pad usable and retry
+    try { document.getElementById('p1').focus(); } catch(_) {}
+    setTimeout(init, 300);
+  }
+}
+
+function enterApp(pin) {
+  currentPin = pin;
+  document.getElementById('pinScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  if (!hasPinSet) {
+    // Confidential area with no PIN yet: do NOT load any entries. Force PIN setup.
+    document.getElementById('noPinBanner').style.display = 'flex';
+    document.getElementById('setupPinBtn').style.display = 'inline-flex';
+    showChangePinModal(true);
+    return;
+  }
+  loadData();
+}
+
+// ─── PIN SCREEN ───────────────────────────────────────────────────────────────
+function pinNext(el, nextId) { if (el.value && nextId) document.getElementById(nextId).focus(); }
+function pinBack(e, prevId, curId) {
+  if (e.key === 'Backspace' && !document.getElementById(curId).value && prevId)
+    document.getElementById(prevId).focus();
+}
+
+async function verifyPin() {
+  const pin = [1,2,3,4].map(i => document.getElementById('p'+i).value).join('');
+  if (!hasPinSet && pin.length === 0) { enterApp(''); return; }
+  if (pin.length < 4) { document.getElementById('pinError').textContent = 'Enter 4-digit PIN'; return; }
+  document.getElementById('pinError').textContent = '';
+  const r = await window.erp.verifyManagementPin(pin);
+  if (r.success && r.data.valid) {
+    hasPinSet = r.data.hasPinSet !== false;
+    enterApp(pin);
+  } else {
+    document.getElementById('pinError').textContent = 'Incorrect PIN. Try again.';
+    [1,2,3,4].forEach(i => { document.getElementById('p'+i).value = ''; });
+    document.getElementById('p1').focus();
+  }
+}
+
+function lockScreen() {
+  currentPin = ''; allEntries = [];
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('pinScreen').style.display = 'flex';
+  [1,2,3,4].forEach(i => { document.getElementById('p'+i).value = ''; });
+  if (!hasPinSet) document.getElementById('p1').focus();
+  else { document.getElementById('noPinNotice').style.display = 'none'; document.getElementById('p1').focus(); }
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+async function loadData() {
+  const [er, sr] = await Promise.all([
+    window.erp.getManagementEntries(currentPin),
+    window.erp.getSites()
+  ]);
+  allEntries = er.success ? (er.data || []) : [];
+  allSites   = sr.success ? (sr.data || []) : [];
+  populateSiteSelect();
+  updateDescSuggestions();
+  updatePartySuggestions();
+  updateStats();
+  renderEntries();
+}
+
+function populateSiteSelect() {
+  const sel = document.getElementById('efSite');
+  sel.innerHTML = '<option value="">-- No Site --</option>';
+  allSites.forEach(s => { sel.innerHTML += `<option value="${s.id}">${esc(s.name)}</option>`; });
+}
+
+function updateDescSuggestions() {
+  const dl = document.getElementById('descSuggestions');
+  const unique = [...new Set(allEntries.map(e => e.description).filter(Boolean))];
+  dl.innerHTML = unique.map(d => `<option value="${esc(d)}">`).join('');
+}
+
+function updatePartySuggestions() {
+  const dl = document.getElementById('partySuggestions');
+  const unique = [...new Set(allEntries.map(e => e.party).filter(Boolean))];
+  dl.innerHTML = unique.map(p => `<option value="${esc(p)}">`).join('');
+}
+
+function updateStats() {
+  const income = allEntries.filter(e => e.category === 'income').reduce((a, e) => a + (e.amount || 0), 0);
+  const expense = allEntries.filter(e => e.category === 'expense').reduce((a, e) => a + (e.amount || 0), 0);
+  document.getElementById('mgTotal').textContent   = allEntries.length;
+  document.getElementById('mgIncome').textContent  = allEntries.filter(e => e.category === 'income').length;
+  document.getElementById('mgExpense').textContent = allEntries.filter(e => e.category === 'expense').length;
+  document.getElementById('mgAmt').textContent     = fmt(income - expense);
+}
+
+function renderEntries() {
+  const q  = (document.getElementById('mgSearch').value || '').toLowerCase();
+  const cf = document.getElementById('mgCatFilter').value;
+  const mn = document.getElementById('mgMonth').value;
+  const from = document.getElementById('mgFrom').value;
+  const to   = document.getElementById('mgTo').value;
+
+  const data = allEntries.filter(e => {
+    const m   = !q || (e.description||'').toLowerCase().includes(q) || (e.party||'').toLowerCase().includes(q) || (e.ref_no||'').toLowerCase().includes(q);
+    const mc  = !cf || e.category === cf;
+    const mmn = !mn || (e.date||'').startsWith(mn);
+    const mf  = !from || e.date >= from;
+    const mt  = !to   || e.date <= to;
+    return m && mc && mmn && mf && mt;
+  });
+
+  const catMap = { income:'badge-income', expense:'badge-expense', asset:'badge-asset', liability:'badge-liability', note:'badge-note' };
+  const tbody  = document.getElementById('mgTable');
+
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8">No entries found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(e => {
+    const siteName = allSites.find(s => s.id == e.site_id)?.name || '—';
+    return `<tr>
+      <td>${e.date || '—'}</td>
+      <td><span class="badge ${catMap[e.category] || ''}">${e.category || '—'}</span></td>
+      <td><strong>${esc(e.description || '—')}</strong></td>
+      <td>${esc(e.party || '—')}</td>
+      <td><strong style="${e.category==='income'?'color:#16a34a':e.category==='expense'?'color:#dc2626':''}">${e.amount ? fmt(e.amount) : '—'}</strong></td>
+      <td>${esc(e.payment_mode || '—')}</td>
+      <td><code style="font-size:11px">${esc(e.ref_no || '—')}</code></td>
+      <td>${esc(siteName)}</td>
+      <td style="text-align:center;">${e.include_in_accounts === 0 || e.include_in_accounts === '0' ? '<span style="font-size:11px;background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px;font-weight:600;">Off-Book</span>' : '<span style="font-size:11px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:12px;font-weight:600;">In Accounts</span>'}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-secondary btn-sm" onclick="openEntryModal(${e.id})"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id},'${jsArg(e.description||'')}')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function openEntryModal(id = null) {
+  editEntryId = id;
+  document.getElementById('entryModalTitle').textContent = id ? 'Edit Entry' : 'New Management Entry';
+  if (id) {
+    const e = allEntries.find(x => x.id === id); if (!e) return;
+    document.getElementById('efDate').value    = e.date || '';
+    document.getElementById('efCat').value     = e.category || '';
+    document.getElementById('efDesc').value    = e.description || '';
+    document.getElementById('efParty').value   = e.party || '';
+    document.getElementById('efAmt').value     = e.amount || '';
+    document.getElementById('efMode').value    = e.payment_mode || '';
+    document.getElementById('efRef').value     = e.ref_no || '';
+    document.getElementById('efSite').value    = e.site_id || '';
+    document.getElementById('efRemarks').value = e.remarks || '';
+    document.getElementById('efInclude').checked = (e.include_in_accounts === 0 || e.include_in_accounts === '0') ? false : true;
+  } else {
+    // Rubber-banding: pre-fill from last used values
+    document.getElementById('efDate').value    = new Date().toISOString().split('T')[0];
+    document.getElementById('efCat').value     = lastUsed.category || '';
+    document.getElementById('efMode').value    = lastUsed.payment_mode || '';
+    document.getElementById('efSite').value    = lastUsed.site_id || '';
+    document.getElementById('efParty').value   = '';
+    document.getElementById('efDesc').value    = '';
+    document.getElementById('efAmt').value     = '';
+    document.getElementById('efRef').value     = '';
+    document.getElementById('efRemarks').value = '';
+    document.getElementById('efInclude').checked = true;
+  }
+  document.getElementById('entryModal').classList.add('open');
+  setTimeout(() => document.getElementById('efDesc').focus(), 100);
+}
+
+function closeEntryModal() { document.getElementById('entryModal').classList.remove('open'); }
+
+// Smart contextual hint: tailor the description placeholder to the chosen category
+function updateCatHint() {
+  const cat = document.getElementById('efCat').value;
+  const hints = {
+    income:    'e.g. Cash sale, advance received, scrap sale…',
+    expense:   'e.g. Cash purchase, site expense, commission paid…',
+    asset:     'e.g. Equipment bought, deposit paid, advance given…',
+    liability: 'e.g. Loan taken, unpaid bill, dues payable…',
+    note:      'e.g. Reminder, follow-up, internal remark…',
+  };
+  const el = document.getElementById('efDesc');
+  if (el) el.placeholder = hints[cat] || 'What is this entry for?';
+}
+
+async function saveEntry() {
+  const desc = document.getElementById('efDesc').value.trim();
+  const cat  = document.getElementById('efCat').value;
+  const date = document.getElementById('efDate').value;
+  if (!desc || !cat || !date) { toast('Date, category and description are required', 'error'); return; }
+
+  const btn = document.getElementById('saveEntryBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  const data = {
+    id:           editEntryId || undefined,
+    date:         date,
+    category:     cat,
+    description:  desc,
+    party:        document.getElementById('efParty').value.trim(),
+    amount:       parseFloat(document.getElementById('efAmt').value) || null,
+    payment_mode: document.getElementById('efMode').value,
+    ref_no:       document.getElementById('efRef').value.trim(),
+    site_id:           document.getElementById('efSite').value || null,
+    remarks:           document.getElementById('efRemarks').value.trim(),
+    include_in_accounts: document.getElementById('efInclude').checked ? 1 : 0
+  };
+
+  const r = await window.erp.saveManagementEntry(data, currentPin);
+  btn.disabled = false;
+  btn.innerHTML = '<i data-lucide="save" style="width:14px;height:14px"></i> Save Entry';
+  lucide.createIcons();
+
+  if (r.success) {
+    saveLastUsed(data);
+    toast(editEntryId ? 'Entry updated' : 'Entry saved');
+    closeEntryModal();
+    loadData();
+  } else {
+    toast(r.error || 'Save failed', 'error');
+  }
+}
+
+async function deleteEntry(id, desc) {
+  if (!confirm(`Delete entry "${desc}"? This cannot be undone.`)) return;
+  const r = await window.erp.deleteManagementEntry(id, currentPin);
+  if (r.success) { toast('Entry deleted'); loadData(); }
+  else toast(r.error || 'Delete failed', 'error');
+}
+
+function exportEntries() {
+  const rows = [['Date','Category','Description','Party','Amount','Mode','Reference','Remarks']];
+  allEntries.forEach(e => rows.push([e.date||'',e.category||'',e.description||'',e.party||'',e.amount||'',e.payment_mode||'',e.ref_no||'',e.remarks||'']));
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' }));
+  a.download = 'management_entries.csv'; a.click();
+  toast('Exported');
+}
+
+// ─── CHANGE PIN MODAL ─────────────────────────────────────────────────────────
+function showChangePinModal(fromApp) {
+  changePinFromApp = fromApp;
+  const isFirstTime = !hasPinSet;
+
+  document.getElementById('pinModalTitle').textContent = isFirstTime ? 'Set Management PIN' : 'Change Management PIN';
+  document.getElementById('pinModalDesc').textContent  = isFirstTime
+    ? 'Set a 4-digit PIN to protect management data. You will need this PIN every time you open this section.'
+    : 'Enter your current PIN, then choose a new 4-digit PIN.';
+  document.getElementById('oldPinField').style.display = isFirstTime ? 'none' : 'flex';
+  document.getElementById('pinSaveBtnLabel').textContent = isFirstTime ? 'Set PIN' : 'Change PIN';
+
+  document.getElementById('cpOld').value = '';
+  document.getElementById('cpNew').value = '';
+  document.getElementById('cpConfirm').value = '';
+  document.getElementById('cpError').textContent = '';
+  document.getElementById('changePinModal').classList.add('open');
+  setTimeout(() => document.getElementById(isFirstTime ? 'cpNew' : 'cpOld').focus(), 100);
+}
+
+function closeChangePinModal() { document.getElementById('changePinModal').classList.remove('open'); }
+
+async function saveNewPin() {
+  const oldPin    = document.getElementById('cpOld').value;
+  const newPin    = document.getElementById('cpNew').value;
+  const confirmPin = document.getElementById('cpConfirm').value;
+
+  if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+    document.getElementById('cpError').textContent = 'PIN must be exactly 4 digits'; return;
+  }
+  if (newPin !== confirmPin) {
+    document.getElementById('cpError').textContent = 'PINs do not match'; return;
+  }
+
+  const r = await window.erp.setManagementPin({ old_pin: oldPin, new_pin: newPin });
+  if (r.success) {
+    hasPinSet = true;
+    currentPin = newPin;
+    toast('PIN set successfully ✓');
+    closeChangePinModal();
+    // Update UI
+    document.getElementById('noPinBanner').style.display = 'none';
+    document.getElementById('setupPinBtn').style.display  = 'none';
+    loadData();  // now that a PIN exists, load the confidential entries
+  } else {
+    document.getElementById('cpError').textContent = r.error || 'Failed to change PIN';
+  }
+}
+
+// Start
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+// Shows a visible error instead of a dead page if the bridge never appears.
+(function boot(tries) {
+  if (window.erp) { init(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

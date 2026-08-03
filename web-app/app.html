@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Munimo — live ERP demo</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<script src="vendor/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--border:rgba(255,255,255,0.07);
+  --text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;
+  --danger:#ef4444;--info:#3b82f6;--purple:#a855f7;
+  --radius:12px;--sidebar:248px;--header:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar);min-width:var(--sidebar);height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;position:fixed;left:0;top:0;z-index:100;}
+.sidebar::-webkit-scrollbar{width:3px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--border);min-height:var(--header);flex-shrink:0;}
+.sidebar-logo .icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.sidebar-logo .brand{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
+.sidebar-logo .brand span{display:block;font-size:10px;color:var(--muted);font-weight:400;}
+.nav-section{padding:8px 0 2px;flex-shrink:0;}
+.nav-label{font-size:10px;font-weight:700;color:var(--faint);letter-spacing:1px;padding:6px 18px 4px;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 18px;cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.15s;border-left:3px solid transparent;user-select:none;}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04);}
+.nav-item.active{color:var(--accent);background:rgba(16,185,129,0.08);border-left-color:var(--accent);}
+.nav-item .nav-icon{width:16px;height:16px;flex-shrink:0;}
+.nav-item .badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;}
+.nav-item.admin-only{display:none;}
+.nav-item.admin-only.show{display:flex;}
+.nav-item.approver-only{display:none;}
+.nav-item.approver-only.show{display:flex;}
+/* Simple (Lite) view: show only the curated, relevant screens — cash in/out,
+   dashboard, ledger, commission, reports — and hide the heavy modules. */
+body.lite-view .nav-item:not(.lite-ok){display:none !important;}
+body.lite-view .nav-label{display:none;}
+body.lite-view .nav-section{margin-bottom:2px;}
+#liteToggle.on{background:rgba(16,185,129,0.12);color:var(--accent);border-color:rgba(16,185,129,0.3);}
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding:12px;flex-shrink:0;}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);background:var(--surface2);cursor:pointer;transition:background 0.15s;}
+.user-card:hover{background:rgba(255,255,255,0.06);}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#000;flex-shrink:0;}
+.user-info .name{font-size:12px;font-weight:600;color:var(--text);}
+.user-info .role{font-size:10px;color:var(--muted);}
+.logout-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;margin-top:8px;border-radius:9px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;width:100%;transition:all 0.15s;}
+.logout-btn:hover{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3);color:var(--danger);}
+.logout-btn svg{width:14px;height:14px;flex-shrink:0;}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* ── HAMBURGER + BACKDROP (mobile only) ── */
+.hamburger{display:none;background:transparent;border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:9px;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.hamburger svg{width:20px;height:20px;}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99;}
+
+/* ── RESPONSIVE: phone / small tablet ── */
+@media (max-width: 860px){
+  body{overflow:auto;}
+  .sidebar{transform:translateX(-100%);transition:transform .22s ease;box-shadow:0 0 40px rgba(0,0,0,0.5);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .hamburger{display:flex;}
+  .sidebar-backdrop.show{display:block;}
+  .topbar{padding:0 14px;}
+  .page-title{font-size:15px;}
+  .topbar-btn span, .page-sub{display:none;}
+  .topbar-btn{padding:7px 10px;}
+}
+
+/* ── TOPBAR ── */
+.topbar{height:var(--header);min-height:var(--header);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.page-title{font-size:16px;font-weight:700;color:var(--text);}
+.page-sub{font-size:12px;color:var(--muted);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.topbar-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-accent:hover{opacity:0.88;}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow:hidden;position:relative;}
+.page{display:none;width:100%;height:100%;}
+.page.active{display:block;}
+.page.scroll{overflow-y:auto;padding:24px;}
+.page.iframe{height:calc(100vh - var(--header));overflow:hidden;}
+.page.iframe iframe{width:100%;height:100%;border:none;display:block;}
+
+/* ── DASHBOARD ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;transition:transform 0.15s,box-shadow 0.15s;}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0;}
+.kpi-card.green::before{background:var(--success);}
+.kpi-card.red::before{background:var(--danger);}
+.kpi-card.amber::before{background:var(--accent);}
+.kpi-card.blue::before{background:var(--info);}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.kpi-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.kpi-icon.green{background:rgba(34,197,94,0.12);color:var(--success);}
+.kpi-icon.red{background:rgba(239,68,68,0.12);color:var(--danger);}
+.kpi-icon.amber{background:rgba(16,185,129,0.12);color:var(--accent);}
+.kpi-icon.blue{background:rgba(59,130,246,0.12);color:var(--info);}
+.kpi-badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;}
+.kpi-badge.up{background:rgba(34,197,94,0.12);color:var(--success);}
+.kpi-badge.down{background:rgba(239,68,68,0.12);color:var(--danger);}
+.kpi-badge.neutral{background:rgba(148,163,184,0.12);color:var(--muted);}
+.kpi-label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:0.3px;margin-bottom:6px;}
+.kpi-value{font-size:24px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-0.5px;}
+.kpi-sub{font-size:11px;color:var(--faint);margin-top:4px;}
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.card-title{font-size:14px;font-weight:700;color:var(--text);}
+.card-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.chart-wrap{position:relative;height:220px;}
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;}
+td{font-size:13px;color:var(--muted);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.03);}
+tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+.amount{font-weight:600;font-variant-numeric:tabular-nums;}
+.amount.cr{color:var(--success);}
+.amount.dr{color:var(--danger);}
+.status{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.status.paid{background:rgba(34,197,94,0.12);color:var(--success);}
+.status.pending{background:rgba(16,185,129,0.12);color:var(--accent);}
+.status.overdue{background:rgba(239,68,68,0.12);color:var(--danger);}
+.status.draft{background:rgba(148,163,184,0.12);color:var(--muted);}
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.qa-btn{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all 0.15s;font-size:12px;font-weight:600;color:var(--text);}
+.qa-btn:hover{border-color:var(--accent);background:rgba(16,185,129,0.06);}
+.qa-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+.alert-list{display:flex;flex-direction:column;gap:8px;}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:9px;font-size:12px;}
+.alert-item.warn{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);}
+.alert-item.danger{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);}
+.alert-item.info{background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);}
+.alert-item.success{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.alert-text strong{display:block;font-weight:700;margin-bottom:2px;color:var(--text);}
+.alert-text span{color:var(--muted);}
+
+/* ── LOADING SKELETON ── */
+.kpi-loading .kpi-value{background:var(--surface2);color:transparent;border-radius:6px;animation:shimmer 1.5s infinite;}
+@keyframes shimmer{0%,100%{opacity:0.5;}50%{opacity:1;}}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+/* Command palette / global search */
+.kbd-hint{font-size:10px;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:1px 5px;margin-left:5px;letter-spacing:.5px;}
+.cp-overlay{position:fixed;inset:0;background:rgba(2,6,23,.7);backdrop-filter:blur(2px);z-index:1000;display:none;align-items:flex-start;justify-content:center;padding-top:11vh;}
+.cp-overlay.open{display:flex;}
+.cp-box{width:min(640px,92vw);background:var(--surface,#1e293b);border:1px solid var(--border,rgba(255,255,255,.1));border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,.6);overflow:hidden;}
+.cp-input-row{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.cp-input-row input{flex:1;background:transparent;border:none;outline:none;color:var(--text,#f1f5f9);font-size:16px;}
+.cp-esc{font-size:10px;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:2px 6px;}
+.cp-results{max-height:52vh;overflow-y:auto;}
+.cp-item{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;border-left:2px solid transparent;}
+.cp-item.sel{background:rgba(59,130,246,.12);border-left-color:var(--info,#3b82f6);}
+.cp-item:hover{background:rgba(255,255,255,.04);}
+.cp-ic{width:30px;height:30px;border-radius:8px;background:var(--surface2,#243147);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;}
+.cp-ic svg{width:15px;height:15px;}
+.cp-txt{flex:1;min-width:0;}
+.cp-label{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cp-sub{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cp-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--faint);background:var(--surface2);padding:2px 8px;border-radius:10px;flex-shrink:0;}
+.cp-empty{padding:26px 16px;text-align:center;color:var(--faint);font-size:13px;}
+.cp-foot{padding:9px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--faint);}
+</style>
+</head>
+<body>
+
+<!-- GLOBAL SEARCH / COMMAND PALETTE (Ctrl-K) -->
+<div class="cp-overlay" id="cpOverlay" onclick="if(event.target===this)closePalette()">
+  <div class="cp-box" role="dialog" aria-label="Search">
+    <div class="cp-input-row">
+      <i data-lucide="search" style="width:18px;height:18px;color:var(--muted);"></i>
+      <input id="cpInput" type="text" autocomplete="off" spellcheck="false" oninput="cpOnInput()"
+             placeholder="Search invoices, bills, clients, vendors, sites, POs…">
+      <span class="cp-esc">esc</span>
+    </div>
+    <div class="cp-results" id="cpResults"></div>
+    <div class="cp-foot"><span>↑↓ to move · ↵ to open · esc to close</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <img src="assets/logo.svg" alt="Munimo" style="height:34px;width:auto;" onerror="this.outerHTML='<div class=\'icon\'>🏗️</div>'">
+    <div class="brand">Munimo<span>Business ERP &middot; live demo</span></div>
+  </div>
+
+  <!-- Overview -->
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active lite-ok" id="nav-today" onclick="navigate('today')">
+      <i data-lucide="sun" class="nav-icon"></i> Today
+    </div>
+    <div class="nav-item lite-ok" id="nav-dashboard" onclick="navigate('dashboard')">
+      <i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard
+    </div>
+  </div>
+
+  <!-- HR & Payroll -->
+  <div class="nav-section">
+    <div class="nav-label">HR &amp; Payroll</div>
+    <div class="nav-item" id="nav-employees" onclick="navigate('employees')">
+      <i data-lucide="users" class="nav-icon"></i> Employees
+    </div>
+    <div class="nav-item" id="nav-payroll" onclick="navigate('payroll')">
+      <i data-lucide="indian-rupee" class="nav-icon"></i> Payroll
+    </div>
+  </div>
+
+  <!-- Masters -->
+  <div class="nav-section">
+    <div class="nav-label">Masters</div>
+    <div class="nav-item lite-ok" id="nav-clients" onclick="navigate('clients')">
+      <i data-lucide="building-2" class="nav-icon"></i> Clients
+    </div>
+    <div class="nav-item lite-ok" id="nav-vendors" onclick="navigate('vendors')">
+      <i data-lucide="truck" class="nav-icon"></i> Vendors
+    </div>
+    <div class="nav-item" id="nav-sites" onclick="navigate('sites')">
+      <i data-lucide="map-pin" class="nav-icon"></i> Sites
+    </div>
+    <div class="nav-item lite-ok" id="nav-banks" onclick="navigate('banks')">
+      <i data-lucide="landmark" class="nav-icon"></i> Banks
+    </div>
+  </div>
+
+  <!-- Finance -->
+  <div class="nav-section">
+    <div class="nav-label">Finance</div>
+    <div class="nav-item approver-only lite-ok" id="nav-approvals" onclick="navigate('approvals')">
+      <i data-lucide="clipboard-check" class="nav-icon"></i> Field Approvals
+      <span class="badge" id="approvalsBadge" hidden></span>
+    </div>
+    <div class="nav-item" id="nav-invoices" onclick="navigate('invoices')">
+      <i data-lucide="file-text" class="nav-icon"></i> Sales Invoices
+    </div>
+    <div class="nav-item" id="nav-expenses" onclick="navigate('expenses')">
+      <i data-lucide="receipt" class="nav-icon"></i> Vendor Bills
+    </div>
+    <div class="nav-item" id="nav-purchases" onclick="navigate('purchases')">
+      <i data-lucide="shopping-cart" class="nav-icon"></i> Purchase Orders
+    </div>
+    <div class="nav-item" id="nav-inventory" onclick="navigate('inventory')">
+      <i data-lucide="package" class="nav-icon"></i> Inventory
+    </div>
+    <div class="nav-item" id="nav-instruments" onclick="navigate('instruments')">
+      <i data-lucide="shield-check" class="nav-icon"></i> BG / EMD / PDC
+    </div>
+    <div class="nav-item" id="nav-statutory" onclick="navigate('statutory')">
+      <i data-lucide="file-badge" class="nav-icon"></i> Statutory Returns
+    </div>
+    <div class="nav-item lite-ok" id="nav-cashflow" onclick="navigate('cashflow')">
+      <i data-lucide="trending-up" class="nav-icon"></i> Cash Flow
+    </div>
+    <div class="nav-item lite-ok" id="nav-commission" onclick="navigate('commission')">
+      <i data-lucide="handshake" class="nav-icon"></i> Commission
+    </div>
+    <div class="nav-item lite-ok" id="nav-loans" onclick="navigate('loans')">
+      <i data-lucide="banknote" class="nav-icon"></i> Loans
+    </div>
+    <div class="nav-item" id="nav-labour" onclick="navigate('labour')">
+      <i data-lucide="hard-hat" class="nav-icon"></i> Labour Wages
+    </div>
+  </div>
+
+  <!-- Subcontractors -->
+  <div class="nav-section">
+    <div class="nav-label">Subcontractors</div>
+    <div class="nav-item" id="nav-subcontractors" onclick="navigate('subcontractors')">
+      <i data-lucide="wrench" class="nav-icon"></i> Subcontractors
+    </div>
+  </div>
+
+  <!-- Compliance -->
+  <div class="nav-section">
+    <div class="nav-label">Compliance</div>
+    <div class="nav-item" id="nav-gst" onclick="navigate('gst')">
+      <i data-lucide="shield-check" class="nav-icon"></i> GST &amp; TDS
+    </div>
+    <div class="nav-item lite-ok" id="nav-reports" onclick="navigate('reports')">
+      <i data-lucide="bar-chart-2" class="nav-icon"></i> Reports
+    </div>
+  </div>
+
+  <!-- System -->
+  <div class="nav-section">
+    <div class="nav-label">System</div>
+    <div class="nav-item lite-ok" id="nav-settings" onclick="navigate('settings')">
+      <i data-lucide="settings" class="nav-icon"></i> Settings
+    </div>
+    <div class="nav-item admin-only" id="nav-askerp" onclick="navigate('askerp')">
+      <i data-lucide="sparkles" class="nav-icon"></i> AI Bookkeeper
+    </div>
+    <div class="nav-item admin-only" id="nav-management" onclick="navigate('management')">
+      <i data-lucide="shield" class="nav-icon"></i> Management Entries
+    </div>
+  </div>
+
+  <!-- Footer: user card + logout -->
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="navigate('settings')">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div class="user-info">
+        <div class="name" id="userName">Administrator</div>
+        <div class="role" id="userRole">ADMIN</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">
+      <i data-lucide="log-out"></i> Sign Out
+    </button>
+  </div>
+</nav>
+
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════════ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu"><i data-lucide="menu"></i></button>
+      <div>
+        <div class="page-title" id="topTitle">Today</div>
+        <div class="page-sub" id="topSub">Your day at a glance</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div id="topbarDateEl" style="font-size:12px;color:var(--muted);margin-right:4px;"></div>
+      <button class="topbar-btn btn-ghost" id="liteToggle" onclick="toggleLiteView()" title="Switch between Simple and Full view">
+        <i data-lucide="wallet" style="width:14px;height:14px;"></i> Simple view
+      </button>
+      <button class="topbar-btn btn-ghost" onclick="openPalette()" title="Search (Ctrl-K)">
+        <i data-lucide="search" style="width:14px;height:14px;"></i> Search <span class="kbd-hint">Ctrl K</span>
+      </button>
+      <button class="topbar-btn btn-ghost" onclick="navigate('settings')">
+        <i data-lucide="settings" style="width:14px;height:14px;"></i> Settings
+      </button>
+      <button class="topbar-btn btn-accent" onclick="handleQuickAdd()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> Quick Add
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ═══ TODAY (daily driver, mobile-first) ═══ -->
+    <div class="page iframe active" id="page-today">
+      <iframe src="today.html" id="todayFrame"></iframe>
+    </div>
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="page scroll" id="page-dashboard">
+
+      <!-- KPI Row -->
+      <div class="kpi-grid">
+        <div class="kpi-card green" onclick="navigate('invoices')" style="cursor:pointer;" title="Click to open Sales Invoices">
+          <div class="kpi-top">
+            <div class="kpi-icon green"><i data-lucide="trending-up" style="width:20px;height:20px;"></i></div>
+            <span class="kpi-badge up" id="kpiRevBadge">AR</span>
+          </div>
+          <div class="kpi-label">TOTAL RECEIVABLES</div>
+          <div class="kpi-value" id="kpiRevenue">₹—</div>
+          <div class="kpi-sub" id="kpiRevSub">Click to view invoices →</div>
+        </div>
+        <div class="kpi-card red" onclick="navigate('expenses')" style="cursor:pointer;" title="Click to open Vendor Bills">
+          <div class="kpi-top">
+            <div class="kpi-icon red"><i data-lucide="credit-card" style="width:20px;height:20px;"></i></div>
+            <span class="kpi-badge down" id="kpiExpBadge">AP</span>
+          </div>
+          <div class="kpi-label">TOTAL PAYABLES</div>
+          <div class="kpi-value" id="kpiExpenses">₹—</div>
+          <div class="kpi-sub" id="kpiExpSub">Click to view vendor bills →</div>
+        </div>
+        <div class="kpi-card amber" onclick="navigate('employees')" style="cursor:pointer;" title="Click to open Employees">
+          <div class="kpi-top">
+            <div class="kpi-icon amber"><i data-lucide="users" style="width:20px;height:20px;"></i></div>
+            <span class="kpi-badge neutral" id="kpiEmpBadge">Active</span>
+          </div>
+          <div class="kpi-label">EMPLOYEES</div>
+          <div class="kpi-value" id="kpiEmployees">—</div>
+          <div class="kpi-sub" id="kpiEmpSub">Click to manage employees →</div>
+        </div>
+        <div class="kpi-card blue" onclick="navigate('banks')" style="cursor:pointer;" title="Click to open Bank Accounts">
+          <div class="kpi-top">
+            <div class="kpi-icon blue"><i data-lucide="wallet" style="width:20px;height:20px;"></i></div>
+            <span class="kpi-badge neutral" id="kpiCashBadge">Bank</span>
+          </div>
+          <div class="kpi-label">NET CASH POSITION</div>
+          <div class="kpi-value" id="kpiCash">₹—</div>
+          <div class="kpi-sub" id="kpiCashSub">Click to manage accounts →</div>
+        </div>
+        <!-- Management KPI card — hidden until PIN authenticated -->
+        <div class="kpi-card" id="kpiMgmtCard" style="display:none;cursor:pointer;background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(109,40,217,0.25));border:1px solid rgba(124,58,237,0.4);" onclick="navigate('management')">
+          <div class="kpi-top">
+            <div class="kpi-icon" style="background:rgba(124,58,237,0.2);"><i data-lucide="shield" style="width:20px;height:20px;color:#a78bfa;"></i></div>
+            <span class="kpi-badge" style="background:#4c1d95;color:#c4b5fd;">PRIVATE</span>
+          </div>
+          <div class="kpi-label" style="color:#a78bfa;">MANAGEMENT (OFF-BOOK)</div>
+          <div class="kpi-value" id="kpiMgmtNet" style="color:#c4b5fd;">₹—</div>
+          <div class="kpi-sub" style="color:#7c3aed;">Net: Income − Expenses</div>
+        </div>
+      </div>
+
+      <!-- Management PIN button on dashboard -->
+      <div style="display:flex;justify-content:flex-end;padding:0 0 8px 0;">
+        <span id="dashMgmtBadge" style="display:none;font-size:10px;background:#4c1d95;color:#c4b5fd;padding:2px 10px;border-radius:12px;font-weight:700;margin-right:8px;align-self:center;">🔓 MANAGEMENT VIEW ACTIVE</span>
+        <button id="dashMgmtBtn" onclick="toggleDashMgmt()" style="padding:5px 12px;border-radius:8px;background:rgba(124,58,237,.12);color:#a78bfa;border:1px solid rgba(124,58,237,.3);font-size:11px;font-weight:600;cursor:pointer;">🔒 Management View</button>
+      </div>
+
+      <!-- Dashboard Management PIN Modal -->
+      <div id="dashPinModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
+        <div style="background:#1e293b;border:1px solid rgba(255,255,255,.08);border-radius:14px;width:340px;padding:28px;text-align:center;">
+          <div style="font-size:24px;margin-bottom:8px;">🔒</div>
+          <div style="font-weight:700;font-size:15px;color:#f1f5f9;margin-bottom:6px;">Management View</div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:20px;line-height:1.5;">Enter PIN to reveal off-book management data on the dashboard.</div>
+          <div style="display:flex;gap:10px;justify-content:center;margin-bottom:12px;">
+            <input id="dP1" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="dPinNext(this,'dP2')" onkeydown="dPinBack(event,'','dP1')">
+            <input id="dP2" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="dPinNext(this,'dP3')" onkeydown="dPinBack(event,'dP1','dP2')">
+            <input id="dP3" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="dPinNext(this,'dP4')" onkeydown="dPinBack(event,'dP2','dP3')">
+            <input id="dP4" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="dPinNext(this,null)" onkeydown="dPinBack(event,'dP3','dP4')" onkeypress="if(event.key==='Enter')verifyDashPin()">
+          </div>
+          <div id="dPinErr" style="color:#f87171;font-size:12px;min-height:18px;margin-bottom:10px;"></div>
+          <div style="display:flex;gap:10px;justify-content:center;">
+            <button onclick="closeDashPinModal()" style="padding:8px 18px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,.15);color:#94a3b8;cursor:pointer;font-size:12px;">Cancel</button>
+            <button onclick="verifyDashPin()" style="padding:8px 18px;border-radius:8px;background:#7c3aed;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:600;">Unlock →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="charts-row">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Monthly Cash Flow</div>
+              <div class="card-sub">Inflows vs Outflows — last 6 months</div>
+            </div>
+            <button class="topbar-btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="refreshDashboard()">
+              <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i> Refresh
+            </button>
+          </div>
+          <div class="chart-wrap"><canvas id="cfChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Expense Breakdown</div>
+              <div class="card-sub">By category</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="expChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="bottom-row">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Invoices</div>
+            <button class="topbar-btn btn-ghost" style="padding:5px 10px;font-size:11px;" onclick="navigate('invoices')">View All →</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Invoice</th><th>Client</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody id="dashInvTable">
+                <tr><td colspan="4" style="text-align:center;color:var(--faint);padding:20px;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Smart Alerts</div></div>
+          <div class="alert-list" id="dashAlerts">
+            <div class="alert-item info">
+              <div class="alert-icon">ℹ️</div>
+              <div class="alert-text"><strong>Loading…</strong><span>Fetching dashboard data.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div style="margin-top:16px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Quick Actions</div></div>
+          <div class="quick-actions">
+            <div class="qa-btn" onclick="navigate('invoices')">
+              <div class="qa-icon">🧾</div>
+              <div><div style="font-size:12px;font-weight:700;">New Invoice</div><div style="font-size:11px;color:var(--muted);">Bill a client</div></div>
+            </div>
+            <div class="qa-btn" onclick="navigate('expenses')">
+              <div class="qa-icon">📦</div>
+              <div><div style="font-size:12px;font-weight:700;">Add Vendor Bill</div><div style="font-size:11px;color:var(--muted);">Record purchase</div></div>
+            </div>
+            <div class="qa-btn" onclick="navigate('employees')">
+              <div class="qa-icon">👷</div>
+              <div><div style="font-size:12px;font-weight:700;">Add Employee</div><div style="font-size:11px;color:var(--muted);">Onboard staff</div></div>
+            </div>
+            <div class="qa-btn" onclick="navigate('payroll')">
+              <div class="qa-icon">💰</div>
+              <div><div style="font-size:12px;font-weight:700;">Run Payroll</div><div style="font-size:11px;color:var(--muted);">Monthly salary</div></div>
+            </div>
+            <div class="qa-btn" onclick="navigate('purchases')">
+              <div class="qa-icon">🛒</div>
+              <div><div style="font-size:12px;font-weight:700;">Purchase Order</div><div style="font-size:11px;color:var(--muted);">Create new PO</div></div>
+            </div>
+            <div class="qa-btn" onclick="navigate('cashflow')">
+              <div class="qa-icon">📈</div>
+              <div><div style="font-size:12px;font-weight:700;">Cash Flow</div><div style="font-size:11px;color:var(--muted);">Plan &amp; track</div></div>
+            </div>
+            <div class="qa-btn" onclick="navigate('labour')">
+              <div class="qa-icon">🪖</div>
+              <div><div style="font-size:12px;font-weight:700;">Labour Muster</div><div style="font-size:11px;color:var(--muted);">Daily attendance</div></div>
+            </div>
+            <div class="qa-btn" onclick="navigate('reports')">
+              <div class="qa-icon">📊</div>
+              <div><div style="font-size:12px;font-weight:700;">GST Reports</div><div style="font-size:11px;color:var(--muted);">GSTR-1 &amp; 3B</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /dashboard -->
+
+    <!-- ═══ IFRAME PAGES — EXISTING ═══ -->
+    <div class="page iframe" id="page-employees">
+      <iframe src="employees.html" id="empFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-payroll">
+      <iframe src="employees.html" id="payFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-invoices">
+      <iframe src="invoices.html" id="invFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-expenses">
+      <iframe src="expenses.html" id="expFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-cashflow">
+      <iframe src="cashflow.html" id="cfFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-commission">
+      <iframe src="commission.html" id="commFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-loans">
+      <iframe src="loans.html" id="loansFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-banks">
+      <iframe src="cashflow.html" id="banksFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-reports">
+      <iframe src="reports.html" id="repFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-settings">
+      <iframe src="settings.html" id="settFrame"></iframe>
+    </div>
+
+    <!-- ═══ IFRAME PAGES — NEW ═══ -->
+    <div class="page iframe" id="page-clients">
+      <iframe src="clients.html" id="cliFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-vendors">
+      <iframe src="vendors.html" id="venFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-sites">
+      <iframe src="sites.html" id="siteFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-approvals">
+      <iframe src="approvals.html" id="approvalsFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-purchases">
+      <iframe src="purchases.html" id="poFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-inventory">
+      <iframe src="inventory.html" id="invFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-instruments">
+      <iframe src="instruments.html" id="instrFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-statutory">
+      <iframe src="statutory.html" id="statFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-labour">
+      <iframe src="labour.html" id="labFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-subcontractors">
+      <iframe src="subcontractors.html" id="subFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-gst">
+      <iframe src="gst.html" id="gstFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-management">
+      <iframe src="management.html" id="mgmtFrame"></iframe>
+    </div>
+    <div class="page iframe" id="page-askerp">
+      <iframe src="ask-erp.html" id="askErpFrame"></iframe>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+lucide.createIcons();
+
+// ═══════════════════════════════════════════════
+// SESSION & USER
+// ═══════════════════════════════════════════════
+const user = (() => {
+  try {
+    return JSON.parse(sessionStorage.getItem('erp_user') || '{}');
+  } catch (e) {
+    return {};
+  }
+})();
+
+// Populate user info in sidebar
+document.getElementById('userName').textContent   = user.name     || 'Administrator';
+document.getElementById('userRole').textContent   = (user.role    || 'Admin').toUpperCase();
+document.getElementById('userAvatar').textContent = (user.name    || 'A')[0].toUpperCase();
+
+// Show "Management Entries" only for admin role
+if (user.role === 'admin' || user.role === 'Admin') {
+  document.getElementById('nav-management').classList.add('show');
+}
+
+// Show "Ask the ERP" for accountant and above (matches the server-side RBAC
+// floor on ask-assistant in server/lib/rbac.js -- hiding it here is just UX,
+// the real enforcement is server-side).
+const ASKERP_ROLES = ['owner', 'admin', 'accountant'];
+if (ASKERP_ROLES.includes((user.role || '').toLowerCase())) {
+  document.getElementById('nav-askerp').classList.add('show');
+}
+
+// "Field Approvals" -- only the people who can actually approve/reject
+// (server-side: approve-field-submission defaults to accountant+, reject-
+// field-submission is explicitly accountant+ in SENSITIVE_OPS). Hiding it
+// for site_manager/staff here is just UX; the real gate is server-side.
+if (ASKERP_ROLES.includes((user.role || '').toLowerCase())) {
+  document.getElementById('nav-approvals').classList.add('show');
+  refreshApprovalsBadge();
+  setInterval(refreshApprovalsBadge, 60000);
+}
+async function refreshApprovalsBadge() {
+  try {
+    const r = await window.erp.getFieldSubmissions({ status: 'pending' });
+    const n = (r && r.success && Array.isArray(r.data)) ? r.data.length : 0;
+    const b = document.getElementById('approvalsBadge');
+    if (n > 0) { b.textContent = n; b.hidden = false; } else { b.hidden = true; }
+  } catch (e) { /* leave badge as-is */ }
+}
+
+// ═══════════════════════════════════════════════
+// DATE
+// ═══════════════════════════════════════════════
+const now = new Date();
+document.getElementById('topbarDateEl').textContent =
+  now.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+
+// ═══════════════════════════════════════════════
+// PAGE META
+// ═══════════════════════════════════════════════
+const pageMeta = {
+  today:          { title:'Today',               sub:'Your day at a glance' },
+  dashboard:      { title:'Dashboard',           sub:'Business overview for today' },
+  employees:      { title:'Employees',            sub:'Manage workforce & HR records' },
+  payroll:        { title:'Payroll',              sub:'Monthly salary & deductions' },
+  clients:        { title:'Client Master',        sub:'Manage client / customer database' },
+  vendors:        { title:'Vendor Master',        sub:'Manage vendor & supplier database' },
+  sites:          { title:'Site Master',          sub:'100+ construction sites management' },
+  banks:          { title:'Banks & Accounts',     sub:'Bank accounts & cash book' },
+  approvals:      { title:'Field Approvals',      sub:'Review attendance, expenses & advances from the site app' },
+  invoices:       { title:'Sales Invoices',       sub:'Accounts Receivable (AR)' },
+  expenses:       { title:'Vendor Bills',         sub:'Accounts Payable (AP) + OCR scanner' },
+  purchases:      { title:'Purchase Orders',      sub:'PO management & GRN' },
+  inventory:      { title:'Inventory',            sub:'Stock register, valuation & movements' },
+  instruments:    { title:'BG / EMD / PDC',       sub:'Bank guarantees, EMDs & post-dated cheques' },
+  statutory:      { title:'Statutory Returns',     sub:'PF/ESIC/TDS/GST returns & BOCW cess' },
+  cashflow:       { title:'Cash Flow',            sub:'Bank book & cash planner' },
+  commission:     { title:'Commission',           sub:'Brokerage earned & paid · 194H TDS' },
+  loans:          { title:'Loans',                 sub:'Loans taken & given · EMIs · outstanding' },
+  labour:         { title:'Labour Attendance',    sub:'Daily muster roll & wage calculation' },
+  subcontractors: { title:'Subcontractors',       sub:'Work orders & RA bills' },
+  gst:            { title:'GST & TDS',            sub:'GSTR-1, GSTR-3B, TDS tracking' },
+  reports:        { title:'Reports',              sub:'P&L, CA export pack, year-end' },
+  settings:       { title:'Settings',             sub:'Company, users, backup & license' },
+  management:     { title:'Management Entries',   sub:'Admin-only internal adjustments' },
+  askerp:         { title:'AI Bookkeeper',         sub:'Finds what needs doing — and does it on one tap' },
+};
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+let current = 'today';
+
+// Mobile off-canvas sidebar.
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar') || document.querySelector('.sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  const open = sb.classList.toggle('open');
+  if (bd) bd.classList.toggle('show', open);
+}
+function closeSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  if (sb) sb.classList.remove('open');
+  if (bd) bd.classList.remove('show');
+}
+
+// Pages that are valid navigation targets (drives hash-routing validation).
+const VALID_PAGES = new Set(Object.keys(pageMeta));
+// Tracks which pages have been shown at least once. The first time a page is
+// shown its iframe already holds a fresh load (set in the HTML), so we don't
+// reload it; on every RE-visit we pull fresh data so the screen is never stale.
+const _navVisited = new Set();
+let _suppressHash = false;
+
+// Ask an iframe page to switch to a sub-tab (payroll/banks reuse a shared frame).
+function applyFrameTab(fr, tab) {
+  if (!fr || !tab) return;
+  try { if (fr.contentWindow && fr.contentWindow.switchTab) fr.contentWindow.switchTab(tab); } catch (e) {}
+}
+// Refresh a module's data. Prefer an in-place hook the page exposes
+// (window.refreshPage) — no flash, keeps scroll/sub-tab; otherwise fall back to
+// reloading the iframe so the data is guaranteed current.
+function refreshFrame(fr, tab) {
+  if (!fr) return;
+  try {
+    const w = fr.contentWindow;
+    if (w && typeof w.refreshPage === 'function') { w.refreshPage(); applyFrameTab(fr, tab); return; }
+  } catch (e) {}
+  if (tab) {
+    const onLoad = () => { fr.removeEventListener('load', onLoad); applyFrameTab(fr, tab); };
+    fr.addEventListener('load', onLoad);
+  }
+  try { fr.contentWindow.location.reload(); } catch (e) { fr.src = fr.src; }
+}
+
+// ─── Global search / command palette (Ctrl-K) ───────────────────────────────
+let _cpResults = [], _cpSel = 0, _cpSeq = 0;
+function cpEsc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function openPalette(){
+  const ov = document.getElementById('cpOverlay');
+  ov.classList.add('open');
+  const inp = document.getElementById('cpInput');
+  inp.value = ''; _cpResults = []; _cpSel = 0;
+  document.getElementById('cpResults').innerHTML = '<div class="cp-empty">Start typing to search across your records…</div>';
+  setTimeout(() => inp.focus(), 30);
+  if (window.lucide) lucide.createIcons();
+}
+function closePalette(){ document.getElementById('cpOverlay').classList.remove('open'); }
+window.openPalette = openPalette; window.closePalette = closePalette;
+
+let _cpTimer = null;
+function cpOnInput(){
+  const q = document.getElementById('cpInput').value.trim();
+  clearTimeout(_cpTimer);
+  if (q.length < 2){ _cpResults = []; document.getElementById('cpResults').innerHTML = '<div class="cp-empty">Keep typing…</div>'; return; }
+  _cpTimer = setTimeout(() => cpSearch(q), 160);
+}
+async function cpSearch(q){
+  const seq = ++_cpSeq;
+  let r;
+  try { r = await window.erp.globalSearch({ q }); } catch(e){ r = null; }
+  if (seq !== _cpSeq) return;                 // a newer keystroke superseded this one
+  _cpResults = (r && r.success && r.data && r.data.results) || [];
+  _cpSel = 0;
+  cpRender();
+}
+function cpRender(){
+  const host = document.getElementById('cpResults');
+  if (!_cpResults.length){ host.innerHTML = '<div class="cp-empty">No matches. Try an invoice no., name or phone.</div>'; return; }
+  host.innerHTML = _cpResults.map((x, i) => `
+    <div class="cp-item ${i===_cpSel?'sel':''}" data-i="${i}" onclick="cpPick(${i})" onmousemove="cpHover(${i})">
+      <div class="cp-ic"><i data-lucide="${cpEsc(x.icon||'circle')}"></i></div>
+      <div class="cp-txt">
+        <div class="cp-label">${cpEsc(x.label)}</div>
+        ${x.sub ? `<div class="cp-sub">${cpEsc(x.sub)}</div>` : ''}
+      </div>
+      <span class="cp-type">${cpEsc(x.type)}</span>
+    </div>`).join('');
+  if (window.lucide) lucide.createIcons();
+}
+function cpHover(i){ if (i!==_cpSel){ _cpSel = i; cpUpdateSel(); } }
+function cpUpdateSel(){
+  const items = document.querySelectorAll('#cpResults .cp-item');
+  items.forEach((el, i) => el.classList.toggle('sel', i===_cpSel));
+  const sel = items[_cpSel]; if (sel) sel.scrollIntoView({ block: 'nearest' });
+}
+function cpPick(i){
+  const x = _cpResults[i]; if (!x) return;
+  closePalette();
+  navigate(x.page);
+}
+window.cpHover = cpHover; window.cpPick = cpPick;
+
+document.addEventListener('keydown', (e) => {
+  const meta = e.ctrlKey || e.metaKey;
+  if (meta && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); openPalette(); return; }
+  const ov = document.getElementById('cpOverlay');
+  if (!ov || !ov.classList.contains('open')) return;
+  if (e.key === 'Escape') { e.preventDefault(); closePalette(); }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); if (_cpResults.length){ _cpSel = (_cpSel+1)%_cpResults.length; cpUpdateSel(); } }
+  else if (e.key === 'ArrowUp')   { e.preventDefault(); if (_cpResults.length){ _cpSel = (_cpSel-1+_cpResults.length)%_cpResults.length; cpUpdateSel(); } }
+  else if (e.key === 'Enter')     { e.preventDefault(); if (_cpResults.length) cpPick(_cpSel); }
+});
+
+function navigate(page, opts) {
+  opts = opts || {};
+  closeSidebar();
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const pageEl = document.getElementById('page-' + page);
+  const navEl  = document.getElementById('nav-' + page);
+  if (!pageEl) { if (page !== 'today') navigate('today', opts); return; }
+
+  pageEl.classList.add('active');
+  if (navEl) navEl.classList.add('active');
+
+  const meta = pageMeta[page] || { title: page, sub: '' };
+  document.getElementById('topTitle').textContent = meta.title;
+  document.getElementById('topSub').textContent   = meta.sub;
+  current = page;
+
+  // Keep the URL hash in sync so a browser refresh restores THIS screen (not the
+  // dashboard), and back/forward navigate between screens — standard SPA routing.
+  if (!opts.fromHash) {
+    _suppressHash = true;
+    if (('#' + page) !== location.hash) location.hash = page;
+    setTimeout(() => { _suppressHash = false; }, 0);
+  }
+
+  // Dashboard is rendered in-page (not an iframe) and already re-fetches here.
+  if (page === 'dashboard') { refreshDashboard(); return; }
+
+  const fr  = pageEl.querySelector('iframe');
+  const tab = page === 'payroll' ? 'payroll' : page === 'banks' ? 'banks' : null;
+  if (!fr) return;
+
+  const firstShow = !_navVisited.has(page);
+  _navVisited.add(page);
+  if (firstShow) applyFrameTab(fr, tab);   // initial load is already fresh
+  else refreshFrame(fr, tab);              // re-visit -> pull fresh data
+}
+
+// Restore the screen named in the URL hash on first load / refresh / back-fwd.
+function restoreFromHash() {
+  const h = (location.hash || '').replace(/^#/, '');
+  navigate(VALID_PAGES.has(h) ? h : 'today', { fromHash: true });
+}
+window.addEventListener('hashchange', () => { if (!_suppressHash) restoreFromHash(); });
+
+// When the user returns to the app (switches back to this tab/window), refresh
+// the screen they're looking at so it reflects anything that changed meanwhile.
+// Throttled, and in-place only (no reload flash) — competitor-standard "live" feel.
+// Never repaint while the user is in the middle of something — that is what made
+// the auto-refresh look like the screen was "blinking". If a dialog is open, a
+// field is focused (they're typing), or text is selected, skip this round. The
+// frame argument is the iframe whose page we're about to refresh (or null for
+// the in-page dashboard, in which case we check the shell document).
+function userIsBusy(fr) {
+  const docs = [];
+  try { const d = fr && fr.contentWindow && fr.contentWindow.document; if (d) docs.push([d, fr.contentWindow]); } catch (e) {}
+  docs.push([document, window]);
+  for (const [d, w] of docs) {
+    try {
+      if (d.querySelector('.modal-overlay.open, .modal.open, .modal.show, dialog[open]')) return true;
+      const ae = d.activeElement;
+      if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.type !== 'checkbox' && ae.type !== 'radio') return true;
+      const sel = w.getSelection && w.getSelection();
+      if (sel && String(sel).length > 0) return true;
+    } catch (e) {}
+  }
+  return false;
+}
+
+let _lastFocusRefresh = 0;
+function softRefreshCurrent() {
+  const now = Date.now();
+  if (now - _lastFocusRefresh < 2000) return;
+  _lastFocusRefresh = now;
+  if (typeof refreshApprovalsBadge === 'function') refreshApprovalsBadge();
+  const pageEl = document.getElementById('page-' + current);
+  const fr = pageEl && pageEl.querySelector('iframe');
+  if (userIsBusy(fr)) return;
+  if (current === 'dashboard') { refreshDashboard(); return; }
+  if (fr) { try { const w = fr.contentWindow; if (w && typeof w.refreshPage === 'function') w.refreshPage(); } catch (e) {} }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') softRefreshCurrent(); });
+window.addEventListener('focus', softRefreshCurrent);
+
+// Live auto-refresh: while the tab is visible, quietly re-fetch the screen the
+// user is looking at, so data added anywhere (the field app, another machine, a
+// colleague) appears on its own with no manual refresh. In-place only (uses each
+// page's refreshPage hook); skipped on heavy/on-demand screens and whenever the
+// user is busy, and on a gentle 60s cadence so it stays a background refresh —
+// not a twitchy repaint.
+const NO_POLL = new Set(['reports', 'gst', 'statutory', 'settings', 'askerp', 'management']);
+function pollTick() {
+  if (document.visibilityState !== 'visible') return;
+  if (typeof refreshApprovalsBadge === 'function') refreshApprovalsBadge();
+  if (NO_POLL.has(current)) return;
+  const pageEl = document.getElementById('page-' + current);
+  const fr = pageEl && pageEl.querySelector('iframe');
+  if (userIsBusy(fr)) return;              // don't blink while they're working
+  if (current === 'dashboard') { refreshDashboard(); return; }
+  if (fr) { try { const w = fr.contentWindow; if (w && typeof w.refreshPage === 'function') w.refreshPage(); } catch (e) {} }
+}
+setInterval(pollTick, 60000);
+
+function handleQuickAdd() {
+  const quickMap = {
+    invoices: 'invoices', expenses: 'expenses',
+    employees: 'employees', payroll: 'payroll',
+    cashflow: 'cashflow', purchases: 'purchases',
+    labour: 'labour',
+  };
+  navigate(quickMap[current] || 'invoices');
+}
+
+// ═══════════════════════════════════════════════
+// LOGOUT
+// ═══════════════════════════════════════════════
+async function doLogout() {
+  try {
+    sessionStorage.removeItem('erp_user');
+    if (window.erp && window.erp.logout) {
+      await window.erp.logout();
+    }
+  } catch (e) {
+    console.error('Logout error:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// FORMATTERS
+// ═══════════════════════════════════════════════
+function fmt(n) {
+  const v = Math.abs(+n || 0);
+  const prefix = n < 0 ? '-₹' : '₹';
+  if (v >= 10000000) return prefix + (v / 10000000).toFixed(2) + ' Cr';
+  if (v >= 100000)   return prefix + (v / 100000).toFixed(2)   + ' L';
+  if (v >= 1000)     return prefix + (v / 1000).toFixed(1)     + 'K';
+  return prefix + Math.round(v).toLocaleString('en-IN');
+}
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ═══════════════════════════════════════════════
+// CHART INSTANCES
+// ═══════════════════════════════════════════════
+let cfChartInst  = null;
+let expChartInst = null;
+
+// ═══════════════════════════════════════════════
+// DASHBOARD — IPC-POWERED
+// ═══════════════════════════════════════════════
+async function refreshDashboard() {
+  // ── KPIs via IPC ──
+  try {
+    const kpis = await window.erp.getDashboardKPIs();
+    if (kpis && kpis.success) {
+      const d = kpis.data;
+
+      // Receivables
+      document.getElementById('kpiRevenue').textContent =
+        fmt(d.totalRec != null ? d.totalRec : 0);
+      document.getElementById('kpiRevSub').textContent =
+        (d.pendingInvCount != null ? d.pendingInvCount : 0) + ' invoices outstanding';
+
+      // Payables
+      document.getElementById('kpiExpenses').textContent =
+        fmt(d.totalPay != null ? d.totalPay : 0);
+      document.getElementById('kpiExpSub').textContent =
+        (d.pendingExpCount != null ? d.pendingExpCount : 0) + ' vendor bills pending';
+
+      // Employees
+      document.getElementById('kpiEmployees').textContent =
+        d.empCount != null ? d.empCount : '—';
+      document.getElementById('kpiEmpSub').textContent =
+        fmt(d.monthlyPayroll != null ? d.monthlyPayroll : 0) + ' payroll this month';
+
+      // Cash
+      const cash = d.bankBalance != null ? d.bankBalance : 0;
+      document.getElementById('kpiCash').textContent = fmt(cash);
+      const cashBadge = document.getElementById('kpiCashBadge');
+      if (cash >= 500000) {
+        cashBadge.textContent  = 'Healthy';
+        cashBadge.className    = 'kpi-badge up';
+      } else if (cash >= 50000) {
+        cashBadge.textContent  = 'OK';
+        cashBadge.className    = 'kpi-badge neutral';
+      } else {
+        cashBadge.textContent  = 'Low';
+        cashBadge.className    = 'kpi-badge down';
+      }
+    }
+  } catch (e) {
+    console.error('getDashboardKPIs error:', e);
+  }
+
+  // ── Cash Flow Chart — last 6 months via getTransactions ──
+  try {
+    const txRes = await window.erp.getTransactions({});
+    const txList = (txRes && txRes.success && Array.isArray(txRes.data)) ? txRes.data : [];
+
+    const months  = [];
+    const inData  = [];
+    const outData = [];
+
+    for (let i = 5; i >= 0; i--) {
+      const d  = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - i);
+      const ym  = d.toISOString().slice(0, 7);
+      const lbl = d.toLocaleString('default', { month: 'short' });
+      months.push(lbl);
+
+      // Credits = inflows, Debits = outflows
+      const monthTx = txList.filter(t => (t.txn_date || t.date || '').startsWith(ym));
+      const inSum   = monthTx
+        .filter(t => (t.type || '').toLowerCase() === 'credit' || (t.type || '').toLowerCase() === 'in')
+        .reduce((s, t) => s + (+t.amount || +t.amt || 0), 0);
+      const outSum  = monthTx
+        .filter(t => (t.type || '').toLowerCase() === 'debit' || (t.type || '').toLowerCase() === 'out')
+        .reduce((s, t) => s + (+t.amount || +t.amt || 0), 0);
+
+      inData.push(+(inSum  / 1000).toFixed(1));
+      outData.push(+(outSum / 1000).toFixed(1));
+    }
+
+    const cfCtx = document.getElementById('cfChart').getContext('2d');
+    if (cfChartInst) cfChartInst.destroy();
+    cfChartInst = new Chart(cfCtx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          { label: 'Inflows (₹K)',  data: inData,  backgroundColor: 'rgba(34,197,94,0.65)',  borderRadius: 4 },
+          { label: 'Outflows (₹K)', data: outData, backgroundColor: 'rgba(239,68,68,0.65)', borderRadius: 4 },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+        },
+        scales: {
+          x: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+          y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+        },
+      },
+    });
+
+    // ── Expense Breakdown Doughnut ──
+    const cats = {};
+    const txDebits = txList.filter(
+      t => (t.type || '').toLowerCase() === 'debit' || (t.type || '').toLowerCase() === 'out'
+    );
+    txDebits.forEach(t => {
+      const k = t.category || t.cat || 'Other';
+      cats[k] = (cats[k] || 0) + (+t.amount || +t.amt || 0);
+    });
+
+    const catKeys = Object.keys(cats).slice(0, 6);
+    const catVals = catKeys.map(k => cats[k]);
+    const COLORS  = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#a855f7', '#06b6d4'];
+    const expCtx  = document.getElementById('expChart').getContext('2d');
+    if (expChartInst) expChartInst.destroy();
+
+    if (catKeys.length === 0) {
+      expChartInst = new Chart(expCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['No Data'],
+          datasets: [{ data: [1], backgroundColor: ['#1e293b'], borderColor: ['#334155'], borderWidth: 1 }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#475569', font: { size: 11 } } } },
+        },
+      });
+    } else {
+      expChartInst = new Chart(expCtx, {
+        type: 'doughnut',
+        data: {
+          labels: catKeys,
+          datasets: [{ data: catVals, backgroundColor: COLORS, borderWidth: 0 }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+        },
+      });
+    }
+  } catch (e) {
+    console.error('getTransactions error:', e);
+    // Render empty charts gracefully
+    renderEmptyCharts();
+  }
+
+  // ── Recent Invoices via getInvoices (if available) ──
+  try {
+    const invRes = window.erp.getInvoices
+      ? await window.erp.getInvoices({})
+      : { success: false };
+
+    const invoices = (invRes && invRes.success && Array.isArray(invRes.data)) ? invRes.data : [];
+    const recent   = [...invoices].sort((a, b) => new Date(b.invoice_date || b.date) - new Date(a.invoice_date || a.date)).slice(0, 5);
+    const tbody    = document.getElementById('dashInvTable');
+
+    if (recent.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="4" style="text-align:center;color:var(--faint);padding:20px;">No invoices yet — click Sales Invoices to create one</td></tr>';
+    } else {
+      tbody.innerHTML = recent.map(inv => `
+        <tr>
+          <td style="color:var(--text);font-weight:600;">${esc(inv.invoice_no || inv.invoiceNo || String(inv.id || '') || '—')}</td>
+          <td>${esc(inv.client_name || inv.clientName || inv.client || '—')}</td>
+          <td class="amount cr">${fmt(+inv.total_amount || +inv.total || 0)}</td>
+          <td><span class="status ${esc((inv.status || '').toLowerCase())}">${esc(inv.status || 'Pending')}</span></td>
+        </tr>`).join('');
+    }
+  } catch (e) {
+    document.getElementById('dashInvTable').innerHTML =
+      '<tr><td colspan="4" style="text-align:center;color:var(--faint);padding:20px;">Could not load invoices</td></tr>';
+  }
+
+  // ── Smart Alerts ──
+  buildAlerts();
+}
+
+function buildAlerts() {
+  const alerts = [];
+  const today  = new Date();
+  const day    = today.getDate();
+
+  if (day >= 7 && day <= 11)
+    alerts.push({ type: 'warn', icon: '📅', title: 'GSTR-1 Due Soon', text: 'File GSTR-1 by 11th of this month' });
+  if (day >= 15 && day <= 20)
+    alerts.push({ type: 'warn', icon: '📅', title: 'GSTR-3B Due Soon', text: 'File GSTR-3B by 20th of this month' });
+  if (day >= 22 && day <= 25)
+    alerts.push({ type: 'info', icon: '💰', title: 'Payroll Reminder', text: 'Monthly payroll due — run salary for ' + today.toLocaleString('default', { month: 'long' }) });
+  if (day >= 5 && day <= 7)
+    alerts.push({ type: 'warn', icon: '🏦', title: 'TDS Payment Due', text: 'TDS for last month is due by 7th' });
+
+  if (alerts.length === 0)
+    alerts.push({ type: 'success', icon: '✅', title: 'All Good!', text: 'No pending compliance alerts. Keep up the great work.' });
+
+  document.getElementById('dashAlerts').innerHTML = alerts.map(a => `
+    <div class="alert-item ${a.type}">
+      <div class="alert-icon">${a.icon}</div>
+      <div class="alert-text"><strong>${a.title}</strong><span>${a.text}</span></div>
+    </div>`).join('');
+}
+
+function renderEmptyCharts() {
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    months.push(d.toLocaleString('default', { month: 'short' }));
+  }
+  const cfCtx = document.getElementById('cfChart').getContext('2d');
+  if (cfChartInst) cfChartInst.destroy();
+  cfChartInst = new Chart(cfCtx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        { label: 'Inflows (₹K)',  data: [0,0,0,0,0,0], backgroundColor: 'rgba(34,197,94,0.65)',  borderRadius: 4 },
+        { label: 'Outflows (₹K)', data: [0,0,0,0,0,0], backgroundColor: 'rgba(239,68,68,0.65)', borderRadius: 4 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+        y: { ticks: { color: '#475569' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+      },
+    },
+  });
+
+  const expCtx = document.getElementById('expChart').getContext('2d');
+  if (expChartInst) expChartInst.destroy();
+  expChartInst = new Chart(expCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['No Data'],
+      datasets: [{ data: [1], backgroundColor: ['#1e293b'], borderColor: ['#334155'], borderWidth: 1 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#475569', font: { size: 11 } } } },
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════
+// MANAGEMENT PIN — DASHBOARD
+// ═══════════════════════════════════════════════
+let dashMgmtPin = null;
+
+function toggleDashMgmt() {
+  if (dashMgmtPin) {
+    dashMgmtPin = null;
+    document.getElementById('dashMgmtBtn').textContent = '🔒 Management View';
+    document.getElementById('dashMgmtBtn').style.background = 'rgba(124,58,237,.12)';
+    document.getElementById('dashMgmtBadge').style.display = 'none';
+    document.getElementById('kpiMgmtCard').style.display = 'none';
+    refreshDashboard();
+  } else {
+    openDashPinModal();
+  }
+}
+
+function openDashPinModal() {
+  ['dP1','dP2','dP3','dP4'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('dPinErr').textContent = '';
+  document.getElementById('dashPinModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('dP1').focus(), 80);
+}
+
+function closeDashPinModal() {
+  document.getElementById('dashPinModal').style.display = 'none';
+}
+
+function dPinNext(el, nextId) { if (el.value && nextId) document.getElementById(nextId).focus(); }
+function dPinBack(e, prevId, curId) {
+  if (e.key === 'Backspace' && !document.getElementById(curId).value && prevId)
+    document.getElementById(prevId).focus();
+}
+
+async function verifyDashPin() {
+  const pin = ['dP1','dP2','dP3','dP4'].map(id => document.getElementById(id).value).join('');
+  if (pin.length < 4) { document.getElementById('dPinErr').textContent = 'Enter 4-digit PIN'; return; }
+  const r = await window.erp.verifyManagementPin(pin);
+  if (r.success && r.data.valid) {
+    dashMgmtPin = pin;
+    closeDashPinModal();
+    document.getElementById('dashMgmtBtn').textContent = '🔓 Lock Management View';
+    document.getElementById('dashMgmtBtn').style.background = 'rgba(124,58,237,.4)';
+    document.getElementById('dashMgmtBadge').style.display = '';
+    document.getElementById('kpiMgmtCard').style.display = '';
+    loadMgmtKPI();
+  } else {
+    document.getElementById('dPinErr').textContent = 'Incorrect PIN';
+    ['dP1','dP2','dP3','dP4'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('dP1').focus();
+  }
+}
+
+async function loadMgmtKPI() {
+  if (!dashMgmtPin) return;
+  try {
+    const r = await window.erp.getManagementEntries(dashMgmtPin);
+    const entries = r.success ? (r.data || []) : [];
+    const income  = entries.filter(e => e.category === 'income').reduce((s, e) => s + (e.amount || 0), 0);
+    const expense = entries.filter(e => e.category === 'expense').reduce((s, e) => s + (e.amount || 0), 0);
+    const net = income - expense;
+    document.getElementById('kpiMgmtNet').textContent = (net >= 0 ? '₹' : '-₹') + Math.abs(net).toLocaleString('en-IN');
+  } catch(e) { console.error('loadMgmtKPI error', e); }
+}
+
+// ═══════════════════════════════════════════════
+// LITE / FULL VIEW
+// ═══════════════════════════════════════════════
+// "Simple view" shows a curated, professional subset of the SAME screens —
+// daily cash in/out, the dashboard, ledger & reports, commission — and hides the
+// heavy modules (payroll, GST, statutory, inventory, etc.). It is not a separate
+// app: the toggle just filters the sidebar, so every screen keeps its full,
+// polished UI. The company-level lite_mode flag is the default on login; the
+// topbar toggle flips it and remembers the choice.
+const LITE_PAGES = new Set(['today','dashboard','banks','clients','vendors','cashflow','commission','loans','approvals','reports','settings']);
+let _liteView = false;
+function setLiteView(on, persist) {
+  _liteView = !!on;
+  document.body.classList.toggle('lite-view', _liteView);
+  const btn = document.getElementById('liteToggle');
+  if (btn) {
+    btn.classList.toggle('on', _liteView);
+    btn.innerHTML = _liteView
+      ? '<i data-lucide="layout-grid" style="width:14px;height:14px;"></i> Full view'
+      : '<i data-lucide="wallet" style="width:14px;height:14px;"></i> Simple view';
+    if (window.lucide && lucide.createIcons) { try { lucide.createIcons(); } catch (e) {} }
+  }
+  // If the open screen isn't part of Simple view, move to the cash book.
+  if (_liteView && !LITE_PAGES.has(current)) navigate('cashflow');
+  // Let the Today screen swap its quick actions (Money In/Out vs full set).
+  try { const tf = document.getElementById('todayFrame'); if (tf && tf.contentWindow && tf.contentWindow.applyQuickView) tf.contentWindow.applyQuickView(); } catch (e) {}
+  if (persist) { try { window.erp.saveCompany({ lite_mode: _liteView ? 1 : 0 }); } catch (e) {} }
+}
+
+// Open the Cash Flow money-in/out modal directly from a Today quick action.
+function quickMoney(type) {
+  navigate('cashflow');
+  const fr = document.getElementById('cfFrame');
+  setTimeout(() => { try { fr.contentWindow.openCFModal(type === 'credit' ? 'credit' : 'debit'); } catch (e) {} }, 250);
+}
+function toggleLiteView() { setLiteView(!_liteView, true); }
+async function initLiteView() {
+  try { const r = await window.erp.getCompany(); if (r && r.success && r.data && r.data.lite_mode) setLiteView(true, false); } catch (e) {}
+}
+
+// ═══════════════════════════════════════════════
+// GLOBAL AI — available on EVERY screen (floating ✨)
+// One box that answers questions, books one-line entries, and creates
+// clients/vendors/sites/heads — same engine as the AI Bookkeeper page.
+// ═══════════════════════════════════════════════
+(function initGlobalAI() {
+  let role = '';
+  try { role = (JSON.parse(sessionStorage.getItem('erp_user') || '{}').role) || ''; } catch (e) {}
+  if (!['owner', 'admin', 'accountant'].includes(role)) return;   // same floor as the AI ops
+
+  const css = document.createElement('style');
+  css.textContent = `
+  #gaiFab{position:fixed;right:22px;bottom:22px;z-index:900;width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:22px;box-shadow:0 10px 30px -8px rgba(99,102,241,.8);}
+  #gaiFab:hover{transform:scale(1.06);}
+  #gaiPanel{position:fixed;right:22px;bottom:84px;z-index:901;width:400px;max-width:calc(100vw - 34px);max-height:64vh;display:none;
+    flex-direction:column;background:var(--surface,#111826);border:1px solid var(--border,#243049);border-radius:16px;
+    box-shadow:0 30px 70px -20px rgba(0,0,0,.7);overflow:hidden;}
+  #gaiPanel.open{display:flex;}
+  #gaiHead{padding:12px 16px;border-bottom:1px solid var(--border,#243049);font-weight:700;font-size:13px;color:var(--text,#eaf0fb);display:flex;justify-content:space-between;align-items:center;}
+  #gaiThread{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;min-height:120px;}
+  .gai-m{max-width:88%;padding:9px 12px;border-radius:11px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;}
+  .gai-u{align-self:flex-end;background:#6366f1;color:#fff;}
+  .gai-b{align-self:flex-start;background:var(--surface2,#182238);color:var(--text,#eaf0fb);border:1px solid var(--border,#243049);}
+  .gai-card{border:1px solid #6366f1;border-radius:10px;padding:10px;margin-top:8px;font-size:12px;}
+  .gai-go{margin-top:8px;width:100%;background:#059669;color:#fff;border:none;border-radius:8px;padding:9px;font-weight:700;cursor:pointer;font-size:12.5px;}
+  .gai-go:disabled{opacity:.6;}
+  #gaiRow{display:flex;gap:8px;padding:10px;border-top:1px solid var(--border,#243049);}
+  #gaiIn{flex:1;background:var(--surface2,#182238);border:1px solid var(--border,#243049);border-radius:9px;color:var(--text,#eaf0fb);padding:10px 12px;font-size:13px;outline:none;}
+  #gaiSend{background:#6366f1;color:#fff;border:none;border-radius:9px;padding:0 16px;font-weight:700;cursor:pointer;}
+  .gai-hint{color:var(--muted,#8aa0c6);font-size:11px;padding:0 12px 10px;}`;
+  document.head.appendChild(css);
+
+  const fab = document.createElement('button'); fab.id = 'gaiFab'; fab.title = 'AI — ask or type an entry (Ctrl+/)'; fab.textContent = '✦';
+  const panel = document.createElement('div'); panel.id = 'gaiPanel';
+  panel.innerHTML = '<div id="gaiHead"><span>✦ AI — ask, book an entry, or create</span><span style="cursor:pointer;color:var(--muted,#8aa0c6)" id="gaiClose">✕</span></div>' +
+    '<div id="gaiThread"></div>' +
+    '<div class="gai-hint">Try: “diesel 500 paid” · “create vendor Sharma Traders 9876543210” · “who owes me money?”</div>' +
+    '<div id="gaiRow"><input id="gaiIn" placeholder="Type here…"><button id="gaiSend">Go</button></div>';
+  document.body.appendChild(fab); document.body.appendChild(panel);
+  const thread = panel.querySelector('#gaiThread'), input = panel.querySelector('#gaiIn');
+  let pending = null;
+
+  const esc2 = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const bubble = (txt, who) => { const d = document.createElement('div'); d.className = 'gai-m ' + (who === 'u' ? 'gai-u' : 'gai-b'); d.textContent = txt; thread.appendChild(d); thread.scrollTop = 1e9; return d; };
+  function draftCard(draft, host) {
+    const c = document.createElement('div'); c.className = 'gai-card';
+    c.innerHTML = '<b>' + (draft.type === 'credit' ? 'MONEY IN' : 'MONEY OUT') + ' ₹' + Math.round(draft.amount).toLocaleString('en-IN') + '</b> — ' + esc2(draft.category) +
+      '<br><span style="opacity:.75">' + esc2(draft.txn_date) + ' · ' + esc2(draft.payment_mode || 'bank') + '</span>' +
+      '<button class="gai-go">✓ Save entry</button>';
+    const b = c.querySelector('.gai-go');
+    b.onclick = async () => { b.disabled = true; b.textContent = 'Saving…';
+      const r = await window.erp.applyBookkeepingAction({ action: { type: 'record', payload: draft } });
+      b.textContent = (r && r.success) ? '✓ Saved to the books' : ((r && r.error) || 'Failed'); if (!(r && r.success)) b.disabled = false; };
+    host.appendChild(c); thread.scrollTop = 1e9;
+  }
+  function masterCard(master, host) {
+    const c = document.createElement('div'); c.className = 'gai-card';
+    c.innerHTML = '<b>New ' + esc2(master.type) + ':</b> ' + esc2(master.name) + (master.phone ? ' · ' + esc2(master.phone) : '') +
+      '<button class="gai-go">✓ Create</button>';
+    const b = c.querySelector('.gai-go');
+    b.onclick = async () => { b.disabled = true; b.textContent = 'Creating…';
+      const r = await window.erp.applyBookkeepingAction({ action: { type: 'create_master', master } });
+      b.textContent = (r && r.success) ? (r.data && r.data.existed ? '✓ Already exists — reused' : '✓ Created') : ((r && r.error) || 'Failed'); if (!(r && r.success)) b.disabled = false; };
+    host.appendChild(c); thread.scrollTop = 1e9;
+  }
+  async function send() {
+    const q = input.value.trim(); if (!q) return;
+    input.value = ''; bubble(q, 'u');
+    let r;
+    try {
+      if (pending) { const p = pending; pending = null;
+        r = await window.erp.parseQuickEntry({ fill: { draft: p.draft, slot: p.slot, dir: p.dir, text: q } });
+        if (r && r.success && r.data && r.data.draft) { const d = bubble('Entry ready — check and save:', 'b'); draftCard(r.data.draft, d); return; }
+      } else {
+        r = await window.erp.askAssistant(q);
+      }
+    } catch (e) { r = null; }
+    if (!r || !r.success) { bubble((r && r.error) || 'Could not reach the server.', 'b'); return; }
+    const d = r.data || {};
+    if (d.pending) { pending = d.pending; bubble(d.answer, 'b'); return; }
+    const host = bubble(d.answer || 'Done.', 'b');
+    if (d.draft) draftCard(d.draft, host);
+    if (d.master) masterCard(d.master, host);
+  }
+  fab.onclick = () => { panel.classList.toggle('open'); if (panel.classList.contains('open')) setTimeout(() => input.focus(), 60); };
+  panel.querySelector('#gaiClose').onclick = () => panel.classList.remove('open');
+  panel.querySelector('#gaiSend').onclick = send;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+  document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === '/') { e.preventDefault(); fab.onclick(); } });
+})();
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+// Pre-warm the dashboard data, then open the screen named in the URL hash so a
+// refresh keeps you exactly where you were (defaults to Today on a clean load).
+refreshDashboard();
+restoreFromHash();
+initLiteView();
+</script>
+</body>
+</html>

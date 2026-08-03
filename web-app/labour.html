@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Labour Wages</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;font-size:14px}
+.header{background:#fff;border-bottom:1px solid #e2e8f0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header h1{font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
+.header-actions{display:flex;gap:8px}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.btn-primary{background:#3b82f6;color:#fff}.btn-primary:hover{background:#2563eb}
+.btn-secondary{background:#f8fafc;border:1px solid #e2e8f0;color:#374151}.btn-secondary:hover{background:#f1f5f9}
+.btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}.btn-danger:hover{background:#fecaca}
+.btn-success{background:#dcfce7;color:#16a34a;border:1px solid #86efac}.btn-success:hover{background:#bbf7d0}
+.btn-orange{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}.btn-orange:hover{background:#ffedd5}
+.btn-sm{padding:5px 10px;font-size:12px}
+.tabs{display:flex;border-bottom:2px solid #e2e8f0;background:#fff;padding:0 24px}
+.tab{padding:12px 20px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;color:#64748b;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab.active{color:#3b82f6;border-bottom-color:#3b82f6}
+.content{padding:24px}
+.panel{display:none}.panel.active{display:block}
+.toolbar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.search-box{position:relative;flex:1;min-width:180px}
+.search-box input{width:100%;padding:8px 12px 8px 36px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;outline:none}
+.search-box input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.search-box .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8}
+.filter-select,.filter-input{padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;cursor:pointer;outline:none}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:10px;padding:14px;border:1px solid #e2e8f0}
+.stat-card .label{font-size:11px;color:#64748b;font-weight:500;margin-bottom:4px}
+.stat-card .value{font-size:20px;font-weight:700;color:#1e293b}
+.table-wrap{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:#f8fafc;padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
+td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:13px}
+tr:hover td{background:#f8fafc}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-p{background:#dcfce7;color:#16a34a}
+.badge-a{background:#fee2e2;color:#dc2626}
+.badge-h{background:#fef3c7;color:#059669}
+.badge-ot{background:#ede9fe;color:#7c3aed}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #e2e8f0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0}
+/* Muster Roll */
+.muster-header{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:16px;margin-bottom:16px}
+.muster-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.muster-wrap{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:auto}
+.muster-table{border-collapse:collapse;white-space:nowrap;font-size:12px}
+.muster-table th,.muster-table td{padding:8px 10px;border:1px solid #e2e8f0;text-align:center}
+.muster-table th{background:#f8fafc;font-weight:600;color:#64748b;font-size:10px;text-transform:uppercase}
+.muster-table td:first-child,.muster-table th:first-child{text-align:left;min-width:130px;font-weight:600;position:sticky;left:0;background:#fff;z-index:1}
+.muster-table th:first-child{background:#f8fafc;z-index:2}
+.att-cell{width:28px;height:28px;border-radius:4px;border:none;cursor:pointer;font-size:11px;font-weight:700;transition:all .2s}
+.att-P{background:#dcfce7;color:#16a34a}
+.att-A{background:#fee2e2;color:#dc2626}
+.att-H{background:#fef3c7;color:#059669}
+.att-OT{background:#ede9fe;color:#7c3aed}
+.att-{background:#f1f5f9;color:#94a3b8}
+.muster-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;font-size:11px}
+.muster-summary span{padding:2px 4px;border-radius:3px}
+.wage-calc-table{width:100%;border-collapse:collapse}
+.wage-calc-table th{background:#f8fafc;padding:10px;text-align:left;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0}
+.wage-calc-table td{padding:10px;border-bottom:1px solid #f1f5f9;font-size:13px}
+.wage-calc-table tr.subtotal td{background:#f8fafc;font-weight:600}
+.wage-calc-table tr.grand td{background:#eff6ff;font-weight:700;color:#1d4ed8}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#16a34a}.toast.error{background:#dc2626}
+.print-title{display:none}
+@media print{
+  .header,.tabs,.muster-controls,.toast{display:none!important}
+  body{background:#fff}
+  .content{padding:0}
+  .muster-wrap{border:none}
+  .att-cell{cursor:default}
+  .print-title{display:block;font-size:16px;font-weight:700;margin-bottom:10px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><i data-lucide="hard-hat" style="width:20px;height:20px;color:#10b981"></i> Labour Wages & Attendance</h1>
+  <div class="header-actions">
+    <button class="btn btn-secondary" onclick="exportAttendance()"><i data-lucide="download" style="width:14px;height:14px"></i> Export</button>
+    <button class="btn btn-primary" onclick="openWorkerModal()"><i data-lucide="user-plus" style="width:14px;height:14px"></i> Add Worker</button>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="showTab('workers')">Workers</button>
+  <button class="tab" onclick="showTab('muster')">Muster Roll</button>
+  <button class="tab" onclick="showTab('wages')">Wage Calculation</button>
+  <button class="tab" onclick="showTab('advances')">Advances</button>
+  <button class="tab" onclick="showTab('attendance')">Attendance Log</button>
+</div>
+<div class="content">
+
+<!-- Workers Tab -->
+<div class="panel active" id="tabWorkers">
+  <div class="stats-row">
+    <div class="stat-card"><div class="label">Total Workers</div><div class="value" id="wTotal">0</div></div>
+    <div class="stat-card"><div class="label">Active Workers</div><div class="value" id="wActive" style="color:#16a34a">0</div></div>
+    <div class="stat-card"><div class="label">Daily Wage Workers</div><div class="value" id="wDaily" style="color:#3b82f6">0</div></div>
+    <div class="stat-card"><div class="label">Avg Daily Rate</div><div class="value" id="wAvgRate" style="font-size:16px">₹0</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" class="si" style="width:16px;height:16px"></i>
+      <input type="text" id="wSearch" placeholder="Search workers..." oninput="renderWorkers()">
+    </div>
+    <select class="filter-select" id="wSiteFilter" onchange="renderWorkers()">
+      <option value="">All Sites</option>
+    </select>
+    <select class="filter-select" id="wStatusFilter" onchange="renderWorkers()">
+      <option value="">All Status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Code</th><th>Name</th><th>Trade/Skill</th><th>Site</th><th>Daily Rate (₹)</th><th>OT Rate (₹/hr)</th><th>PF Enroll</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="workerTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Muster Roll Tab -->
+<div class="panel" id="tabMuster">
+  <div class="muster-header">
+    <div class="muster-controls">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">SITE</label>
+        <select class="filter-select" id="mSite" onchange="loadMuster()">
+          <option value="">All Sites</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">MONTH</label>
+        <input type="month" class="filter-input" id="mMonth" onchange="loadMuster()">
+      </div>
+      <div style="margin-top:auto">
+        <button class="btn btn-orange btn-sm" onclick="quickFillPresent()"><i data-lucide="zap" style="width:12px;height:12px"></i> Quick-fill Present (Mon–Sat)</button>
+        <button class="btn btn-success btn-sm" onclick="saveMuster()"><i data-lucide="save" style="width:12px;height:12px"></i> Save Attendance</button>
+        <button class="btn btn-secondary btn-sm" onclick="printMuster()"><i data-lucide="printer" style="width:12px;height:12px"></i> Print</button>
+      </div>
+      <div style="margin-top:auto;margin-left:auto;font-size:12px;color:#64748b">
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;font-weight:500;">👆 Click any cell to cycle: ·→P→A→H→OT</div>
+        <span style="background:#dcfce7;color:#16a34a;padding:2px 6px;border-radius:4px;font-weight:700;margin-right:4px">P</span>Present
+        <span style="background:#fee2e2;color:#dc2626;padding:2px 6px;border-radius:4px;font-weight:700;margin:0 4px">A</span>Absent
+        <span style="background:#fef3c7;color:#059669;padding:2px 6px;border-radius:4px;font-weight:700;margin-right:4px">H</span>Half-Day
+        <span style="background:#ede9fe;color:#7c3aed;padding:2px 6px;border-radius:4px;font-weight:700;margin-right:4px">OT</span>Overtime
+      </div>
+    </div>
+  </div>
+  <div class="print-title" id="musterPrintTitle"></div>
+  <div class="muster-wrap">
+    <table class="muster-table" id="musterTable">
+      <tbody id="musterBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Wage Calculation Tab -->
+<div class="panel" id="tabWages">
+  <div class="toolbar">
+    <div>
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">SITE</label>
+      <select class="filter-select" id="wageSite" onchange="calcWages()">
+        <option value="">All Sites</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">PAY CYCLE</label>
+      <select class="filter-select" id="wageCycle" onchange="onWageCycleChange()">
+        <option value="month">Monthly</option>
+        <option value="week">Weekly</option>
+        <option value="fortnight">Fortnightly</option>
+        <option value="day">Daily</option>
+        <option value="custom">Custom range</option>
+      </select>
+    </div>
+    <!-- Monthly picker -->
+    <div id="wagePickMonth">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">MONTH</label>
+      <input type="month" class="filter-input" id="wageMonth" onchange="calcWages()">
+    </div>
+    <!-- Weekly / fortnightly / daily anchor date -->
+    <div id="wagePickAnchor" style="display:none">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px" id="wageAnchorLabel">WEEK OF</label>
+      <input type="date" class="filter-input" id="wageAnchor" onchange="calcWages()">
+    </div>
+    <!-- Custom from/to -->
+    <div id="wagePickFrom" style="display:none">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">FROM</label>
+      <input type="date" class="filter-input" id="wageFrom" onchange="calcWages()">
+    </div>
+    <div id="wagePickTo" style="display:none">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">TO</label>
+      <input type="date" class="filter-input" id="wageTo" onchange="calcWages()">
+    </div>
+    <div style="margin-top:auto">
+      <button class="btn btn-primary" onclick="calcWages()"><i data-lucide="calculator" style="width:14px;height:14px"></i> Calculate Wages</button>
+      <button class="btn btn-orange" onclick="exportWages()"><i data-lucide="file-spreadsheet" style="width:14px;height:14px"></i> Export</button>
+    </div>
+  </div>
+  <div id="wagesContent">
+    <div style="text-align:center;padding:60px;color:#94a3b8">Select site and month to calculate wages</div>
+  </div>
+</div>
+
+<!-- Advances Tab -->
+<div class="panel" id="tabAdvances">
+  <div class="stats-row">
+    <div class="stat-card"><div class="label">Total Advanced</div><div class="value" id="advTotal" style="font-size:18px">₹0</div></div>
+    <div class="stat-card"><div class="label">Recovered</div><div class="value" id="advRecovered" style="font-size:18px;color:#16a34a">₹0</div></div>
+    <div class="stat-card"><div class="label">Outstanding</div><div class="value" id="advOutstanding" style="font-size:18px;color:#ea580c">₹0</div></div>
+    <div class="stat-card"><div class="label">Workers with Advance</div><div class="value" id="advWorkers">0</div></div>
+  </div>
+  <div class="toolbar">
+    <div style="font-size:12px;color:#64748b;flex:1">Cash a worker draws against future wages (<em>kharchi</em>). It is auto-deducted from the next wage payment.</div>
+    <button class="btn btn-primary" onclick="openAdvanceModal()"><i data-lucide="hand-coins" style="width:14px;height:14px"></i> Give Advance</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Worker</th><th>Site</th><th>Amount</th><th>Recovered</th><th>Outstanding</th><th>Status</th><th>Mode</th><th>Actions</th></tr></thead>
+      <tbody id="advanceTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Attendance Log Tab -->
+<div class="panel" id="tabAttendance">
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" class="si" style="width:16px;height:16px"></i>
+      <input type="text" id="aSearch" placeholder="Search..." oninput="filterAttLog()">
+    </div>
+    <select class="filter-select" id="aSite" onchange="loadAttLog()">
+      <option value="">All Sites</option>
+    </select>
+    <input type="date" class="filter-input" id="aFromDate" onchange="loadAttLog()">
+    <input type="date" class="filter-input" id="aToDate" onchange="loadAttLog()">
+    <button class="btn btn-secondary btn-sm" onclick="loadAttLog()"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i></button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Worker</th><th>Site</th><th>Status</th><th>OT Hours</th><th>Remarks</th></tr></thead>
+      <tbody id="attLogBody"></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<!-- Worker Modal -->
+<div class="modal-overlay" id="workerModal">
+  <div class="modal">
+    <h2 id="workerModalTitle">Add Worker</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Worker Code</label>
+        <input type="text" id="wfCode" placeholder="LBR-001">
+      </div>
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="wfName" placeholder="Worker name" required>
+      </div>
+      <div class="form-group">
+        <label>Trade / Skill</label>
+        <select id="wfTrade">
+          <option value="">-- Select --</option>
+          <option>Mason</option><option>Carpenter</option><option>Electrician</option>
+          <option>Plumber</option><option>Painter</option><option>Helper</option>
+          <option>Welder</option><option>Fitter</option><option>Driver</option><option>Supervisor</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Assigned Site</label>
+        <select id="wfSite">
+          <option value="">-- No Site --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Daily Wage Rate (₹)</label>
+        <input type="number" id="wfDailyRate" placeholder="500" min="0">
+      </div>
+      <div class="form-group">
+        <label>OT Rate (₹/hr)</label>
+        <input type="number" id="wfOtRate" placeholder="75" min="0">
+      </div>
+      <div class="form-group">
+        <label>Mobile</label>
+        <input type="tel" id="wfMobile" placeholder="9XXXXXXXXX">
+      </div>
+      <div class="form-group">
+        <label>Aadhar No.</label>
+        <input type="text" id="wfAadhar" placeholder="XXXX XXXX XXXX">
+      </div>
+      <div class="form-group">
+        <label>PF Enrolled</label>
+        <select id="wfPf">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ESIC Enrolled</label>
+        <select id="wfEsic">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="wfStatus">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Join Date</label>
+        <input type="date" id="wfJoinDate">
+      </div>
+      <div class="form-group full">
+        <label>Address</label>
+        <input type="text" id="wfAddress" placeholder="Full address">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeWorkerModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWorker()"><i data-lucide="save" style="width:14px;height:14px"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Record Wage Payment modal -->
+<div class="modal-overlay" id="wagePayModal">
+  <div class="modal" style="width:460px">
+    <h2>💵 Record Wage Payment</h2>
+    <div id="wagePaySummary" style="font-size:13px;color:#475569;margin-bottom:16px"></div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">PAYMENT DATE</label>
+      <input type="date" id="wagePayDate" class="filter-input" style="width:100%">
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">MODE</label>
+      <select id="wagePayMode" class="filter-select" style="width:100%" onchange="onWagePayModeChange()">
+        <option value="cash">Cash</option>
+        <option value="bank">Bank Transfer</option>
+      </select>
+    </div>
+    <div style="margin-bottom:12px;display:none" id="wagePayBankWrap">
+      <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">BANK ACCOUNT</label>
+      <select id="wagePayBank" class="filter-select" style="width:100%"></select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeWagePayModal()">Cancel</button>
+      <button class="btn btn-primary" id="wagePayConfirmBtn" onclick="confirmWagePayment()"><i data-lucide="check" style="width:14px;height:14px"></i> Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Give Advance modal -->
+<div class="modal-overlay" id="advModal">
+  <div class="modal" style="width:460px">
+    <h2>🤝 Give Wage Advance</h2>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Worker *</label>
+        <select id="advWorker"></select>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="advDate">
+      </div>
+      <div class="form-group">
+        <label>Amount (₹) *</label>
+        <input type="number" id="advAmount" min="0" placeholder="2000">
+      </div>
+      <div class="form-group">
+        <label>Mode</label>
+        <select id="advMode" onchange="onAdvModeChange()">
+          <option value="cash">Cash</option>
+          <option value="bank">Bank Transfer</option>
+        </select>
+      </div>
+      <div class="form-group" id="advBankWrap" style="display:none">
+        <label>Bank Account</label>
+        <select id="advBank"></select>
+      </div>
+      <div class="form-group full">
+        <label>Note</label>
+        <input type="text" id="advNote" placeholder="e.g. festival advance">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeAdvanceModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAdvance()"><i data-lucide="check" style="width:14px;height:14px"></i> Record Advance</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+lucide.createIcons();
+let allWorkers=[], allSites=[], allAttendance=[], musterData={}, editWorkerId=null;
+let wageRows=[], wageMonthVal='', wagePeriodVal=null, wagePaidMap={}, allBanks=[];
+let allAdvances=[], advOutstandingByWorker={};
+
+const now=new Date();
+const curMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+
+// Rubber banding — persisted as UI preference only
+let lastWorker={};
+try{lastWorker=JSON.parse(localStorage.getItem('labour_lastWorker')||'{}');}catch(_){}
+function saveLastWorker(d){
+  lastWorker={site_id:d.site_id,trade:d.trade,pf_enrolled:d.pf_enrolled,esic_enrolled:d.esic_enrolled,daily_rate:d.daily_rate,ot_rate:d.ot_rate};
+  try{localStorage.setItem('labour_lastWorker',JSON.stringify(lastWorker));}catch(_){}
+}
+
+function fmt(n){return'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type==='error'?'error':'success');setTimeout(()=>t.classList.remove('show'),3000)}
+
+function showTab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1)).classList.add('active');
+  if(event&&event.target)event.target.classList.add('active');
+  if(name==='advances')loadAdvances();
+}
+
+async function loadData(){
+  const [wr,sr]=await Promise.all([window.erp.getLabourWorkers(),window.erp.getSites()]);
+  allWorkers=wr.success?wr.data:[];
+  allSites=sr.success?sr.data:[];
+  populateSiteSelects();
+  renderWorkers();
+  updateWorkerStats();
+  document.getElementById('mMonth').value=curMonth;
+  document.getElementById('wageMonth').value=curMonth;
+  loadMuster();
+}
+
+function populateSiteSelects(){
+  const selects=['wSiteFilter','mSite','wageSite','aSite','wfSite'];
+  selects.forEach(id=>{
+    const el=document.getElementById(id);
+    const first=el.options[0];
+    el.innerHTML='';
+    if(first)el.appendChild(first);
+    allSites.forEach(s=>{
+      const o=document.createElement('option');
+      o.value=s.id;o.textContent=s.name;
+      el.appendChild(o);
+    });
+  });
+}
+
+function updateWorkerStats(){
+  document.getElementById('wTotal').textContent=allWorkers.length;
+  document.getElementById('wActive').textContent=allWorkers.filter(w=>w.status==='active'||!w.status).length;
+  document.getElementById('wDaily').textContent=allWorkers.filter(w=>w.daily_rate>0).length;
+  const rates=allWorkers.map(w=>w.daily_rate||0).filter(r=>r>0);
+  const avg=rates.length?Math.round(rates.reduce((a,b)=>a+b,0)/rates.length):0;
+  document.getElementById('wAvgRate').textContent=fmt(avg);
+}
+
+function renderWorkers(){
+  const q=(document.getElementById('wSearch').value||'').toLowerCase();
+  const sf=document.getElementById('wSiteFilter').value;
+  const stf=document.getElementById('wStatusFilter').value;
+  const data=allWorkers.filter(w=>{
+    const m=!q||(w.name||'').toLowerCase().includes(q)||(w.code||'').toLowerCase().includes(q)||(w.trade||'').toLowerCase().includes(q);
+    const ms=!sf||String(w.site_id)===sf;
+    const mst=!stf||w.status===stf||(!w.status&&stf==='active');
+    return m&&ms&&mst;
+  });
+  const tbody=document.getElementById('workerTable');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">No workers found</td></tr>';return}
+  tbody.innerHTML=data.map(w=>`<tr>
+    <td><code style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px">${esc(w.code||'—')}</code></td>
+    <td><strong>${esc(w.name)}</strong><br><span style="font-size:11px;color:#64748b">${esc(w.mobile||'')}</span></td>
+    <td>${esc(w.trade||'—')}</td>
+    <td>${esc(w.site_name||'—')}</td>
+    <td><strong>${fmt(w.daily_rate)}</strong></td>
+    <td>${fmt(w.ot_rate)}</td>
+    <td><span class="badge ${w.pf_enrolled?'badge-p':'badge-a'}">${w.pf_enrolled?'Yes':'No'}</span></td>
+    <td><span class="badge ${!w.status||w.status==='active'?'badge-p':'badge-a'}">${!w.status||w.status==='active'?'Active':'Inactive'}</span></td>
+    <td>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-secondary btn-sm" onclick="openWorkerModal(${w.id})"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteWorker(${w.id},'${jsArg(w.name)}')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+      </div>
+    </td>
+  </tr>`).join('');
+  lucide.createIcons();
+}
+
+// ---- MUSTER ROLL ----
+let musterWorkers=[], musterDaysArr=[], musterYr=0, musterMo=0;
+async function loadMuster(){
+  const siteId=document.getElementById('mSite').value;
+  const month=document.getElementById('mMonth').value;
+  if(!month)return;
+  const [yr,mo]=month.split('-').map(Number);
+  const days=new Date(yr,mo,0).getDate();
+  const workers=siteId?allWorkers.filter(w=>String(w.site_id)===siteId):allWorkers;
+  const attFilter={month};
+  if(siteId)attFilter.site_id=siteId;
+  const r=await window.erp.getAttendance(attFilter);
+  const attRecords=r.success?r.data:[];
+  // Build musterData map: workerId -> {day: status}
+  musterData={};
+  attRecords.forEach(a=>{
+    const d=new Date(a.date).getDate();
+    if(!musterData[a.worker_id])musterData[a.worker_id]={};
+    musterData[a.worker_id][d]={status:a.status,ot_hours:a.ot_hours||0,id:a.id};
+  });
+  musterWorkers=workers; musterYr=yr; musterMo=mo;
+  musterDaysArr=Array.from({length:days},(_,i)=>i+1);
+  renderMusterGrid();
+}
+// Renders the grid purely from the in-memory musterData/musterWorkers state —
+// no server fetch — so quick-fill and other bulk edits can redraw without
+// discarding unsaved changes.
+function renderMusterGrid(){
+  const yr=musterYr,mo=musterMo,daysArr=musterDaysArr,workers=musterWorkers;
+  const days=daysArr.length;
+  let head=`<tr><th>Worker / Day</th>${daysArr.map(d=>{
+    const dt=new Date(yr,mo-1,d);
+    const isSun=dt.getDay()===0;
+    return`<th style="${isSun?'background:#fee2e2;color:#dc2626':''}">${d}<br><span style="font-size:9px">${['Su','Mo','Tu','We','Th','Fr','Sa'][dt.getDay()]}</span></th>`;
+  }).join('')}<th>P</th><th>A</th><th>H</th><th>OT</th></tr>`;
+  let rows='';
+  workers.filter(w=>!w.status||w.status==='active').forEach(w=>{
+    const wAtt=musterData[w.id]||{};
+    let pCount=0,aCount=0,hCount=0,otCount=0;
+    let cells=daysArr.map(d=>{
+      const s=(wAtt[d]&&wAtt[d].status)||'';
+      if(s==='P')pCount++;else if(s==='A')aCount++;else if(s==='H')hCount++;else if(s==='OT')otCount++;
+      const otH=s==='OT'?(wAtt[d].ot_hours||2):0;
+      return`<td><button class="att-cell att-${s}" data-wid="${w.id}" data-day="${d}" data-status="${s}" onclick="cycleAtt(this)" oncontextmenu="return editOTHours(this)" title="${otH?('Present full day + '+otH+'h overtime (right-click to change hours)'):''}">${s||'·'}</button></td>`;
+    }).join('');
+    rows+=`<tr><td><strong>${esc(w.name)}</strong><br><span style="font-size:10px;color:#94a3b8">${esc(w.trade||'—')} • ${fmt(w.daily_rate)}/day</span></td>${cells}<td style="background:#f0fdf4;color:#16a34a;font-weight:700">${pCount}</td><td style="background:#fef2f2;color:#dc2626;font-weight:700">${aCount}</td><td style="background:#fffbeb;color:#059669;font-weight:700">${hCount}</td><td style="background:#faf5ff;color:#7c3aed;font-weight:700">${otCount}</td></tr>`;
+  });
+  if(!rows)rows=`<tr><td colspan="${days+5}" style="text-align:center;padding:30px;color:#94a3b8">No active workers for selected site</td></tr>`;
+  document.getElementById('musterBody').innerHTML=head+rows;
+}
+// Most sites work Mon–Sat; an accountant's real workflow is to default the
+// whole crew to Present and then hand-correct the few exceptions (absences,
+// half-days, OT) rather than clicking every cell for every worker every day.
+// Never overwrites a cell that already has a status — purely fills blanks.
+function quickFillPresent(){
+  if(!musterWorkers.length){toast('Select a site and month first','error');return}
+  if(!confirm('Mark every worker Present for all blank Mon–Sat days this month? Sundays are left blank, and any day you already marked is left as-is.'))return;
+  let filled=0;
+  musterWorkers.filter(w=>!w.status||w.status==='active').forEach(w=>{
+    if(!musterData[w.id])musterData[w.id]={};
+    musterDaysArr.forEach(d=>{
+      const dt=new Date(musterYr,musterMo-1,d);
+      if(dt.getDay()===0)return; // Sunday left blank
+      const cur=musterData[w.id][d];
+      if(cur&&cur.status)return; // don't clobber an already-set day
+      musterData[w.id][d]={status:'P',ot_hours:0,id:cur?cur.id:null,changed:true};
+      filled++;
+    });
+  });
+  renderMusterGrid();
+  toast(filled?`Filled ${filled} day(s) as Present — review exceptions, then Save`:'Nothing to fill — every day already has a status');
+}
+
+function cycleAtt(btn){
+  const states=['','P','A','H','OT'];
+  const cur=btn.dataset.status||btn.textContent.trim();
+  const curState=states.includes(cur)?cur:(btn.classList.contains('att-P')?'P':btn.classList.contains('att-A')?'A':btn.classList.contains('att-H')?'H':btn.classList.contains('att-OT')?'OT':'');
+  const idx=(states.indexOf(curState)+1)%states.length;
+  const next=states[idx];
+  const wid=parseInt(btn.dataset.wid);
+  const day=parseInt(btn.dataset.day);
+  if(!musterData[wid])musterData[wid]={};
+  if(!musterData[wid][day])musterData[wid][day]={};
+  let otHours=musterData[wid][day].ot_hours||2;
+  if(next==='OT'){
+    // OT means "present the full day, plus this many overtime hours" — ask for
+    // the actual hours instead of silently assuming a fixed 2h every time.
+    const v=prompt('Overtime hours worked (in addition to the full present day):', otHours);
+    if(v===null)return; // cancelled — leave the cell as it was
+    const n=parseFloat(v);
+    if(!(n>0)){toast('Enter a positive number of OT hours','error');return}
+    otHours=n;
+  }
+  btn.textContent=next||'·';
+  btn.className=`att-cell att-${next}`;
+  btn.title=next==='OT'?`Present full day + ${otHours}h overtime (right-click to change hours)`:'';
+  btn.dataset.status=next;
+  musterData[wid][day].status=next;
+  musterData[wid][day].ot_hours=next==='OT'?otHours:0;
+  musterData[wid][day].changed=true;
+}
+function editOTHours(btn){
+  if(btn.dataset.status!=='OT')return false;
+  const wid=parseInt(btn.dataset.wid),day=parseInt(btn.dataset.day);
+  const cur=(musterData[wid]&&musterData[wid][day]&&musterData[wid][day].ot_hours)||2;
+  const v=prompt('Overtime hours worked:', cur);
+  if(v!==null){
+    const n=parseFloat(v);
+    if(!(n>0)){toast('Enter a positive number of OT hours','error');return false}
+    if(!musterData[wid])musterData[wid]={};
+    if(!musterData[wid][day])musterData[wid][day]={status:'OT'};
+    musterData[wid][day].ot_hours=n;
+    musterData[wid][day].changed=true;
+    btn.title=`Present full day + ${n}h overtime (right-click to change hours)`;
+  }
+  return false; // suppress the browser's context menu
+}
+
+async function saveMuster(){
+  const month=document.getElementById('mMonth').value;
+  const siteId=document.getElementById('mSite').value;
+  if(!month){toast('Select a month','error');return}
+  if(!siteId){toast('Please select a site before saving attendance','error');return}
+  const [yr,mo]=month.split('-').map(Number);
+  const records=[];
+  const delIds=[];
+  for(const [wid,days] of Object.entries(musterData)){
+    for(const [day,att] of Object.entries(days)){
+      if(!att.changed)continue; // only save cells that were actually changed this session
+      if(!att.status){
+        // Cell cleared — if it had a DB record, queue for deletion
+        if(att.id) delIds.push(att.id);
+        continue;
+      }
+      const date=`${yr}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      records.push({id:att.id||null,worker_id:parseInt(wid),site_id:siteId||null,date,status:att.status,ot_hours:att.ot_hours||0});
+    }
+  }
+  if(!records.length&&!delIds.length){toast('No changes to save');return}
+  const promises=[];
+  if(records.length) promises.push(window.erp.bulkSaveAttendance(records));
+  if(delIds.length)  promises.push(window.erp.deleteAttendanceRecords(delIds));
+  const results=await Promise.all(promises);
+  const allOk=results.every(r=>r&&r.success);
+  if(allOk){toast(`Saved ${records.length} record${records.length!==1?'s':''}${delIds.length?', removed '+delIds.length:''}`);}
+  else toast('Some records failed to save','error');
+  loadMuster();
+}
+
+// ---- WAGE CALCULATION ----
+// Construction labour is paid daily / weekly / fortnightly / monthly — the pay
+// cycle picker resolves to a real [from,to] date range, and every wage figure
+// below is computed over that range from the same per-day muster.
+function isoDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function dMon(s){const d=new Date(s+'T00:00:00');return d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]}
+function wagePeriod(){
+  const cycle=document.getElementById('wageCycle').value;
+  if(cycle==='month'){
+    const m=document.getElementById('wageMonth').value; if(!m)return null;
+    const [y,mo]=m.split('-').map(Number);
+    return {from:`${m}-01`,to:isoDate(new Date(y,mo,0)),label:new Date(y,mo-1).toLocaleString('en-IN',{month:'long',year:'numeric'})};
+  }
+  if(cycle==='custom'){
+    const from=document.getElementById('wageFrom').value,to=document.getElementById('wageTo').value;
+    if(!from||!to)return null;
+    if(from>to)return {error:'“From” date is after “To” date.'};
+    return {from,to,label:`${dMon(from)} – ${dMon(to)} ${to.slice(0,4)}`};
+  }
+  const av=document.getElementById('wageAnchor').value; if(!av)return null;
+  const a=new Date(av+'T00:00:00');
+  if(cycle==='day')return {from:av,to:av,label:dMon(av)+' '+a.getFullYear()};
+  if(cycle==='week'){
+    const dow=(a.getDay()+6)%7; // 0=Mon
+    const mon=new Date(a);mon.setDate(a.getDate()-dow);
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    return {from:isoDate(mon),to:isoDate(sun),label:'Week of '+dMon(isoDate(mon))+' – '+dMon(isoDate(sun))};
+  }
+  // fortnight: 1–15 or 16–end of the anchor's month
+  const y=a.getFullYear(),mo=a.getMonth();
+  const f=a.getDate()<=15?[new Date(y,mo,1),new Date(y,mo,15)]:[new Date(y,mo,16),new Date(y,mo+1,0)];
+  return {from:isoDate(f[0]),to:isoDate(f[1]),label:dMon(isoDate(f[0]))+' – '+dMon(isoDate(f[1]))+' '+y};
+}
+function onWageCycleChange(){
+  const c=document.getElementById('wageCycle').value;
+  document.getElementById('wagePickMonth').style.display=c==='month'?'':'none';
+  document.getElementById('wagePickAnchor').style.display=(c==='week'||c==='fortnight'||c==='day')?'':'none';
+  document.getElementById('wagePickFrom').style.display=c==='custom'?'':'none';
+  document.getElementById('wagePickTo').style.display=c==='custom'?'':'none';
+  document.getElementById('wageAnchorLabel').textContent=c==='day'?'DATE':c==='fortnight'?'DATE IN FORTNIGHT':'WEEK OF';
+  const today=new Date().toISOString().slice(0,10);
+  if((c==='week'||c==='fortnight'||c==='day')&&!document.getElementById('wageAnchor').value)document.getElementById('wageAnchor').value=today;
+  if(c==='custom'){
+    if(!document.getElementById('wageFrom').value)document.getElementById('wageFrom').value=new Date(Date.now()-6*864e5).toISOString().slice(0,10);
+    if(!document.getElementById('wageTo').value)document.getElementById('wageTo').value=today;
+  }
+  calcWages();
+}
+async function calcWages(){
+  const siteId=document.getElementById('wageSite').value;
+  const period=wagePeriod();
+  if(!period){document.getElementById('wagesContent').innerHTML='<div style="text-align:center;padding:40px;color:#94a3b8">Pick a pay cycle and date to calculate wages</div>';return}
+  if(period.error){document.getElementById('wagesContent').innerHTML='<div style="text-align:center;padding:40px;color:#dc2626">'+esc(period.error)+'</div>';return}
+  wagePeriodVal=period;
+  wageMonthVal=period.from.slice(0,7);
+  const r=await window.erp.getAttendance({from:period.from,to:period.to,site_id:siteId||undefined});
+  const att=r.success?r.data:[];
+  // Wages already PAID for a period OVERLAPPING this one — show a Paid badge and
+  // block paying twice (so week-1 and week-2 of a month stay independent).
+  wagePaidMap={};
+  try{ const pr=await window.erp.getLabourPayments({from:period.from,to:period.to}); (pr&&pr.success?pr.data:[]).forEach(p=>{wagePaidMap[p.worker_id]=p}); }catch(e){}
+  // Outstanding wage advances per worker — recovered automatically when paying.
+  advOutstandingByWorker={};
+  try{ const ar=await window.erp.getLabourAdvances({status:'open'}); (ar&&ar.success?ar.data:[]).forEach(av=>{advOutstandingByWorker[av.worker_id]=(advOutstandingByWorker[av.worker_id]||0)+(av.balance_amount||0)}); }catch(e){}
+  if(!allBanks.length){ try{ const br=await window.erp.getBanks(); allBanks=(br&&br.success?br.data:[])||[]; }catch(e){} }
+  const workers=siteId?allWorkers.filter(w=>String(w.site_id)===siteId):allWorkers;
+  // Aggregate per worker
+  const wageMap={};
+  workers.forEach(w=>{wageMap[w.id]={...w,P:0,A:0,H:0,OT:0,ot_hrs:0}});
+  att.forEach(a=>{
+    if(!wageMap[a.worker_id])return;
+    const s=a.status;
+    if(s==='P')wageMap[a.worker_id].P++;
+    else if(s==='A')wageMap[a.worker_id].A++;
+    else if(s==='H')wageMap[a.worker_id].H++;
+    else if(s==='OT'){wageMap[a.worker_id].OT++;wageMap[a.worker_id].ot_hrs+=(a.ot_hours||0);}
+  });
+  let totalWages=0,totalPf=0,totalEsic=0;
+  let rows='';
+  wageRows=[];
+  Object.values(wageMap).forEach(w=>{
+    const basic=(w.P+(w.H*0.5)+(w.OT*1))*(w.daily_rate||0);
+    const ot=w.ot_hrs*(w.ot_rate||0);
+    const gross=basic+ot;
+    const pf=w.pf_enrolled?Math.round(gross*0.12):0;
+    const esic=w.esic_enrolled&&gross<=21000?Math.round(gross*0.0075):0;
+    const net=gross-pf-esic;
+    const days=w.P+(w.H*0.5)+w.OT;
+    totalWages+=net;totalPf+=pf;totalEsic+=esic;
+    wageRows.push({worker_id:w.id,name:w.name,site_id:w.site_id,days,gross,pf,esic,net});
+    const paid=wagePaidMap[w.id];
+    const chkCell = paid
+      ? '<span style="font-size:10px;font-weight:700;color:#16a34a;background:#f0fdf4;border:1px solid #86efac;padding:2px 7px;border-radius:10px">✓ Paid</span>'
+      : (net>0?`<input type="checkbox" class="wage-chk" data-wid="${w.id}">`:'<span style="color:#cbd5e1">—</span>');
+    rows+=`<tr>
+      <td style="text-align:center">${chkCell}</td>
+      <td><strong>${esc(w.name)}</strong><br><span style="font-size:11px;color:#64748b">${esc(w.trade||'—')}</span></td>
+      <td>${w.daily_rate||0}</td>
+      <td>${w.P}</td><td>${w.H}</td><td>${w.OT}</td><td>${w.ot_hrs}</td>
+      <td>${fmt(basic)}</td><td>${fmt(ot)}</td><td>${fmt(gross)}</td>
+      <td>${pf?fmt(pf):'—'}</td><td>${esic?fmt(esic):'—'}</td>
+      <td><strong>${fmt(net)}</strong></td>
+    </tr>`;
+  });
+  const mName=period.label;
+  document.getElementById('wagesContent').innerHTML=`
+    <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div><strong style="font-size:15px">Wage Sheet — ${esc(mName)}</strong><span style="margin-left:8px;font-size:11px;color:#94a3b8">${period.from} → ${period.to}</span>${siteId?'<span style="margin-left:8px;font-size:12px;color:#64748b">'+esc(allSites.find(s=>String(s.id)===siteId)?.name||'')+'</span>':''}</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-primary" onclick="openWagePayModal()"><i data-lucide="wallet" style="width:14px;height:14px"></i> Record Payment</button>
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:2px">Net Wages</div><div style="font-weight:700;color:#16a34a">${fmt(totalWages)}</div></div>
+          <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:2px">PF</div><div style="font-weight:700;color:#2563eb">${fmt(totalPf)}</div></div>
+          <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:10px;color:#64748b;margin-bottom:2px">ESIC</div><div style="font-weight:700;color:#059669">${fmt(totalEsic)}</div></div>
+        </div>
+      </div>
+      <div style="overflow:auto">
+      <table class="wage-calc-table">
+        <thead><tr>
+          <th style="text-align:center"><input type="checkbox" id="wageChkAll" onclick="toggleWageAll(this)"></th>
+          <th>Worker</th><th>Rate/Day</th><th>P</th><th>H</th><th>OT Days</th><th>OT Hrs</th>
+          <th>Basic</th><th>OT Pay</th><th>Gross</th><th>PF (12%)</th><th>ESIC</th><th>Net Pay</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="grand">
+          <td colspan="9">Grand Total</td>
+          <td>${fmt(totalWages+totalPf+totalEsic)}</td>
+          <td>${fmt(totalPf)}</td>
+          <td>${fmt(totalEsic)}</td>
+          <td>${fmt(totalWages)}</td>
+        </tr></tfoot>
+      </table>
+      </div>
+    </div>`;
+  if(window.lucide&&lucide.createIcons)lucide.createIcons();
+}
+
+// ── Labour wage payment recording ─────────────────────────────────────────────
+function toggleWageAll(master){
+  document.querySelectorAll('.wage-chk').forEach(cb=>{cb.checked=master.checked});
+}
+function checkedWageIds(){
+  return [...document.querySelectorAll('.wage-chk:checked')].map(cb=>+cb.getAttribute('data-wid'));
+}
+function onWagePayModeChange(){
+  document.getElementById('wagePayBankWrap').style.display =
+    document.getElementById('wagePayMode').value==='bank' ? 'block' : 'none';
+}
+function closeWagePayModal(){document.getElementById('wagePayModal').classList.remove('open')}
+function openWagePayModal(){
+  const ids=checkedWageIds();
+  if(!ids.length){toast('Tick one or more workers to pay','error');return}
+  const rows=wageRows.filter(r=>ids.includes(r.worker_id));
+  const total=rows.reduce((s,r)=>s+r.net,0);
+  const advRecover=rows.reduce((s,r)=>s+Math.min(advOutstandingByWorker[r.worker_id]||0,r.net),0);
+  const netCash=total-advRecover;
+  document.getElementById('wagePaySummary').innerHTML=
+    `Paying <strong>${rows.length}</strong> worker(s) net wages of <strong style="color:#16a34a">${fmt(total)}</strong> for <strong>${esc((wagePeriodVal&&wagePeriodVal.label)||wageMonthVal)}</strong>.`
+    +(advRecover>0?`<div style="margin-top:8px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412">Less advances recovered: <strong>${fmt(advRecover)}</strong> &nbsp;→&nbsp; Net cash to pay: <strong>${fmt(netCash)}</strong></div>`:'');
+  document.getElementById('wagePayDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('wagePayMode').value='cash';
+  document.getElementById('wagePayBank').innerHTML=allBanks.map(b=>`<option value="${b.id}">${esc(b.account_name||b.bank_name||('A/c '+b.id))}</option>`).join('');
+  onWagePayModeChange();
+  document.getElementById('wagePayModal').classList.add('open');
+}
+async function confirmWagePayment(){
+  const ids=checkedWageIds();
+  if(!ids.length){toast('No workers selected','error');closeWagePayModal();return}
+  const mode=document.getElementById('wagePayMode').value;
+  const bankId=mode==='bank'?(document.getElementById('wagePayBank').value||null):null;
+  if(mode==='bank'&&!bankId){toast('Select a bank account','error');return}
+  const payDate=document.getElementById('wagePayDate').value||new Date().toISOString().slice(0,10);
+  const btn=document.getElementById('wagePayConfirmBtn');btn.disabled=true;
+  const rows=wageRows.filter(r=>ids.includes(r.worker_id));
+  const per=wagePeriodVal||{};
+  let done=0,failed=0,firstErr='';
+  for(const r of rows){
+    try{
+      const res=await window.erp.saveLabourPayment({
+        worker_id:r.worker_id, site_id:r.site_id||null,
+        period_month:wageMonthVal, period_from:per.from||null, period_to:per.to||null, period_label:per.label||null,
+        payment_date:payDate, days_present:r.days, gross:r.gross, pf:r.pf, esic:r.esic,
+        advance_deducted:Math.min(advOutstandingByWorker[r.worker_id]||0,r.net),
+        net_amount:r.net, payment_mode:mode, bank_account_id:bankId
+      });
+      if(res&&res.success===false){failed++;if(!firstErr)firstErr=res.error||'';}else{done++;}
+    }catch(e){failed++;}
+  }
+  btn.disabled=false;
+  closeWagePayModal();
+  toast(`${done} payment(s) recorded${failed?(' · '+failed+' failed'+(firstErr?': '+firstErr:'')):''}`, failed?'error':'success');
+  calcWages();
+}
+
+function exportWages(){
+  const table=document.querySelector('.wage-calc-table');
+  if(!table){toast('Calculate wages first','error');return}
+  let csv='Worker,Rate/Day,P,H,OT Days,OT Hrs,Basic,OT Pay,Gross,PF,ESIC,Net Pay\n';
+  table.querySelectorAll('tbody tr').forEach(tr=>{
+    // Skip the leading checkbox/paid column.
+    csv+=Array.from(tr.querySelectorAll('td')).slice(1).map(td=>'"'+td.textContent.trim().replace(/"/g,'""')+'"').join(',')+'\n';
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='wages.csv';a.click();URL.revokeObjectURL(url);
+  toast('Exported');
+}
+
+// ---- WAGE ADVANCES (kharchi) ----
+async function loadAdvances(){
+  try{ const r=await window.erp.getLabourAdvances({}); allAdvances=(r&&r.success&&r.data)||[]; }catch(e){ allAdvances=[]; }
+  // Outstanding by worker — used by the wage sheet to auto-recover.
+  advOutstandingByWorker={};
+  allAdvances.forEach(a=>{ if(a.status==='open') advOutstandingByWorker[a.worker_id]=(advOutstandingByWorker[a.worker_id]||0)+(a.balance_amount||0); });
+  const total=allAdvances.reduce((s,a)=>s+(a.amount||0),0);
+  const rec=allAdvances.reduce((s,a)=>s+(a.recovered_amount||0),0);
+  const out=allAdvances.reduce((s,a)=>s+(a.balance_amount||0),0);
+  document.getElementById('advTotal').textContent=fmt(total);
+  document.getElementById('advRecovered').textContent=fmt(rec);
+  document.getElementById('advOutstanding').textContent=fmt(out);
+  document.getElementById('advWorkers').textContent=Object.keys(advOutstandingByWorker).length;
+  const tbody=document.getElementById('advanceTable');
+  if(!allAdvances.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">No advances given yet</td></tr>';return}
+  const badge=s=>s==='recovered'?'badge-p':'badge-h';
+  tbody.innerHTML=allAdvances.map(a=>`<tr>
+    <td>${a.advance_date||'—'}</td>
+    <td><strong>${esc(a.worker_name||'—')}</strong><br><span style="font-size:11px;color:#64748b">${esc(a.trade||'')}</span></td>
+    <td>${esc(a.site_name||'—')}</td>
+    <td><strong>${fmt(a.amount)}</strong></td>
+    <td style="color:#16a34a">${fmt(a.recovered_amount)}</td>
+    <td style="color:#ea580c"><strong>${fmt(a.balance_amount)}</strong></td>
+    <td><span class="badge ${badge(a.status)}">${a.status==='recovered'?'Recovered':'Open'}</span></td>
+    <td>${esc(a.payment_mode||'cash')}</td>
+    <td>${a.recovered_amount>0?'<span class="muted" style="color:#cbd5e1">—</span>':`<button class="btn btn-danger btn-sm" onclick="deleteAdvance(${a.id})"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>`}</td>
+  </tr>`).join('');
+  if(window.lucide)lucide.createIcons();
+}
+function onAdvModeChange(){ document.getElementById('advBankWrap').style.display=document.getElementById('advMode').value==='bank'?'':'none'; }
+function openAdvanceModal(){
+  const sel=document.getElementById('advWorker');
+  sel.innerHTML='<option value="">— Select worker —</option>'+allWorkers.filter(w=>!w.status||w.status==='active').map(w=>`<option value="${w.id}" data-site="${w.site_id||''}">${esc(w.name)}${w.trade?' · '+esc(w.trade):''}</option>`).join('');
+  document.getElementById('advDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('advAmount').value='';
+  document.getElementById('advNote').value='';
+  document.getElementById('advMode').value='cash';
+  if(!allBanks.length){ window.erp.getBanks().then(br=>{allBanks=(br&&br.success&&br.data)||[];fillAdvBanks();}); } else fillAdvBanks();
+  onAdvModeChange();
+  document.getElementById('advModal').classList.add('open');
+}
+function fillAdvBanks(){ document.getElementById('advBank').innerHTML=allBanks.map(b=>`<option value="${b.id}">${esc(b.account_name||b.bank_name||('A/c '+b.id))}</option>`).join(''); }
+function closeAdvanceModal(){ document.getElementById('advModal').classList.remove('open'); }
+async function saveAdvance(){
+  const sel=document.getElementById('advWorker');
+  const wid=+sel.value||0;
+  const amount=+document.getElementById('advAmount').value||0;
+  if(!wid){toast('Select a worker','error');return}
+  if(!(amount>0)){toast('Enter an advance amount','error');return}
+  const mode=document.getElementById('advMode').value;
+  const bankId=mode==='bank'?(document.getElementById('advBank').value||null):null;
+  if(mode==='bank'&&!bankId){toast('Select a bank account','error');return}
+  const opt=sel.options[sel.selectedIndex];
+  const r=await window.erp.saveLabourAdvance({
+    worker_id:wid, site_id:opt?.dataset?.site||null, advance_date:document.getElementById('advDate').value,
+    amount, payment_mode:mode, bank_account_id:bankId, notes:document.getElementById('advNote').value.trim()
+  });
+  if(r&&r.success){ toast('Advance recorded'); closeAdvanceModal(); loadAdvances(); }
+  else toast((r&&r.error)||'Save failed','error');
+}
+async function deleteAdvance(id){
+  if(!confirm('Delete this advance? (only allowed before any of it is recovered)'))return;
+  const r=await window.erp.deleteLabourAdvance(id);
+  if(r&&r.success){ toast('Advance deleted'); loadAdvances(); }
+  else toast((r&&r.error)||'Cannot delete','error');
+}
+
+// ---- ATTENDANCE LOG ----
+let allAttLog=[];
+async function loadAttLog(){
+  const siteId=document.getElementById('aSite').value;
+  const from=document.getElementById('aFromDate').value;
+  const to=document.getElementById('aToDate').value;
+  const r=await window.erp.getAttendance({site_id:siteId||undefined,from,to});
+  allAttLog=r.success?r.data:[];
+  filterAttLog();
+}
+function filterAttLog(){
+  const q=(document.getElementById('aSearch').value||'').toLowerCase();
+  const data=allAttLog.filter(a=>!q||(a.worker_name||'').toLowerCase().includes(q)||(a.site_name||'').toLowerCase().includes(q));
+  const tbody=document.getElementById('attLogBody');
+  const attMap={P:'badge-p',A:'badge-a',H:'badge-h',OT:'badge-ot'};
+  if(!data.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8">No records</td></tr>';return}
+  tbody.innerHTML=data.slice(0,200).map(a=>`<tr>
+    <td>${a.date||'—'}</td>
+    <td>${esc(a.worker_name||'—')}</td>
+    <td>${esc(a.site_name||'—')}</td>
+    <td><span class="badge ${attMap[a.status]||''}">${esc(a.status||'—')}</span></td>
+    <td>${a.ot_hours||0}</td>
+    <td>${esc(a.remarks||'—')}</td>
+  </tr>`).join('');
+}
+
+function exportAttendance(){
+  const data=allAttLog;
+  const rows=[['Date','Worker','Site','Status','OT Hours','Remarks']];
+  data.forEach(a=>rows.push([a.date,a.worker_name,a.site_name||'',a.status,a.ot_hours||0,a.remarks||'']));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='attendance.csv';a.click();URL.revokeObjectURL(url);
+  toast('Exported');
+}
+
+function printMuster(){
+  const month=document.getElementById('mMonth').value;
+  const siteId=document.getElementById('mSite').value;
+  const siteName=siteId?(allSites.find(s=>String(s.id)===siteId)?.name||''):'All Sites';
+  const monthLabel=month?new Date(month+'-01T00:00:00').toLocaleString('en-IN',{month:'long',year:'numeric'}):'';
+  document.getElementById('musterPrintTitle').textContent=`Muster Roll — ${siteName} — ${monthLabel}`;
+  window.print();
+}
+
+// ---- WORKER MODAL ----
+function nextWorkerCode(){
+  const codes=allWorkers.map(w=>parseInt((w.code||'').replace(/\D/g,'')||'0'));
+  const max=codes.length?Math.max(...codes):0;
+  return 'LW-'+String(max+1).padStart(4,'0');
+}
+
+function openWorkerModal(id=null){
+  editWorkerId=id;
+  document.getElementById('workerModalTitle').textContent=id?'Edit Worker':'Add Worker';
+  if(id){
+    const w=allWorkers.find(x=>x.id===id);
+    if(!w)return;
+    document.getElementById('wfCode').value=w.code||'';
+    document.getElementById('wfName').value=w.name||'';
+    document.getElementById('wfTrade').value=w.trade||'';
+    document.getElementById('wfSite').value=w.site_id||'';
+    document.getElementById('wfDailyRate').value=w.daily_rate||'';
+    document.getElementById('wfOtRate').value=w.ot_rate||'';
+    document.getElementById('wfMobile').value=w.mobile||'';
+    document.getElementById('wfAadhar').value=w.aadhar||'';
+    document.getElementById('wfPf').value=w.pf_enrolled?'1':'0';
+    document.getElementById('wfEsic').value=w.esic_enrolled?'1':'0';
+    document.getElementById('wfStatus').value=w.status||'active';
+    document.getElementById('wfJoinDate').value=w.join_date||'';
+    document.getElementById('wfAddress').value=w.address||'';
+  } else {
+    // Smart defaults + rubber banding
+    document.getElementById('wfCode').value=nextWorkerCode();
+    document.getElementById('wfName').value='';
+    document.getElementById('wfMobile').value='';
+    document.getElementById('wfAadhar').value='';
+    document.getElementById('wfAddress').value='';
+    document.getElementById('wfTrade').value=lastWorker.trade||'';
+    document.getElementById('wfSite').value=lastWorker.site_id||'';
+    document.getElementById('wfDailyRate').value=lastWorker.daily_rate||'';
+    document.getElementById('wfOtRate').value=lastWorker.ot_rate||'';
+    document.getElementById('wfPf').value=lastWorker.pf_enrolled!=null?String(lastWorker.pf_enrolled):'0';
+    document.getElementById('wfEsic').value=lastWorker.esic_enrolled!=null?String(lastWorker.esic_enrolled):'0';
+    document.getElementById('wfStatus').value='active';
+    document.getElementById('wfJoinDate').value=new Date().toISOString().split('T')[0];
+  }
+  document.getElementById('workerModal').classList.add('open');
+  setTimeout(()=>document.getElementById('wfName').focus(),100);
+}
+function closeWorkerModal(){document.getElementById('workerModal').classList.remove('open')}
+
+async function saveWorker(){
+  const name=document.getElementById('wfName').value.trim();
+  if(!name){toast('Name is required','error');return}
+  const data={
+    id:editWorkerId||undefined,
+    code:document.getElementById('wfCode').value.trim(),
+    name,
+    trade:document.getElementById('wfTrade').value,
+    site_id:document.getElementById('wfSite').value||null,
+    daily_rate:parseFloat(document.getElementById('wfDailyRate').value)||0,
+    ot_rate:parseFloat(document.getElementById('wfOtRate').value)||0,
+    mobile:document.getElementById('wfMobile').value.trim(),
+    aadhar:document.getElementById('wfAadhar').value.trim(),
+    pf_enrolled:document.getElementById('wfPf').value==='1'?1:0,
+    esic_enrolled:document.getElementById('wfEsic').value==='1'?1:0,
+    status:document.getElementById('wfStatus').value,
+    join_date:document.getElementById('wfJoinDate').value||null,
+    address:document.getElementById('wfAddress').value.trim()
+  };
+  const r=await window.erp.saveLabourWorker(data);
+  if(r.success){
+    saveLastWorker(data);
+    toast(editWorkerId?'Worker updated':'Worker added');
+    closeWorkerModal();
+    loadData();
+  } else toast(r.error||'Save failed','error');
+}
+
+async function deleteWorker(id,name){
+  if(!confirm(`Delete worker "${name}"?`))return;
+  const r=await window.erp.deleteLabourWorker(id);
+  if(r.success){toast('Worker deleted');loadData();}
+  else toast(r.error||'Delete failed','error');
+}
+
+window.refreshPage = function(){ loadData(); };  // live auto-refresh from the app shell
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+(function boot(tries) {
+  if (window.erp) { loadData();
+  const today=new Date();
+  document.getElementById('aFromDate').value=today.toISOString().split('T')[0];
+  document.getElementById('aToDate').value=today.toISOString().split('T')[0]; return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

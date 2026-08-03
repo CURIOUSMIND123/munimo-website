@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Client Master</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;
+  --info:#3b82f6;--purple:#a855f7;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 24px;border-bottom:1px solid var(--border);}
+.kpi{background:var(--surface2);border-radius:10px;padding:14px 16px;border:1px solid var(--border);}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+.kpi-val{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.kpi-sub{font-size:11px;color:var(--faint);margin-top:2px;}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;gap:10px;flex-wrap:wrap;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 14px;flex:1;max-width:300px;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%;}
+.search-box input::placeholder{color:var(--faint);}
+.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+.btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2);}
+.btn-danger:hover{background:rgba(239,68,68,0.22);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+
+/* TABLE */
+.tc{padding:0 24px 24px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:13px;color:var(--muted);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+.name-bold{font-weight:600;color:var(--text);}
+.sub-text{font-size:11px;color:var(--faint);}
+.code-badge{font-size:11px;font-weight:700;font-family:monospace;background:var(--surface3);color:var(--info);padding:2px 7px;border-radius:5px;}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.b-active{background:rgba(34,197,94,0.12);color:var(--success);}
+.b-inactive{background:rgba(148,163,184,0.1);color:var(--muted);}
+.b-prospect{background:rgba(16,185,129,0.12);color:var(--accent);}
+.b-blacklisted{background:rgba(239,68,68,0.12);color:var(--danger);}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;}
+.overdue{color:var(--danger);}
+.action-btns{display:flex;gap:5px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:820px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px;}
+.close-btn:hover{color:var(--text);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+input,select,textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:10px 14px;font-size:13px;color:var(--text);outline:none;
+  transition:border-color 0.2s;width:100%;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);background:rgba(16,185,129,0.04);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:70px;}
+.section-hdr{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:0.5px;text-transform:uppercase;padding:6px 0 2px;border-bottom:1px solid rgba(16,185,129,0.15);margin-bottom:2px;grid-column:1/-1;}
+.checkbox-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);}
+.checkbox-row input{width:auto;padding:0;}
+
+/* CONFIRM DIALOG */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:300;display:none;align-items:center;justify-content:center;padding:16px;}
+.confirm-overlay.open{display:flex;}
+.confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,0.7);}
+.confirm-icon{width:44px;height:44px;background:rgba(239,68,68,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.confirm-title{font-size:15px;font-weight:700;margin-bottom:8px;}
+.confirm-msg{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.confirm-btns{display:flex;gap:10px;justify-content:flex-end;}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 24px;color:var(--faint);}
+.empty svg{margin-bottom:12px;opacity:0.4;}
+.empty p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;z-index:500;display:none;gap:8px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.toast.show{display:flex;}
+.toast.t-success{border-color:rgba(34,197,94,0.3);color:var(--success);}
+.toast.t-error{border-color:rgba(239,68,68,0.3);color:var(--danger);}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+</style>
+</head>
+<body>
+
+<!-- KPI ROW -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-lbl">Total Active Clients</div>
+    <div class="kpi-val" id="kpiActive" style="color:var(--accent);">0</div>
+    <div class="kpi-sub">All active clients</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Total Outstanding Receivable</div>
+    <div class="kpi-val" id="kpiOutstanding" style="color:var(--info);">₹0</div>
+    <div class="kpi-sub">Across all clients</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Overdue Count</div>
+    <div class="kpi-val" id="kpiOverdue" style="color:var(--danger);">0</div>
+    <div class="kpi-sub">Invoices past due date</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Total Retention Held</div>
+    <div class="kpi-val" id="kpiRetention" style="color:var(--purple);">₹0</div>
+    <div class="kpi-sub">Retention across projects</div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-box">
+    <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+    <input type="text" id="searchInput" placeholder="Search clients..." oninput="applyFilters()">
+  </div>
+  <div class="toolbar-right">
+    <select id="statusFilter" onchange="applyFilters()" style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--muted);outline:none;">
+      <option value="">All Status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="prospect">Prospect</option>
+      <option value="blacklisted">Blacklisted</option>
+    </select>
+    <button class="btn btn-outline" onclick="exportCSV()">
+      <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+    </button>
+    <button class="btn btn-primary" onclick="openModal()">
+      <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Client
+    </button>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="tc">
+  <table id="clientTable">
+    <thead>
+      <tr>
+        <th>Client Code</th>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>GSTIN</th>
+        <th>Credit Limit</th>
+        <th>Outstanding</th>
+        <th>Retention</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="clientBody"></tbody>
+  </table>
+  <div class="empty" id="emptyState" style="display:none;">
+    <i data-lucide="users" style="width:48px;height:48px;"></i>
+    <p>No clients found.<br>Add your first client to get started.</p>
+    <button class="btn btn-primary" onclick="openModal()">
+      <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Client
+    </button>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="modal-overlay" id="clientModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add New Client</div>
+      <button class="close-btn" onclick="closeModal()">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="clientForm" class="form-grid">
+        <input type="hidden" id="fId">
+
+        <!-- Basic Info -->
+        <div class="section-hdr">Basic Information</div>
+
+        <div class="form-group">
+          <label>Client Code</label>
+          <input type="text" id="fCode" placeholder="Auto-generated" readonly style="color:var(--faint);">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="fStatus">
+            <option value="active">Active</option>
+            <option value="prospect">Prospect</option>
+            <option value="inactive">Inactive</option>
+            <option value="blacklisted">Blacklisted</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Client Name *</label>
+          <input type="text" id="fName" placeholder="Legal / Registered Name" required>
+        </div>
+        <div class="form-group">
+          <label>Trade Name</label>
+          <input type="text" id="fTradeName" placeholder="DBA / Trade name">
+        </div>
+
+        <!-- Contact -->
+        <div class="section-hdr">Contact Details</div>
+
+        <div class="form-group">
+          <label>Contact Person</label>
+          <input type="text" id="fContactPerson" placeholder="Primary contact name">
+        </div>
+        <div class="form-group">
+          <label>Phone *</label>
+          <input type="tel" id="fPhone" placeholder="10-digit mobile">
+        </div>
+        <div class="form-group">
+          <label>Alternate Phone</label>
+          <input type="tel" id="fAltPhone" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="fEmail" placeholder="client@email.com">
+        </div>
+        <div class="form-group full">
+          <label>Address</label>
+          <textarea id="fAddress" rows="2" placeholder="Street address"></textarea>
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="fCity" placeholder="City">
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input type="text" id="fState" placeholder="State">
+        </div>
+        <div class="form-group">
+          <label>Pincode</label>
+          <input type="text" id="fPincode" placeholder="6-digit PIN">
+        </div>
+
+        <!-- GST Details -->
+        <div class="section-hdr">GST Details</div>
+
+        <div class="form-group">
+          <label>GSTIN</label>
+          <input type="text" id="fGstin" placeholder="15-char GST number" style="text-transform:uppercase;" maxlength="15">
+        </div>
+        <div class="form-group">
+          <label>PAN</label>
+          <input type="text" id="fPan" placeholder="10-char PAN" style="text-transform:uppercase;" maxlength="10">
+        </div>
+
+        <!-- Credit Terms -->
+        <div class="section-hdr">Credit Terms</div>
+
+        <div class="form-group">
+          <label>Credit Limit (₹)</label>
+          <input type="number" id="fCreditLimit" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Credit Days</label>
+          <input type="number" id="fCreditDays" placeholder="e.g. 30" min="0" max="365">
+        </div>
+        <div class="form-group">
+          <label>Retention % (on invoice)</label>
+          <input type="number" id="fRetentionPct" placeholder="e.g. 5" min="0" max="20" step="0.5">
+        </div>
+        <div class="form-group">
+          <div class="checkbox-row" style="margin-top:20px;">
+            <input type="checkbox" id="fTdsApplicable" onchange="toggleTds()">
+            <label for="fTdsApplicable" style="text-transform:none;font-size:13px;letter-spacing:0;color:var(--text);cursor:pointer;">TDS Applicable</label>
+          </div>
+        </div>
+        <div class="form-group" id="tdsRateRow" style="display:none;">
+          <label>TDS Rate (%)</label>
+          <input type="number" id="fTdsRate" placeholder="e.g. 2" step="0.01" min="0" max="30">
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="fNotes" rows="2" placeholder="Internal notes about this client"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveClient()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i>
+        <span id="saveLabel">Save Client</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">
+      <i data-lucide="trash-2" style="width:20px;height:20px;color:var(--danger);"></i>
+    </div>
+    <div class="confirm-title">Delete Client?</div>
+    <div class="confirm-msg" id="confirmMsg">This action cannot be undone.</div>
+    <div class="confirm-btns">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">
+        <i data-lucide="trash-2" style="width:14px;height:14px;"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---- compatibility shim: unwrap {success,data,error} from IPC so this page can use raw results ----
+  const erpc = new Proxy({}, { get(_,k){ const t=window.erp||{}; const v=t[k]; if(typeof v!=='function') return v;
+    return async (...a)=>{ const r = await v.apply(t,a);
+      if (r && typeof r==='object' && !Array.isArray(r) && 'success' in r){ if(!r.success) throw new Error(r.error||'Operation failed'); return r.data; }
+      return r; }; } });
+let allClients = [];
+let allInvoices = [];
+let filteredClients = [];
+let deleteId = null;
+let clientFinancials = {};
+let lastClient = {};
+try { lastClient = JSON.parse(localStorage.getItem('client_lastUsed') || '{}'); } catch(_) {}
+function saveLastClient(d) {
+  lastClient = { state: d.state, city: d.city, credit_days: d.credit_days, retention_pct: d.retention_pct };
+  try { localStorage.setItem('client_lastUsed', JSON.stringify(lastClient)); } catch(_) {}
+}
+
+async function init() {
+  await loadData();
+  lucide.createIcons();
+}
+
+async function loadData() {
+  try {
+    const [clients, invoices] = await Promise.all([
+      erpc.getClients({}).catch(() => []),
+      erpc.getInvoices({}).catch(() => [])
+    ]);
+    allClients = clients || [];
+    allInvoices = invoices || [];
+  } catch(e) {
+    allClients = [];
+    allInvoices = [];
+  }
+  buildClientFinancials();
+  updateKPIs();
+  applyFilters();
+}
+
+function buildClientFinancials() {
+  clientFinancials = {};
+  const today = new Date();
+  allInvoices.forEach(inv => {
+    const cid = inv.client_id;
+    if (!cid) return;
+    if (!clientFinancials[cid]) clientFinancials[cid] = { outstanding: 0, overdue: 0, retention: 0 };
+    const bal = parseFloat(inv.balance_amount || 0);
+    clientFinancials[cid].outstanding += bal;
+    // Check overdue: if balance > 0 and due_date < today
+    if (bal > 0 && inv.due_date && new Date(inv.due_date) < today) {
+      clientFinancials[cid].overdue += bal;
+    }
+    // Retention: if invoice has retention_amount field
+    if (inv.retention_amount) {
+      clientFinancials[cid].retention += parseFloat(inv.retention_amount || 0);
+    }
+  });
+}
+
+function updateKPIs() {
+  const active = allClients.filter(c => c.status === 'active');
+  document.getElementById('kpiActive').textContent = active.length;
+
+  let totalOutstanding = 0, totalRetention = 0, overdueCount = 0;
+  allClients.forEach(c => {
+    const fin = clientFinancials[c.id] || {};
+    totalOutstanding += fin.outstanding || 0;
+    totalRetention += fin.retention || 0;
+    if ((fin.overdue || 0) > 0) overdueCount++;
+  });
+
+  document.getElementById('kpiOutstanding').textContent = '₹' + fmt(totalOutstanding);
+  document.getElementById('kpiRetention').textContent = '₹' + fmt(totalRetention);
+  document.getElementById('kpiOverdue').textContent = overdueCount;
+}
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const status = document.getElementById('statusFilter').value;
+
+  filteredClients = allClients.filter(c => {
+    const matchStatus = !status || c.status === status;
+    const matchSearch = !search ||
+      (c.name || '').toLowerCase().includes(search) ||
+      (c.client_code || '').toLowerCase().includes(search) ||
+      (c.phone || '').includes(search) ||
+      (c.gstin || '').toLowerCase().includes(search) ||
+      (c.contact_person || '').toLowerCase().includes(search);
+    return matchStatus && matchSearch;
+  });
+
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('clientBody');
+  const empty = document.getElementById('emptyState');
+
+  if (!filteredClients.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    lucide.createIcons();
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filteredClients.map(c => {
+    const fin = clientFinancials[c.id] || {};
+    const outstanding = fin.outstanding || 0;
+    const retention = fin.retention || 0;
+    const isOverdue = (fin.overdue || 0) > 0;
+    const creditLimit = parseFloat(c.credit_limit || 0);
+    return `
+    <tr>
+      <td><span class="code-badge">${esc(c.client_code || '-')}</span></td>
+      <td>
+        <div class="name-bold">${esc(c.name)}</div>
+        ${c.contact_person ? `<div class="sub-text">${esc(c.contact_person)}</div>` : ''}
+      </td>
+      <td>${esc(c.phone || '-')}</td>
+      <td><span style="font-family:monospace;font-size:12px;">${esc(c.gstin || '-')}</span></td>
+      <td class="amount">${creditLimit > 0 ? '₹' + fmt(creditLimit) : '-'}</td>
+      <td class="amount ${isOverdue ? 'overdue' : ''}">${outstanding > 0 ? '₹' + fmt(outstanding) : '₹0'}${isOverdue ? ' <span style="font-size:10px;background:rgba(239,68,68,0.12);color:var(--danger);padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:700;">OVERDUE</span>' : ''}</td>
+      <td class="amount">${retention > 0 ? '₹' + fmt(retention) : '-'}</td>
+      <td><span class="badge b-${c.status || 'inactive'}">${statusLabel(c.status)}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-outline btn-sm" onclick="editClient(${c.id})" title="Edit">
+            <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="askDelete(${c.id}, '${jsArg(c.name)}')" title="Delete">
+            <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function statusLabel(s) {
+  const m = { active:'Active', inactive:'Inactive', prospect:'Prospect', blacklisted:'Blacklisted' };
+  return m[s] || s || 'Unknown';
+}
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmt(n) { return Math.round(n).toLocaleString('en-IN'); }
+
+function toggleTds() {
+  const on = document.getElementById('fTdsApplicable').checked;
+  document.getElementById('tdsRateRow').style.display = on ? 'flex' : 'none';
+}
+
+// MODAL
+function openModal(client = null) {
+  resetForm();
+  if (client) {
+    document.getElementById('modalTitle').textContent = 'Edit Client';
+    document.getElementById('saveLabel').textContent = 'Update Client';
+    document.getElementById('fId').value = client.id || '';
+    document.getElementById('fCode').value = client.client_code || '';
+    document.getElementById('fName').value = client.name || '';
+    document.getElementById('fTradeName').value = client.trade_name || '';
+    document.getElementById('fContactPerson').value = client.contact_person || '';
+    document.getElementById('fPhone').value = client.phone || '';
+    document.getElementById('fAltPhone').value = client.alt_phone || '';
+    document.getElementById('fEmail').value = client.email || '';
+    document.getElementById('fAddress').value = client.address || '';
+    document.getElementById('fCity').value = client.city || '';
+    document.getElementById('fState').value = client.state || '';
+    document.getElementById('fPincode').value = client.pincode || '';
+    document.getElementById('fGstin').value = client.gstin || '';
+    document.getElementById('fPan').value = client.pan || '';
+    document.getElementById('fStatus').value = client.status || 'active';
+    document.getElementById('fCreditLimit').value = client.credit_limit || '';
+    document.getElementById('fCreditDays').value = client.credit_days || '';
+    document.getElementById('fRetentionPct').value = client.retention_pct || '';
+    document.getElementById('fTdsApplicable').checked = !!client.tds_applicable;
+    document.getElementById('fTdsRate').value = client.tds_rate || '';
+    document.getElementById('fNotes').value = client.notes || '';
+    toggleTds();
+  } else {
+    document.getElementById('modalTitle').textContent = 'Add New Client';
+    document.getElementById('saveLabel').textContent = 'Save Client';
+    document.getElementById('fState').value        = lastClient.state        || 'Assam';
+    document.getElementById('fCity').value         = lastClient.city         || '';
+    document.getElementById('fCreditDays').value   = lastClient.credit_days  || '30';
+    document.getElementById('fRetentionPct').value = lastClient.retention_pct || '5';
+    document.getElementById('fStatus').value       = 'active';
+    toggleTds();
+  }
+  document.getElementById('clientModal').classList.add('open');
+  lucide.createIcons();
+}
+
+function closeModal() {
+  document.getElementById('clientModal').classList.remove('open');
+}
+
+function resetForm() {
+  document.getElementById('clientForm').reset();
+  document.getElementById('fId').value = '';
+  document.getElementById('tdsRateRow').style.display = 'none';
+}
+
+function editClient(id) {
+  const c = allClients.find(x => x.id === id);
+  if (c) openModal(c);
+}
+
+async function saveClient() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { showToast('Client name is required', 'error'); return; }
+
+  const data = {
+    id: document.getElementById('fId').value || undefined,
+    client_code: document.getElementById('fCode').value || undefined,
+    name,
+    trade_name: document.getElementById('fTradeName').value.trim(),
+    contact_person: document.getElementById('fContactPerson').value.trim(),
+    phone: document.getElementById('fPhone').value.trim(),
+    alt_phone: document.getElementById('fAltPhone').value.trim(),
+    email: document.getElementById('fEmail').value.trim(),
+    address: document.getElementById('fAddress').value.trim(),
+    city: document.getElementById('fCity').value.trim(),
+    state: document.getElementById('fState').value.trim(),
+    pincode: document.getElementById('fPincode').value.trim(),
+    gstin: document.getElementById('fGstin').value.trim().toUpperCase(),
+    pan: document.getElementById('fPan').value.trim().toUpperCase(),
+    status: document.getElementById('fStatus').value,
+    credit_limit: document.getElementById('fCreditLimit').value || null,
+    credit_days: document.getElementById('fCreditDays').value || null,
+    retention_pct: document.getElementById('fRetentionPct').value || null,
+    tds_applicable: document.getElementById('fTdsApplicable').checked ? 1 : 0,
+    tds_rate: document.getElementById('fTdsRate').value || null,
+    notes: document.getElementById('fNotes').value.trim(),
+  };
+
+  try {
+    await erpc.saveClient(data);
+    showToast(data.id ? 'Client updated successfully' : 'Client added successfully', 'success');
+    if (!data.id) saveLastClient(data);
+    closeModal();
+    await loadData();
+  } catch(e) {
+    showToast('Error saving client: ' + (e.message || e), 'error');
+  }
+}
+
+// DELETE
+function askDelete(id, name) {
+  deleteId = id;
+  document.getElementById('confirmMsg').textContent = `Delete "${name}"? This action cannot be undone.`;
+  document.getElementById('confirmOverlay').classList.add('open');
+  lucide.createIcons();
+}
+function closeConfirm() {
+  deleteId = null;
+  document.getElementById('confirmOverlay').classList.remove('open');
+}
+async function confirmDelete() {
+  if (!deleteId) return;
+  try {
+    await erpc.deleteClient(deleteId);
+    showToast('Client deleted', 'success');
+    closeConfirm();
+    await loadData();
+  } catch(e) {
+    showToast('Error deleting client: ' + (e.message || e), 'error');
+    closeConfirm();
+  }
+}
+
+// EXPORT CSV
+function exportCSV() {
+  if (!filteredClients.length) { showToast('No clients to export', 'error'); return; }
+  const headers = ['Client Code','Name','Trade Name','Contact Person','Phone','Alt Phone','Email','Address','City','State','Pincode','GSTIN','PAN','Credit Limit','Credit Days','Retention %','TDS Applicable','TDS Rate','Status','Notes'];
+  const rows = filteredClients.map(c => [
+    c.client_code||'', c.name||'', c.trade_name||'', c.contact_person||'',
+    c.phone||'', c.alt_phone||'', c.email||'', c.address||'', c.city||'',
+    c.state||'', c.pincode||'', c.gstin||'', c.pan||'',
+    c.credit_limit||'', c.credit_days||'', c.retention_pct||'',
+    c.tds_applicable ? 'Yes' : 'No', c.tds_rate||'',
+    c.status||'', c.notes||''
+  ].map(f => `"${String(f).replace(/"/g,'""')}"`));
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `clients_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('Clients exported to CSV', 'success');
+}
+
+// TOAST
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.className = 'toast show t-' + type;
+  el.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle-2' : 'alert-circle'}" style="width:16px;height:16px;flex-shrink:0;"></i>${esc(msg)}`;
+  lucide.createIcons();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 3500);
+}
+
+// Close modal on backdrop click
+document.getElementById('clientModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('clientModal')) closeModal();
+});
+document.getElementById('confirmOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmOverlay')) closeConfirm();
+});
+
+window.refreshPage = function(){ init(); };  // live auto-refresh from the app shell
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+// Shows a visible error instead of a dead page if the bridge never appears.
+(function boot(tries) {
+  if (window.erp) { init(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

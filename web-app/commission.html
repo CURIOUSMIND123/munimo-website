@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commission</title>
+<style>
+  :root{--accent:#10b981;--accent-d:#059669;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;
+    --bg:#f8fafc;--card:#fff;--red:#dc2626;--in:#16a34a;--out:#dc2626;--amber:#d97706;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;padding:16px;}
+  .note{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:14px;line-height:1.45;}
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .s-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px;}
+  .s-card .l{font-size:11px;color:var(--muted);font-weight:600;}
+  .s-card .v{font-size:19px;font-weight:800;margin-top:3px;}
+  .s-card.earn .v{color:var(--in);} .s-card.paid .v{color:var(--out);}
+  .bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+  .bar .grow{flex:1;}
+  select,input,textarea{border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--accent);}
+  button{cursor:pointer;font-family:inherit;}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;}
+  .btn:active{background:var(--accent-d);}
+  .btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink);border-radius:10px;padding:9px 13px;font-size:13px;font-weight:600;}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:10px;background:#f1f5f9;}
+  td{padding:10px;border-top:1px solid var(--line);vertical-align:top;}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .pill.earn{background:#dcfce7;color:var(--in);} .pill.paid{background:#fee2e2;color:var(--out);}
+  .del{color:var(--red);cursor:pointer;font-weight:700;}
+  .empty{text-align:center;color:var(--muted);padding:40px 16px;}
+  .empty .e{font-size:38px;}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:16px;}
+  .modal.show{display:flex;}
+  .sheet{background:#fff;width:100%;max-width:440px;border-radius:16px;padding:20px;max-height:92vh;overflow:auto;}
+  .sheet h3{margin:0 0 12px;font-size:18px;}
+  .sheet .x{float:right;font-size:22px;color:var(--muted);cursor:pointer;line-height:1;}
+  label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:12px 1px 5px;}
+  .full{width:100%;}
+  .io{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;}
+  .io button{flex:1;border:none;background:#fff;padding:11px;font-weight:700;color:var(--muted);}
+  .io button.on-earn{background:var(--in);color:#fff;} .io button.on-paid{background:var(--out);color:#fff;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .calc{background:#f1f5f9;border-radius:10px;padding:12px;margin-top:14px;font-size:13px;}
+  .calc .row{display:flex;justify-content:space-between;padding:2px 0;}
+  .calc .net{font-weight:800;font-size:16px;border-top:1px dashed #cbd5e1;margin-top:6px;padding-top:8px;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:22px;font-size:14px;font-weight:600;opacity:0;transition:.2s;z-index:90;}
+  .toast.show{opacity:1;} .toast.err{background:var(--red);}
+  @media(max-width:640px){.strip{grid-template-columns:repeat(2,1fr);} .hide-sm{display:none;}}
+</style>
+</head>
+<body>
+<div class="note">
+  <b>Commission register</b> — record real commission you <b>earn</b> (income) or <b>pay</b> (expense),
+  with GST and 194H TDS handled automatically. Every entry posts to your books, so the Trial Balance always ties back.
+</div>
+
+<div class="strip">
+  <div class="s-card earn"><div class="l">Earned (this month)</div><div class="v" id="sEarn">₹0</div></div>
+  <div class="s-card paid"><div class="l">Paid (this month)</div><div class="v" id="sPaid">₹0</div></div>
+  <div class="s-card"><div class="l">Net commission</div><div class="v" id="sNet">₹0</div></div>
+  <div class="s-card"><div class="l">TDS withheld (194H)</div><div class="v" id="sTds">₹0</div></div>
+</div>
+
+<div class="bar">
+  <input type="month" id="fMonth">
+  <select id="fDir"><option value="">Earned &amp; Paid</option><option value="earned">Earned only</option><option value="paid">Paid only</option></select>
+  <div class="grow"></div>
+  <button class="btn" id="addBtn">＋ Record commission</button>
+</div>
+
+<div id="listWrap"><div class="empty"><div class="e">🤝</div>Loading…</div></div>
+
+<!-- editor -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <span class="x" id="mX">&times;</span>
+    <h3 id="mTitle">Record commission</h3>
+    <div class="io" id="ioT">
+      <button data-dir="earned" class="on-earn">＋ Earned (income)</button>
+      <button data-dir="paid">－ Paid (expense)</button>
+    </div>
+    <label>Party name</label>
+    <input id="cParty" class="full" placeholder="Who paid / who you paid" autocomplete="off">
+    <label>What was it for? (real deal)</label>
+    <input id="cNarr" class="full" placeholder="e.g. brokerage on cotton lot #42" autocomplete="off">
+    <div class="grid2">
+      <div><label>Commission amount (₹)</label><input id="cGross" class="full" type="number" inputmode="decimal" min="0" placeholder="0"></div>
+      <div><label>Date</label><input id="cDate" class="full" type="date"></div>
+    </div>
+    <div class="grid2">
+      <div><label>GST %</label>
+        <select id="cGst" class="full"><option value="0">No GST</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select></div>
+      <div><label>194H TDS %</label>
+        <select id="cTds" class="full"><option value="0">No TDS</option><option value="2" selected>2% (194H)</option><option value="5">5% (old)</option></select></div>
+    </div>
+    <label>Bank / cash account</label>
+    <select id="cAcct" class="full"></select>
+    <div class="calc" id="calc"></div>
+    <button class="btn full" id="cSave" style="margin-top:16px;padding:13px;">Save commission</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  var E=window.erp, S={dir:'earned',accounts:[],editId:null};
+  function $(i){return document.getElementById(i);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function inr(n){n=Math.round((Number(n)||0)*100)/100;return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:2});}
+  function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  var tT;function toast(m,e){var t=$('toast');t.textContent=m;t.className='toast show'+(e?' err':'');clearTimeout(tT);tT=setTimeout(function(){t.className='toast';},2600);}
+
+  function loadAccounts(cb){E.getBanks().then(function(r){S.accounts=(r&&r.success&&r.data)?r.data:[];
+    var sel=$('cAcct');sel.innerHTML='';
+    S.accounts.forEach(function(a){var o=document.createElement('option');o.value=a.id;o.textContent=a.account_name+(a.bank_name&&a.bank_name!=='Cash'?' · '+a.bank_name:'');sel.appendChild(o);});
+    if(!S.accounts.length){var o=document.createElement('option');o.value='';o.textContent='(add a bank/cash account in Banks first)';sel.appendChild(o);}
+    if(cb)cb();});}
+
+  function load(){
+    var month=$('fMonth').value||todayStr().slice(0,7);
+    var dir=$('fDir').value;
+    var filt={from_date:month+'-01',to_date:month+'-31'};if(dir)filt.direction=dir;
+    E.getCommissionSummary({from_date:month+'-01',to_date:month+'-31'}).then(function(r){
+      if(r&&r.success){var d=r.data;
+        $('sEarn').textContent=inr(d.earned.gross);$('sPaid').textContent=inr(d.paid.gross);
+        $('sNet').textContent=inr(d.net_commission);$('sNet').style.color=d.net_commission<0?'var(--out)':'var(--in)';
+        $('sTds').textContent=inr(d.earned.tds+d.paid.tds);}
+    });
+    E.getCommissionEntries(filt).then(function(r){
+      var rows=(r&&r.success&&r.data)?r.data:[];
+      if(!rows.length){$('listWrap').innerHTML='<div class="empty"><div class="e">🤝</div>No commission entries this month.<br><br><button class="btn-ghost" id="emptyAdd">＋ Record one</button></div>';var ea=$('emptyAdd');if(ea)ea.addEventListener('click',function(){openEditor(null);});return;}
+      $('listWrap').innerHTML='<table><thead><tr><th>Date</th><th>Party / for</th><th>Type</th><th class="num">Commission</th><th class="num hide-sm">GST</th><th class="num hide-sm">TDS</th><th class="num">Net</th><th></th></tr></thead><tbody>'+
+        rows.map(function(c){var earn=c.direction==='earned';
+          return '<tr><td>'+esc(c.entry_date)+'</td>'+
+            '<td><b>'+esc(c.party_name)+'</b>'+(c.narration?'<div style="color:var(--muted);font-size:11px;">'+esc(c.narration)+'</div>':'')+'<div style="color:var(--muted);font-size:11px;">'+esc(c.bank_name||'')+'</div></td>'+
+            '<td><span class="pill '+(earn?'earn':'paid')+'">'+(earn?'Earned':'Paid')+'</span></td>'+
+            '<td class="num">'+inr(c.gross_amount)+'</td>'+
+            '<td class="num hide-sm">'+(c.gst_amount?inr(c.gst_amount):'—')+'</td>'+
+            '<td class="num hide-sm">'+(c.tds_amount?inr(c.tds_amount):'—')+'</td>'+
+            '<td class="num"><b>'+inr(c.net_amount)+'</b></td>'+
+            '<td><span class="del" data-del="'+c.id+'">✕</span></td></tr>';
+        }).join('')+'</tbody></table>';
+    });
+  }
+
+  // editor
+  function setDir(d){S.dir=d;$('ioT').querySelectorAll('button').forEach(function(b){b.className=b.getAttribute('data-dir')===d?('on-'+d):'';});recalc();}
+  $('ioT').addEventListener('click',function(e){var b=e.target.closest('button');if(b)setDir(b.getAttribute('data-dir'));});
+  function recalc(){
+    var g=parseFloat($('cGross').value)||0,gr=parseFloat($('cGst').value)||0,tr=parseFloat($('cTds').value)||0;
+    var gst=Math.round(g*gr/100*100)/100,tds=Math.round(g*tr/100*100)/100,net=Math.round((g+gst-tds)*100)/100;
+    var verb=S.dir==='earned'?'You receive':'You pay';
+    $('calc').innerHTML='<div class="row"><span>Commission</span><span>'+inr(g)+'</span></div>'+
+      (gst?'<div class="row"><span>+ GST ('+gr+'%)</span><span>'+inr(gst)+'</span></div>':'')+
+      (tds?'<div class="row"><span>− TDS 194H ('+tr+'%)</span><span>−'+inr(tds)+'</span></div>':'')+
+      '<div class="row net"><span>'+verb+'</span><span>'+inr(net)+'</span></div>'+
+      (S.dir==='paid'&&tds?'<div style="color:var(--muted);font-size:11px;margin-top:6px;">You withhold '+inr(tds)+' as TDS and deposit it to the govt (shows in TDS Payable).</div>':'')+
+      (S.dir==='earned'&&tds?'<div style="color:var(--muted);font-size:11px;margin-top:6px;">'+inr(tds)+' TDS deducted by the payer is your TDS Receivable (claim via 26AS).</div>':'');
+  }
+  ['cGross','cGst','cTds'].forEach(function(id){$(id).addEventListener('input',recalc);$(id).addEventListener('change',recalc);});
+  function openEditor(id){
+    S.editId=id;
+    loadAccounts();
+    $('mTitle').textContent=id?'Edit commission':'Record commission';
+    $('cParty').value='';$('cNarr').value='';$('cGross').value='';$('cDate').value=todayStr();$('cGst').value='0';$('cTds').value='2';
+    setDir('earned');
+    $('modal').classList.add('show');recalc();
+  }
+  function close(){$('modal').classList.remove('show');}
+  $('mX').addEventListener('click',close);
+  $('modal').addEventListener('click',function(e){if(e.target===this)close();});
+  $('addBtn').addEventListener('click',function(){openEditor(null);});
+  $('cSave').addEventListener('click',function(){
+    var party=$('cParty').value.trim();if(!party){toast('Enter the party name',true);return;}
+    var gross=parseFloat($('cGross').value);if(!(gross>0)){toast('Enter the commission amount',true);return;}
+    var acct=$('cAcct').value;if(!acct){toast('Pick an account (add one in Banks if none)',true);return;}
+    var payload={direction:S.dir,party_name:party,narration:$('cNarr').value.trim()||null,
+      entry_date:$('cDate').value||todayStr(),gross_amount:gross,
+      gst_rate:parseFloat($('cGst').value)||0,tds_rate:parseFloat($('cTds').value)||0,
+      bank_account_id:parseInt(acct,10)};
+    if(S.editId)payload.id=S.editId;
+    $('cSave').disabled=true;
+    E.saveCommissionEntry(payload).then(function(r){$('cSave').disabled=false;
+      if(r&&r.success){toast('Commission saved');close();load();}
+      else toast((r&&r.error)||'Could not save',true);});
+  });
+  $('listWrap').addEventListener('click',function(e){
+    var d=e.target.closest('[data-del]');if(!d)return;
+    if(!confirm('Delete this commission entry? It will reverse the cash and the books.'))return;
+    E.deleteCommissionEntry(parseInt(d.getAttribute('data-del'),10)).then(function(r){
+      if(r&&r.success){toast('Deleted');load();}else toast((r&&r.error)||'Could not delete',true);});
+  });
+  $('fMonth').addEventListener('change',load);
+  $('fDir').addEventListener('change',load);
+
+  $('fMonth').value=todayStr().slice(0,7);$('cDate').value=todayStr();
+  loadAccounts();load();
+  window.refreshPage=load; // app shell calls this on re-visit / focus
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sites</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;font-size:14px}
+.header{background:#fff;border-bottom:1px solid #e2e8f0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header h1{font-size:20px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px}
+.header-actions{display:flex;gap:8px;align-items:center}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.btn-primary{background:#3b82f6;color:#fff}.btn-primary:hover{background:#2563eb}
+.btn-secondary{background:#f8fafc;border:1px solid #e2e8f0;color:#374151}.btn-secondary:hover{background:#f1f5f9}
+.btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}.btn-danger:hover{background:#fecaca}
+.btn-success{background:#dcfce7;color:#16a34a;border:1px solid #86efac}.btn-success:hover{background:#bbf7d0}
+.btn-sm{padding:5px 10px;font-size:12px}
+.content{padding:24px}
+.toolbar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.search-box{position:relative;flex:1;min-width:200px}
+.search-box input{width:100%;padding:8px 12px 8px 36px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;outline:none}
+.search-box input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.search-box .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8}
+.filter-select{padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;cursor:pointer;outline:none}
+.view-toggle{display:flex;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#fff}
+.view-toggle button{padding:8px 12px;border:none;cursor:pointer;background:transparent;color:#6b7280;transition:all .2s}
+.view-toggle button.active{background:#3b82f6;color:#fff}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:12px;padding:16px;border:1px solid #e2e8f0}
+.stat-card .label{font-size:12px;color:#64748b;font-weight:500;margin-bottom:4px}
+.stat-card .value{font-size:22px;font-weight:700;color:#1e293b}
+.stat-card .sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.site-card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;transition:all .2s;cursor:pointer}
+.site-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:#93c5fd;transform:translateY(-1px)}
+.site-card .card-header{padding:16px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;position:relative}
+.site-card .card-header h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.site-card .card-header .site-code{font-size:11px;opacity:.8;font-family:monospace}
+.status-badge{position:absolute;top:12px;right:12px;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.status-active{background:rgba(34,197,94,.2);color:#86efac}
+.status-completed{background:rgba(148,163,184,.2);color:#cbd5e1}
+.status-on_hold{background:rgba(251,191,36,.2);color:#fde68a}
+.site-card .card-body{padding:16px}
+.site-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.meta-item{display:flex;flex-direction:column;gap:2px}
+.meta-item .ml{font-size:10px;color:#94a3b8;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.meta-item .mv{font-size:13px;color:#374151;font-weight:500}
+.progress-bar{height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin:8px 0 4px}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#3b82f6,#6366f1);transition:width .3s}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:#64748b}
+.card-actions{display:flex;gap:6px;padding:12px 16px;border-top:1px solid #f1f5f9}
+.table-wrap{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:#f8fafc;padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
+td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#374151}
+tr:hover td{background:#f8fafc}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-active{background:#dcfce7;color:#16a34a}
+.badge-completed{background:#f1f5f9;color:#64748b}
+.badge-on_hold{background:#fef3c7;color:#059669}
+.badge-planning{background:#ede9fe;color:#7c3aed}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;width:700px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h2{font-size:18px;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #e2e8f0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.form-group textarea{resize:vertical;min-height:60px}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0}
+.pnl-modal{width:860px}
+.pnl-section{margin-bottom:20px}
+.pnl-section h3{font-size:14px;font-weight:700;color:#1e293b;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e2e8f0}
+.pnl-table{width:100%;border-collapse:collapse;font-size:13px}
+.pnl-table td{padding:8px 12px;border-bottom:1px solid #f1f5f9}
+.pnl-table td:last-child{text-align:right;font-weight:600}
+.pnl-table tr.total td{background:#f8fafc;font-weight:700;color:#1e293b}
+.pnl-table tr.grand-total td{background:#eff6ff;font-weight:700;color:#1d4ed8;font-size:14px}
+.pnl-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.pnl-kpi{background:#f8fafc;border-radius:10px;padding:14px;text-align:center;border:1px solid #e2e8f0}
+.pnl-kpi .pk-label{font-size:11px;color:#64748b;font-weight:500;margin-bottom:4px}
+.pnl-kpi .pk-value{font-size:20px;font-weight:700}
+.text-green{color:#16a34a}.text-red{color:#dc2626}
+.empty-state{text-align:center;padding:60px 20px;color:#94a3b8}
+.empty-state svg{margin:0 auto 12px;opacity:.4}
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#16a34a}.toast.error{background:#dc2626}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><i data-lucide="map-pin" style="width:20px;height:20px;color:#3b82f6"></i> Site Master</h1>
+  <div class="header-actions">
+    <button class="btn btn-secondary" onclick="exportSites()"><i data-lucide="download" style="width:14px;height:14px"></i> Export</button>
+    <button class="btn btn-primary" onclick="openModal()"><i data-lucide="plus" style="width:14px;height:14px"></i> Add Site</button>
+  </div>
+</div>
+<div class="content">
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="label">Total Sites</div><div class="value" id="stTotal">0</div><div class="sub">All time</div></div>
+    <div class="stat-card"><div class="label">Active</div><div class="value" id="stActive" style="color:#16a34a">0</div><div class="sub">Currently running</div></div>
+    <div class="stat-card"><div class="label">Completed</div><div class="value" id="stCompleted" style="color:#3b82f6">0</div><div class="sub">Finished</div></div>
+    <div class="stat-card"><div class="label">On Hold</div><div class="value" id="stHold" style="color:#059669">0</div><div class="sub">Paused</div></div>
+    <div class="stat-card"><div class="label">Total Contract Value</div><div class="value" id="stValue" style="font-size:16px">₹0</div><div class="sub">All sites</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" class="si" style="width:16px;height:16px"></i>
+      <input type="text" id="searchInput" placeholder="Search by name, code, client, location..." oninput="filterSites()">
+    </div>
+    <select class="filter-select" id="statusFilter" onchange="filterSites()">
+      <option value="">All Status</option>
+      <option value="active">Active</option>
+      <option value="completed">Completed</option>
+      <option value="on_hold">On Hold</option>
+      <option value="planning">Planning</option>
+    </select>
+    <select class="filter-select" id="clientFilter" onchange="filterSites()">
+      <option value="">All Clients</option>
+    </select>
+    <div class="view-toggle">
+      <button id="cardViewBtn" class="active" onclick="setView('card')"><i data-lucide="grid-3x3" style="width:14px;height:14px"></i></button>
+      <button id="tableViewBtn" onclick="setView('table')"><i data-lucide="list" style="width:14px;height:14px"></i></button>
+    </div>
+  </div>
+  <div id="cardView">
+    <div class="card-grid" id="cardGrid"></div>
+  </div>
+  <div id="tableView" style="display:none">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th><th>Site Name</th><th>Client</th><th>Location</th>
+            <th>Contract Value</th><th>Start Date</th><th>End Date</th>
+            <th>Progress</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="siteModal">
+  <div class="modal">
+    <h2 id="modalTitle">Add New Site</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Site Code *</label>
+        <input type="text" id="fCode" placeholder="SITE-001" required>
+      </div>
+      <div class="form-group">
+        <label>Site Name *</label>
+        <input type="text" id="fName" placeholder="Project name" required>
+      </div>
+      <div class="form-group">
+        <label>Client</label>
+        <select id="fClient">
+          <option value="">-- Select Client --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Location / Address</label>
+        <input type="text" id="fLocation" placeholder="City, State">
+      </div>
+      <div class="form-group">
+        <label>Contract Value (₹)</label>
+        <input type="number" id="fContractValue" placeholder="0.00" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Estimated Cost (₹) <span style="font-weight:400;color:var(--muted,#94a3b8);">— for WIP report</span></label>
+        <input type="number" id="fEstimatedCost" placeholder="Budgeted total cost to complete" min="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="planning">Planning</option>
+          <option value="active" selected>Active</option>
+          <option value="on_hold">On Hold</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="fStartDate">
+      </div>
+      <div class="form-group">
+        <label>End Date (Expected)</label>
+        <input type="date" id="fEndDate">
+      </div>
+      <div class="form-group">
+        <label>Site Manager</label>
+        <input type="text" id="fManager" placeholder="Name">
+      </div>
+      <div class="form-group">
+        <label>Progress (%)</label>
+        <input type="number" id="fProgress" placeholder="0" min="0" max="100">
+      </div>
+      <div class="form-group full">
+        <label>Description / Notes</label>
+        <textarea id="fNotes" rows="3" placeholder="Project details, scope, remarks..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSite()"><i data-lucide="save" style="width:14px;height:14px"></i> Save Site</button>
+    </div>
+  </div>
+</div>
+
+<!-- P&L Modal -->
+<div class="modal-overlay" id="pnlModal">
+  <div class="modal pnl-modal">
+    <h2 id="pnlTitle">Site P&L Report</h2>
+    <div class="pnl-summary" id="pnlSummary"></div>
+    <div id="pnlContent"></div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closePnL()">Close</button>
+      <button class="btn btn-primary" onclick="printPnL()"><i data-lucide="printer" style="width:14px;height:14px"></i> Print</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+lucide.createIcons();
+let allSites=[], allClients=[], currentView='card', editId=null, currentPnlSite=null;
+
+// Rubber banding for new sites
+let lastSite={};
+try{lastSite=JSON.parse(localStorage.getItem('sites_lastUsed')||'{}');}catch(_){}
+function saveLastSite(d){
+  lastSite={client_id:d.client_id,location:d.location,manager:d.manager,status:d.status};
+  try{localStorage.setItem('sites_lastUsed',JSON.stringify(lastSite));}catch(_){}
+}
+
+function fmt(n){if(!n&&n!==0)return'₹0';return'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(d){if(!d)return'-';return new Date(d).toLocaleDateString('en-IN')}
+function toast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type==='error'?'error':'success');setTimeout(()=>t.classList.remove('show'),3000)}
+
+async function loadData(){
+  const [sr,cr]=await Promise.all([window.erp.getSites(),window.erp.getClients()]);
+  allSites=sr.success?sr.data:[];
+  allClients=cr.success?cr.data:[];
+  populateClientFilter();
+  populateClientSelect();
+  updateStats();
+  renderView();
+}
+
+function populateClientFilter(){
+  const sel=document.getElementById('clientFilter');
+  sel.innerHTML='<option value="">All Clients</option>';
+  allClients.forEach(c=>{sel.innerHTML+=`<option value="${c.id}">${esc(c.name)}</option>`});
+}
+function populateClientSelect(){
+  const sel=document.getElementById('fClient');
+  sel.innerHTML='<option value="">-- Select Client --</option>';
+  allClients.forEach(c=>{sel.innerHTML+=`<option value="${c.id}">${esc(c.name)}</option>`});
+}
+
+function updateStats(){
+  const s=allSites;
+  document.getElementById('stTotal').textContent=s.length;
+  document.getElementById('stActive').textContent=s.filter(x=>x.status==='active').length;
+  document.getElementById('stCompleted').textContent=s.filter(x=>x.status==='completed').length;
+  document.getElementById('stHold').textContent=s.filter(x=>x.status==='on_hold').length;
+  document.getElementById('stValue').textContent=fmt(s.reduce((a,x)=>a+(x.contract_value||0),0));
+}
+
+function getFiltered(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const sf=document.getElementById('statusFilter').value;
+  const cf=document.getElementById('clientFilter').value;
+  return allSites.filter(s=>{
+    const match=!q||(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q)||(s.location||'').toLowerCase().includes(q)||(s.client_name||'').toLowerCase().includes(q);
+    const matchS=!sf||s.status===sf;
+    const matchC=!cf||String(s.client_id)===cf;
+    return match&&matchS&&matchC;
+  });
+}
+function filterSites(){renderView()}
+
+function setView(v){
+  currentView=v;
+  document.getElementById('cardView').style.display=v==='card'?'':'none';
+  document.getElementById('tableView').style.display=v==='table'?'':'none';
+  document.getElementById('cardViewBtn').classList.toggle('active',v==='card');
+  document.getElementById('tableViewBtn').classList.toggle('active',v==='table');
+  renderView();
+}
+
+function renderView(){
+  if(currentView==='card') renderCards();
+  else renderTable();
+}
+
+function statusBadge(s,cls=false){
+  const map={active:'badge-active',completed:'badge-completed',on_hold:'badge-on_hold',planning:'badge-planning'};
+  const label={active:'Active',completed:'Completed',on_hold:'On Hold',planning:'Planning'};
+  return cls?map[s]||'':'<span class="badge '+(map[s]||'')+'">'+(label[s]||s)+'</span>';
+}
+function statusCardClass(s){return s==='active'?'status-active':s==='completed'?'status-completed':s==='on_hold'?'status-on_hold':''}
+
+function renderCards(){
+  const grid=document.getElementById('cardGrid');
+  const data=getFiltered();
+  if(!data.length){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><i data-lucide="map-pin-off" style="width:48px;height:48px;display:block;margin:0 auto 12px"></i><p>No sites found</p></div>';lucide.createIcons();return}
+  grid.innerHTML=data.map(s=>{
+    const prog=s.progress||0;
+    const cv=s.contract_value||0;
+    return`<div class="site-card">
+      <div class="card-header">
+        <div class="site-code">${esc(s.code||'—')}</div>
+        <h3>${esc(s.name)}</h3>
+        <div style="font-size:11px;opacity:.75;margin-top:2px">${esc(s.location||'—')} ${s.client_name?'• '+esc(s.client_name):''}</div>
+        <span class="status-badge ${statusCardClass(s.status)}">${esc(s.status||'active')}</span>
+      </div>
+      <div class="card-body">
+        <div class="site-meta">
+          <div class="meta-item"><span class="ml">Contract Value</span><span class="mv">${fmt(cv)}</span></div>
+          <div class="meta-item"><span class="ml">Manager</span><span class="mv">${esc(s.manager||'—')}</span></div>
+          <div class="meta-item"><span class="ml">Start Date</span><span class="mv">${fmtDate(s.start_date)}</span></div>
+          <div class="meta-item"><span class="ml">End Date</span><span class="mv">${fmtDate(s.end_date)}</span></div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(prog,100)}%"></div></div>
+        <div class="progress-label"><span>Progress</span><span>${prog}%</span></div>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-secondary btn-sm" onclick="viewPnL(${s.id})"><i data-lucide="bar-chart-2" style="width:12px;height:12px"></i> P&L</button>
+        <button class="btn btn-secondary btn-sm" onclick="openModal(${s.id})"><i data-lucide="edit-2" style="width:12px;height:12px"></i> Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSite(${s.id},'${jsArg(s.name)}')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function renderTable(){
+  const tbody=document.getElementById('tableBody');
+  const data=getFiltered();
+  if(!data.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8">No sites found</td></tr>';return}
+  tbody.innerHTML=data.map(s=>`<tr>
+    <td><code style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px">${esc(s.code||'—')}</code></td>
+    <td><strong>${esc(s.name)}</strong></td>
+    <td>${esc(s.client_name||'—')}</td>
+    <td>${esc(s.location||'—')}</td>
+    <td>${fmt(s.contract_value)}</td>
+    <td>${fmtDate(s.start_date)}</td>
+    <td>${fmtDate(s.end_date)}</td>
+    <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-bar" style="flex:1;margin:0"><div class="progress-fill" style="width:${Math.min(s.progress||0,100)}%"></div></div><span style="font-size:11px;min-width:28px">${s.progress||0}%</span></div></td>
+    <td>${statusBadge(s.status)}</td>
+    <td>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-secondary btn-sm" onclick="viewPnL(${s.id})" title="P&L"><i data-lucide="bar-chart-2" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-secondary btn-sm" onclick="openModal(${s.id})" title="Edit"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSite(${s.id},'${jsArg(s.name)}')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+      </div>
+    </td>
+  </tr>`).join('');
+  lucide.createIcons();
+}
+
+function openModal(id=null){
+  editId=id;
+  document.getElementById('modalTitle').textContent=id?'Edit Site':'Add New Site';
+  if(id){
+    const s=allSites.find(x=>x.id===id);
+    if(!s)return;
+    document.getElementById('fCode').value=s.code||'';
+    document.getElementById('fName').value=s.name||'';
+    document.getElementById('fClient').value=s.client_id||'';
+    document.getElementById('fLocation').value=s.location||'';
+    document.getElementById('fContractValue').value=s.contract_value||'';
+    document.getElementById('fEstimatedCost').value=s.estimated_cost||'';
+    document.getElementById('fStatus').value=s.status||'active';
+    document.getElementById('fStartDate').value=s.start_date||'';
+    document.getElementById('fEndDate').value=s.end_date||'';
+    document.getElementById('fManager').value=s.manager||'';
+    document.getElementById('fProgress').value=s.progress||0;
+    document.getElementById('fNotes').value=s.notes||'';
+  } else {
+    // Auto-generate next site code
+    const codes=allSites.map(s=>parseInt((s.code||'').replace(/\D/g,'')||'0'));
+    const maxCode=codes.length?Math.max(...codes):0;
+    document.getElementById('fCode').value='SITE-'+String(maxCode+1).padStart(3,'0');
+    document.getElementById('fName').value='';
+    document.getElementById('fClient').value=lastSite.client_id||'';
+    document.getElementById('fLocation').value=lastSite.location||'';
+    document.getElementById('fContractValue').value='';
+    document.getElementById('fEstimatedCost').value='';
+    document.getElementById('fStatus').value=lastSite.status||'active';
+    document.getElementById('fStartDate').value=new Date().toISOString().split('T')[0];
+    document.getElementById('fEndDate').value='';
+    document.getElementById('fManager').value=lastSite.manager||'';
+    document.getElementById('fProgress').value=0;
+    document.getElementById('fNotes').value='';
+  }
+  document.getElementById('siteModal').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(),100);
+}
+function closeModal(){document.getElementById('siteModal').classList.remove('open')}
+
+async function saveSite(){
+  const code=document.getElementById('fCode').value.trim();
+  const name=document.getElementById('fName').value.trim();
+  if(!code||!name){toast('Site code and name are required','error');return}
+  const data={
+    id:editId||undefined,
+    code,name,
+    client_id:document.getElementById('fClient').value||null,
+    location:document.getElementById('fLocation').value.trim(),
+    contract_value:parseFloat(document.getElementById('fContractValue').value)||0,
+    estimated_cost:parseFloat(document.getElementById('fEstimatedCost').value)||0,
+    status:document.getElementById('fStatus').value,
+    start_date:document.getElementById('fStartDate').value||null,
+    end_date:document.getElementById('fEndDate').value||null,
+    manager:document.getElementById('fManager').value.trim(),
+    progress:parseInt(document.getElementById('fProgress').value)||0,
+    notes:document.getElementById('fNotes').value.trim()
+  };
+  const r=await window.erp.saveSite(data);
+  if(r.success){
+    saveLastSite(data);
+    toast(editId?'Site updated':'Site created');
+    closeModal();
+    loadData();
+  } else toast(r.error||'Save failed','error');
+}
+
+async function deleteSite(id,name){
+  if(!confirm(`Delete site "${name}"? This cannot be undone.`))return;
+  const r=await window.erp.deleteSite(id);
+  if(r.success){toast('Site deleted');loadData();}
+  else toast(r.error||'Delete failed','error');
+}
+
+async function viewPnL(id){
+  const site=allSites.find(s=>s.id===id);
+  if(!site)return;
+  currentPnlSite=site;
+  document.getElementById('pnlTitle').textContent=`Site P&L — ${site.name}`;
+  document.getElementById('pnlSummary').innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8">Loading...</div>';
+  document.getElementById('pnlContent').innerHTML='';
+  document.getElementById('pnlModal').classList.add('open');
+  const r=await window.erp.getSitePnL(id);
+  if(!r.success){document.getElementById('pnlSummary').innerHTML='<div style="color:red;padding:12px">'+r.error+'</div>';return}
+  const d=r.data;
+  const revenue=d.revenue||0;
+  const totalExp=(d.expenses||0)+(d.labourCost||0)+(d.subCost||0);
+  const profit=d.gross_profit!==undefined?d.gross_profit:(revenue-totalExp);
+  const margin=d.margin_pct||0;
+  document.getElementById('pnlSummary').innerHTML=`
+    <div class="pnl-kpi"><div class="pk-label">Total Revenue</div><div class="pk-value text-green">${fmt(revenue)}</div></div>
+    <div class="pnl-kpi"><div class="pk-label">Total Costs</div><div class="pk-value text-red">${fmt(totalExp)}</div></div>
+    <div class="pnl-kpi"><div class="pk-label">Net Profit</div><div class="pk-value ${profit>=0?'text-green':'text-red'}">${fmt(profit)}<div style="font-size:12px;font-weight:500;color:#64748b">Margin: ${margin}%</div></div></div>
+  `;
+  let html=`<div class="pnl-section"><h3>Cost Breakdown</h3><table class="pnl-table">
+    <tr><td>Vendor Bills / Expenses</td><td>${fmt(d.expenses)}</td></tr>
+    <tr><td>Labour Wages</td><td>${fmt(d.labourCost)}</td></tr>
+    <tr><td>Subcontractor Payments</td><td>${fmt(d.subCost)}</td></tr>
+    <tr class="total"><td>Total Costs</td><td>${fmt(totalExp)}</td></tr>
+  </table></div>`;
+  html+=`<div class="pnl-section"><h3>Summary</h3><table class="pnl-table">
+    <tr><td>Contract Value</td><td>${fmt(site.contract_value)}</td></tr>
+    <tr><td>Revenue Recognized</td><td>${fmt(revenue)}</td></tr>
+    <tr><td>Total Costs</td><td>${fmt(totalExp)}</td></tr>
+    <tr class="grand-total"><td>Net Profit / (Loss)</td><td class="${profit>=0?'text-green':'text-red'}">${fmt(profit)}</td></tr>
+  </table></div>`;
+  document.getElementById('pnlContent').innerHTML=html;
+}
+function closePnL(){document.getElementById('pnlModal').classList.remove('open')}
+function printPnL(){window.print()}
+
+async function exportSites(){
+  const data=getFiltered();
+  const rows=[['Code','Name','Client','Location','Contract Value','Start Date','End Date','Manager','Progress %','Status','Notes']];
+  data.forEach(s=>{rows.push([s.code||'',s.name||'',s.client_name||'',s.location||'',s.contract_value||0,s.start_date||'',s.end_date||'',s.manager||'',s.progress||0,s.status||'',s.notes||''])});
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='sites.csv';a.click();URL.revokeObjectURL(url);
+  toast('Exported');
+}
+
+window.refreshPage = function(){ loadData(); };  // live auto-refresh from the app shell
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+(function boot(tries) {
+  if (window.erp) { loadData(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

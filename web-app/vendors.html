@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Vendor Master</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;
+  --info:#3b82f6;--purple:#a855f7;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+
+.tabs{display:flex;gap:4px;padding:18px 24px 0;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;}
+.tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px 24px;border-bottom:1px solid var(--border);}
+.kpi{background:var(--surface2);border-radius:10px;padding:14px 16px;border:1px solid var(--border);}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+.kpi-val{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.kpi-sub{font-size:11px;color:var(--faint);margin-top:2px;}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;gap:10px;flex-wrap:wrap;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 14px;flex:1;max-width:300px;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%;}
+.search-box input::placeholder{color:var(--faint);}
+.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+.btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2);}
+.btn-danger:hover{background:rgba(239,68,68,0.22);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+
+.tc{padding:0 24px 24px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:13px;color:var(--muted);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+.name-bold{font-weight:600;color:var(--text);}
+.sub-text{font-size:11px;color:var(--faint);}
+.code-badge{font-size:11px;font-weight:700;font-family:monospace;background:var(--surface3);color:var(--accent);padding:2px 7px;border-radius:5px;}
+
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.b-active{background:rgba(34,197,94,0.12);color:var(--success);}
+.b-inactive{background:rgba(148,163,184,0.1);color:var(--muted);}
+.b-blacklisted{background:rgba(239,68,68,0.12);color:var(--danger);}
+.b-material{background:rgba(16,185,129,0.1);color:var(--accent);}
+.b-labour{background:rgba(59,130,246,0.1);color:var(--info);}
+.b-equipment{background:rgba(34,197,94,0.1);color:var(--success);}
+.b-service{background:rgba(168,85,247,0.1);color:var(--purple);}
+.b-subcontractor{background:rgba(239,68,68,0.1);color:var(--danger);}
+.b-other{background:rgba(148,163,184,0.1);color:var(--muted);}
+
+.action-btns{display:flex;gap:5px;}
+.tds-yes{color:var(--info);font-size:12px;font-weight:600;}
+.tds-no{color:var(--faint);font-size:12px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:820px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px;}
+.close-btn:hover{color:var(--text);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+input,select,textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:10px 14px;font-size:13px;color:var(--text);outline:none;
+  transition:border-color 0.2s;width:100%;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);background:rgba(16,185,129,0.04);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:70px;}
+.section-hdr{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:0.5px;text-transform:uppercase;padding:6px 0 2px;border-bottom:1px solid rgba(16,185,129,0.15);margin-bottom:2px;grid-column:1/-1;}
+.checkbox-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);}
+.checkbox-row input{width:auto;padding:0;}
+
+/* CONFIRM DIALOG */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:300;display:none;align-items:center;justify-content:center;padding:16px;}
+.confirm-overlay.open{display:flex;}
+.confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,0.7);}
+.confirm-icon{width:44px;height:44px;background:rgba(239,68,68,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.confirm-title{font-size:15px;font-weight:700;margin-bottom:8px;}
+.confirm-msg{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.confirm-btns{display:flex;gap:10px;justify-content:flex-end;}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 24px;color:var(--faint);}
+.empty svg{margin-bottom:12px;opacity:0.4;}
+.empty p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;z-index:500;display:none;gap:8px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.toast.show{display:flex;}
+.toast.t-success{border-color:rgba(34,197,94,0.3);color:var(--success);}
+.toast.t-error{border-color:rgba(239,68,68,0.3);color:var(--danger);}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+</style>
+</head>
+<body>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-cat="">All Vendors</div>
+  <div class="tab" data-cat="material">Material Suppliers</div>
+  <div class="tab" data-cat="labour">Labour</div>
+  <div class="tab" data-cat="equipment">Equipment</div>
+  <div class="tab" data-cat="service">Service Providers</div>
+  <div class="tab" data-cat="subcontractor">Subcontractors</div>
+</div>
+
+<!-- KPI ROW -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-lbl">Total Active Vendors</div>
+    <div class="kpi-val" id="kpiTotal" style="color:var(--accent);">0</div>
+    <div class="kpi-sub">All categories</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Material Suppliers</div>
+    <div class="kpi-val" id="kpiMaterial" style="color:var(--info);">0</div>
+    <div class="kpi-sub">Active suppliers</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">Labour Contractors</div>
+    <div class="kpi-val" id="kpiLabour" style="color:var(--success);">0</div>
+    <div class="kpi-sub">Active labour vendors</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl">TDS Applicable</div>
+    <div class="kpi-val" id="kpiTds" style="color:var(--purple);">0</div>
+    <div class="kpi-sub">Vendors with TDS</div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-box">
+    <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+    <input type="text" id="searchInput" placeholder="Search vendors..." oninput="applyFilters()">
+  </div>
+  <div class="toolbar-right">
+    <select id="statusFilter" onchange="applyFilters()" style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--muted);outline:none;">
+      <option value="">All Status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="blacklisted">Blacklisted</option>
+    </select>
+    <button class="btn btn-outline" onclick="exportCSV()">
+      <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+    </button>
+    <button class="btn btn-primary" onclick="openModal()">
+      <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Vendor
+    </button>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="tc">
+  <table id="vendorTable">
+    <thead>
+      <tr>
+        <th>Vendor Code</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Phone</th>
+        <th>GSTIN</th>
+        <th>PAN</th>
+        <th>Credit Days</th>
+        <th>TDS</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="vendorBody"></tbody>
+  </table>
+  <div class="empty" id="emptyState" style="display:none;">
+    <i data-lucide="package" style="width:48px;height:48px;"></i>
+    <p>No vendors found.<br>Add your first vendor to get started.</p>
+    <button class="btn btn-primary" onclick="openModal()">
+      <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Vendor
+    </button>
+  </div>
+</div>
+
+<!-- VENDOR MODAL -->
+<div class="modal-overlay" id="vendorModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add New Vendor</div>
+      <button class="close-btn" onclick="closeModal()">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="vendorForm" class="form-grid">
+        <input type="hidden" id="fId">
+
+        <!-- Basic Info -->
+        <div class="section-hdr">Basic Information</div>
+
+        <div class="form-group">
+          <label>Vendor Code</label>
+          <input type="text" id="fCode" placeholder="Auto-generated" readonly style="color:var(--faint);">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="fStatus">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="blacklisted">Blacklisted</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vendor Name *</label>
+          <input type="text" id="fName" placeholder="Legal / Registered Name" required>
+        </div>
+        <div class="form-group">
+          <label>Trade Name</label>
+          <input type="text" id="fTradeName" placeholder="DBA / Trade name">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="fCategory">
+            <option value="material">Material Supplier</option>
+            <option value="labour">Labour Contractor</option>
+            <option value="equipment">Equipment Provider</option>
+            <option value="service">Service Provider</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <input type="text" id="fNotes" placeholder="Internal notes">
+        </div>
+
+        <!-- Contact -->
+        <div class="section-hdr">Contact Details</div>
+
+        <div class="form-group">
+          <label>Contact Person</label>
+          <input type="text" id="fContactPerson" placeholder="Primary contact name">
+        </div>
+        <div class="form-group">
+          <label>Phone *</label>
+          <input type="tel" id="fPhone" placeholder="10-digit mobile">
+        </div>
+        <div class="form-group">
+          <label>Alternate Phone</label>
+          <input type="tel" id="fAltPhone" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="fEmail" placeholder="vendor@email.com">
+        </div>
+        <div class="form-group full">
+          <label>Address</label>
+          <textarea id="fAddress" rows="2" placeholder="Street address"></textarea>
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="fCity" placeholder="City">
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input type="text" id="fState" placeholder="State">
+        </div>
+        <div class="form-group">
+          <label>Pincode</label>
+          <input type="text" id="fPincode" placeholder="6-digit PIN">
+        </div>
+
+        <!-- GST & Tax -->
+        <div class="section-hdr">GST &amp; Tax Details</div>
+
+        <div class="form-group">
+          <label>GSTIN</label>
+          <input type="text" id="fGstin" placeholder="15-char GST number" style="text-transform:uppercase;" maxlength="15">
+        </div>
+        <div class="form-group">
+          <label>PAN</label>
+          <input type="text" id="fPan" placeholder="10-char PAN" style="text-transform:uppercase;" maxlength="10">
+        </div>
+        <div class="form-group full">
+          <div class="checkbox-row">
+            <input type="checkbox" id="fTdsApplicable" onchange="toggleTds()">
+            <label for="fTdsApplicable" style="text-transform:none;font-size:13px;letter-spacing:0;color:var(--text);cursor:pointer;">TDS Applicable</label>
+          </div>
+        </div>
+        <div class="form-group" id="tdsSectionRow" style="display:none;">
+          <label>TDS Section</label>
+          <select id="fTdsSection">
+            <option value="">Select Section</option>
+            <option>194C - Contractors</option>
+            <option>194J - Professional Services</option>
+            <option>194I - Rent</option>
+            <option>194H - Commission</option>
+            <option>194A - Interest</option>
+            <option>194Q - Purchase of Goods</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group" id="tdsRateRow" style="display:none;">
+          <label>TDS Rate (%)</label>
+          <input type="number" id="fTdsRate" placeholder="e.g. 1, 2, 10" step="0.01" min="0" max="30">
+        </div>
+
+        <!-- Bank Details -->
+        <div class="section-hdr">Bank Details</div>
+
+        <div class="form-group">
+          <label>Bank Account No.</label>
+          <input type="text" id="fBankAccount" placeholder="Account number">
+        </div>
+        <div class="form-group">
+          <label>IFSC Code</label>
+          <input type="text" id="fBankIfsc" placeholder="11-char IFSC" style="text-transform:uppercase;" maxlength="11">
+        </div>
+        <div class="form-group">
+          <label>Bank Name</label>
+          <input type="text" id="fBankName" placeholder="Bank & branch">
+        </div>
+
+        <!-- Credit Terms -->
+        <div class="section-hdr">Credit Terms</div>
+
+        <div class="form-group">
+          <label>Credit Days</label>
+          <input type="number" id="fCreditDays" placeholder="e.g. 30" min="0" max="365">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveVendor()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i>
+        <span id="saveLabel">Save Vendor</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">
+      <i data-lucide="trash-2" style="width:20px;height:20px;color:var(--danger);"></i>
+    </div>
+    <div class="confirm-title">Delete Vendor?</div>
+    <div class="confirm-msg" id="confirmMsg">This action cannot be undone.</div>
+    <div class="confirm-btns">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">
+        <i data-lucide="trash-2" style="width:14px;height:14px;"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---- compatibility shim: unwrap {success,data,error} from IPC so this page can use raw results ----
+  const erpc = new Proxy({}, { get(_,k){ const t=window.erp||{}; const v=t[k]; if(typeof v!=='function') return v;
+    return async (...a)=>{ const r = await v.apply(t,a);
+      if (r && typeof r==='object' && !Array.isArray(r) && 'success' in r){ if(!r.success) throw new Error(r.error||'Operation failed'); return r.data; }
+      return r; }; } });
+let allVendors = [];
+let subVendors = [];
+let filteredVendors = [];
+let activeCategory = '';
+let deleteId = null;
+
+// Rubber banding
+let lastVendor = {};
+try { lastVendor = JSON.parse(localStorage.getItem('vendor_lastUsed') || '{}'); } catch(_) {}
+function saveLastVendor(d) {
+  lastVendor = { category: d.category, state: d.state, city: d.city, tds_section: d.tds_section };
+  try { localStorage.setItem('vendor_lastUsed', JSON.stringify(lastVendor)); } catch(_) {}
+}
+
+async function init() {
+  await loadVendors();
+  lucide.createIcons();
+}
+
+async function loadVendors() {
+  try {
+    allVendors = await erpc.getVendors({}) || [];
+  } catch(e) {
+    allVendors = [];
+  }
+  // Subcontractors are a full module of their own (work orders, RA bills,
+  // retention, 194C TDS) and live in a separate table — so the "Subcontractors"
+  // tab here was always empty even after you added them, which is confusing.
+  // Surface the real subcontractors under that tab (read-only), with a link to
+  // manage them in the Subcontracts module. They are NOT mixed into the other
+  // vendor tabs or the vendor KPIs.
+  try {
+    const subs = await erpc.getSubcontractors({}) || [];
+    subVendors = subs.map(s => ({
+      id: s.id, vendor_code: s.sub_code || '-', name: s.name,
+      contact_person: s.contact_person, phone: s.phone || s.mobile || '',
+      gstin: s.gstin, pan: s.pan, category: 'subcontractor',
+      tds_applicable: 1, credit_days: null, status: s.status || 'active', _sub: true,
+    }));
+  } catch(e) { subVendors = []; }
+  updateKPIs();
+  applyFilters();
+}
+
+function updateKPIs() {
+  // KPIs describe the vendor master only — subcontractors have their own module
+  // and their own stats, so they are excluded here.
+  const active = allVendors.filter(v => v.status === 'active');
+  document.getElementById('kpiTotal').textContent = active.length;
+  document.getElementById('kpiMaterial').textContent = active.filter(v => v.category === 'material').length;
+  document.getElementById('kpiLabour').textContent = active.filter(v => v.category === 'labour').length;
+  document.getElementById('kpiTds').textContent = allVendors.filter(v => v.tds_applicable).length;
+}
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const status = document.getElementById('statusFilter').value;
+
+  // The Subcontractors tab shows the real subcontractors (from their module);
+  // every other tab — including "All Vendors" — shows only true vendors.
+  const source = activeCategory === 'subcontractor' ? subVendors : allVendors;
+
+  filteredVendors = source.filter(v => {
+    const matchCat = !activeCategory || v.category === activeCategory;
+    const matchStatus = !status || v.status === status;
+    const matchSearch = !search ||
+      (v.name || '').toLowerCase().includes(search) ||
+      (v.vendor_code || '').toLowerCase().includes(search) ||
+      (v.phone || '').includes(search) ||
+      (v.gstin || '').toLowerCase().includes(search) ||
+      (v.contact_person || '').toLowerCase().includes(search);
+    return matchCat && matchStatus && matchSearch;
+  });
+
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('vendorBody');
+  const empty = document.getElementById('emptyState');
+
+  if (!filteredVendors.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    lucide.createIcons();
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filteredVendors.map(v => `
+    <tr>
+      <td><span class="code-badge">${esc(v.vendor_code || '-')}</span></td>
+      <td>
+        <div class="name-bold">${esc(v.name)}</div>
+        ${v.contact_person ? `<div class="sub-text">${esc(v.contact_person)}</div>` : ''}
+      </td>
+      <td><span class="badge b-${v.category || 'other'}">${catLabel(v.category)}</span></td>
+      <td>${esc(v.phone || '-')}</td>
+      <td><span style="font-family:monospace;font-size:12px;">${esc(v.gstin || '-')}</span></td>
+      <td><span style="font-family:monospace;font-size:12px;">${esc(v.pan || '-')}</span></td>
+      <td style="text-align:center;">${v.credit_days != null ? v.credit_days + 'd' : '-'}</td>
+      <td>${v.tds_applicable ? `<span class="tds-yes">TDS</span>` : `<span class="tds-no">No</span>`}</td>
+      <td><span class="badge b-${v.status || 'inactive'}">${statusLabel(v.status)}</span></td>
+      <td>
+        <div class="action-btns">
+          ${v._sub
+            ? `<button class="btn btn-outline btn-sm" onclick="openSubcontracts()" title="Managed in the Subcontracts module">
+                 <i data-lucide="external-link" style="width:13px;height:13px;"></i> Manage
+               </button>`
+            : `<button class="btn btn-outline btn-sm" onclick="editVendor(${v.id})" title="Edit">
+                 <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+               </button>
+               <button class="btn btn-danger btn-sm" onclick="askDelete(${v.id}, '${jsArg(v.name)}')" title="Delete">
+                 <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+               </button>`}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  lucide.createIcons();
+}
+
+// Subcontractors are maintained in their own module; jump there from the parent
+// app shell (this page runs inside an iframe).
+function openSubcontracts() {
+  try { if (window.parent && window.parent.navigate) { window.parent.navigate('subcontractors'); return; } } catch(_) {}
+  window.location.href = 'subcontractors.html';
+}
+
+function catLabel(cat) {
+  const m = {material:'Material',labour:'Labour',equipment:'Equipment',service:'Service',subcontractor:'Subcontractor',other:'Other'};
+  return m[cat] || cat || 'Other';
+}
+function statusLabel(s) {
+  const m = {active:'Active',inactive:'Inactive',blacklisted:'Blacklisted'};
+  return m[s] || s || 'Unknown';
+}
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// TABS
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    activeCategory = t.dataset.cat;
+    applyFilters();
+  });
+});
+
+// MODAL
+function openModal(vendor = null) {
+  resetForm();
+  if (vendor) {
+    document.getElementById('modalTitle').textContent = 'Edit Vendor';
+    document.getElementById('saveLabel').textContent = 'Update Vendor';
+    document.getElementById('fId').value = vendor.id || '';
+    document.getElementById('fCode').value = vendor.vendor_code || '';
+    document.getElementById('fName').value = vendor.name || '';
+    document.getElementById('fTradeName').value = vendor.trade_name || '';
+    document.getElementById('fContactPerson').value = vendor.contact_person || '';
+    document.getElementById('fPhone').value = vendor.phone || '';
+    document.getElementById('fAltPhone').value = vendor.alt_phone || '';
+    document.getElementById('fEmail').value = vendor.email || '';
+    document.getElementById('fAddress').value = vendor.address || '';
+    document.getElementById('fCity').value = vendor.city || '';
+    document.getElementById('fState').value = vendor.state || '';
+    document.getElementById('fPincode').value = vendor.pincode || '';
+    document.getElementById('fGstin').value = vendor.gstin || '';
+    document.getElementById('fPan').value = vendor.pan || '';
+    document.getElementById('fCategory').value = vendor.category || 'material';
+    document.getElementById('fStatus').value = vendor.status || 'active';
+    document.getElementById('fCreditDays').value = vendor.credit_days || '';
+    document.getElementById('fTdsApplicable').checked = !!vendor.tds_applicable;
+    document.getElementById('fTdsSection').value = vendor.tds_section || '';
+    document.getElementById('fTdsRate').value = vendor.tds_rate || '';
+    document.getElementById('fBankAccount').value = vendor.bank_account || '';
+    document.getElementById('fBankIfsc').value = vendor.bank_ifsc || '';
+    document.getElementById('fBankName').value = vendor.bank_name || '';
+    document.getElementById('fNotes').value = vendor.notes || '';
+    toggleTds();
+  } else {
+    document.getElementById('modalTitle').textContent = 'Add New Vendor';
+    document.getElementById('saveLabel').textContent = 'Save Vendor';
+    document.getElementById('fCategory').value   = lastVendor.category    || 'material';
+    document.getElementById('fState').value      = lastVendor.state       || 'Assam';
+    document.getElementById('fCity').value       = lastVendor.city        || '';
+    document.getElementById('fTdsSection').value = lastVendor.tds_section || '';
+    document.getElementById('fCreditDays').value = '30';
+    document.getElementById('fStatus').value     = 'active';
+    toggleTds();
+  }
+  document.getElementById('vendorModal').classList.add('open');
+  lucide.createIcons();
+}
+
+function closeModal() {
+  document.getElementById('vendorModal').classList.remove('open');
+}
+
+function resetForm() {
+  document.getElementById('vendorForm').reset();
+  document.getElementById('fId').value = '';
+  document.getElementById('tdsSectionRow').style.display = 'none';
+  document.getElementById('tdsRateRow').style.display = 'none';
+}
+
+function toggleTds() {
+  const on = document.getElementById('fTdsApplicable').checked;
+  document.getElementById('tdsSectionRow').style.display = on ? 'flex' : 'none';
+  document.getElementById('tdsRateRow').style.display = on ? 'flex' : 'none';
+}
+
+function editVendor(id) {
+  const v = allVendors.find(x => x.id === id);
+  if (v) openModal(v);
+}
+
+async function saveVendor() {
+  const name = document.getElementById('fName').value.trim();
+  if (!name) { showToast('Vendor name is required', 'error'); return; }
+
+  const data = {
+    id: document.getElementById('fId').value || undefined,
+    vendor_code: document.getElementById('fCode').value || undefined,
+    name,
+    trade_name: document.getElementById('fTradeName').value.trim(),
+    contact_person: document.getElementById('fContactPerson').value.trim(),
+    phone: document.getElementById('fPhone').value.trim(),
+    alt_phone: document.getElementById('fAltPhone').value.trim(),
+    email: document.getElementById('fEmail').value.trim(),
+    address: document.getElementById('fAddress').value.trim(),
+    city: document.getElementById('fCity').value.trim(),
+    state: document.getElementById('fState').value.trim(),
+    pincode: document.getElementById('fPincode').value.trim(),
+    gstin: document.getElementById('fGstin').value.trim().toUpperCase(),
+    pan: document.getElementById('fPan').value.trim().toUpperCase(),
+    category: document.getElementById('fCategory').value,
+    status: document.getElementById('fStatus').value,
+    credit_days: document.getElementById('fCreditDays').value || null,
+    tds_applicable: document.getElementById('fTdsApplicable').checked ? 1 : 0,
+    tds_section: document.getElementById('fTdsSection').value,
+    tds_rate: document.getElementById('fTdsRate').value || null,
+    bank_account: document.getElementById('fBankAccount').value.trim(),
+    bank_ifsc: document.getElementById('fBankIfsc').value.trim().toUpperCase(),
+    bank_name: document.getElementById('fBankName').value.trim(),
+    notes: document.getElementById('fNotes').value.trim(),
+  };
+
+  try {
+    await erpc.saveVendor(data);
+    showToast(data.id ? 'Vendor updated successfully' : 'Vendor added successfully', 'success');
+    if (!data.id) saveLastVendor(data);
+    closeModal();
+    await loadVendors();
+  } catch(e) {
+    showToast('Error saving vendor: ' + (e.message || e), 'error');
+  }
+}
+
+// DELETE
+function askDelete(id, name) {
+  deleteId = id;
+  document.getElementById('confirmMsg').textContent = `Delete "${name}"? This action cannot be undone.`;
+  document.getElementById('confirmOverlay').classList.add('open');
+  lucide.createIcons();
+}
+function closeConfirm() {
+  deleteId = null;
+  document.getElementById('confirmOverlay').classList.remove('open');
+}
+async function confirmDelete() {
+  if (!deleteId) return;
+  try {
+    await erpc.deleteVendor(deleteId);
+    showToast('Vendor deleted', 'success');
+    closeConfirm();
+    await loadVendors();
+  } catch(e) {
+    showToast('Error deleting vendor: ' + (e.message || e), 'error');
+    closeConfirm();
+  }
+}
+
+// EXPORT CSV
+function exportCSV() {
+  if (!filteredVendors.length) { showToast('No vendors to export', 'error'); return; }
+  const headers = ['Vendor Code','Name','Trade Name','Category','Contact Person','Phone','Alt Phone','Email','Address','City','State','Pincode','GSTIN','PAN','Credit Days','TDS Applicable','TDS Section','TDS Rate','Bank Account','Bank IFSC','Bank Name','Status','Notes'];
+  const rows = filteredVendors.map(v => [
+    v.vendor_code||'',v.name||'',v.trade_name||'',v.category||'',v.contact_person||'',
+    v.phone||'',v.alt_phone||'',v.email||'',v.address||'',v.city||'',v.state||'',v.pincode||'',
+    v.gstin||'',v.pan||'',v.credit_days||'',v.tds_applicable?'Yes':'No',
+    v.tds_section||'',v.tds_rate||'',v.bank_account||'',v.bank_ifsc||'',v.bank_name||'',
+    v.status||'',v.notes||''
+  ].map(f => `"${String(f).replace(/"/g,'""')}"`));
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vendors_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('Vendors exported to CSV', 'success');
+}
+
+// TOAST
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.className = 'toast show t-' + type;
+  el.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle-2' : 'alert-circle'}" style="width:16px;height:16px;flex-shrink:0;"></i>${esc(msg)}`;
+  lucide.createIcons();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 3500);
+}
+
+// Close modal on backdrop click
+document.getElementById('vendorModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('vendorModal')) closeModal();
+});
+document.getElementById('confirmOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmOverlay')) closeConfirm();
+});
+
+window.refreshPage = function(){ init(); };  // live auto-refresh from the app shell
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+// Shows a visible error instead of a dead page if the bridge never appears.
+(function boot(tries) {
+  if (window.erp) { init(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

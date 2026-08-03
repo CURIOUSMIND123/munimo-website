@@ -1,0 +1,2286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Reports</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<script src="vendor/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;
+  --info:#3b82f6;--purple:#a855f7;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px;}
+.tabs{display:flex;gap:4px;padding:14px 22px 0;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;}
+.tab{padding:9px 15px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:12px 22px;border-bottom:1px solid var(--border);}
+.kpi-row-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 22px;border-bottom:1px solid var(--border);}
+.kpi{background:var(--surface2);border-radius:10px;padding:12px 14px;border:1px solid var(--border);}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px;}
+.kpi-val{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+.kpi-sub{font-size:10px;color:var(--faint);margin-top:2px;}
+.cr{color:var(--success);}
+.dr{color:var(--danger);}
+.am{color:var(--accent);}
+.inf{color:var(--info);}
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.toolbar-left{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{display:flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,.2);}
+.btn-success{background:rgba(34,197,94,.1);color:var(--success);border:1px solid rgba(34,197,94,.2);}
+.btn-info{background:rgba(59,130,246,.1);color:var(--info);border:1px solid rgba(59,130,246,.2);}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);}
+.btn-sm{padding:5px 9px;font-size:11px;}
+/* PERIOD SELECTOR */
+.period-bar{display:flex;gap:8px;align-items:center;padding:10px 22px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.01);flex-wrap:wrap;}
+.period-lbl{font-size:11px;color:var(--muted);font-weight:600;}
+/* TABLE */
+.tc{padding:0 22px 20px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:12px;color:var(--muted);padding:10px 10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,.02);color:var(--text);}
+tr.drill{cursor:pointer;}
+tr.drill:hover td{background:rgba(59,130,246,.08);color:var(--text);}
+tr.drill .drill-ico{opacity:0;color:var(--info);vertical-align:middle;transition:opacity .12s;}
+tr.drill:hover .drill-ico{opacity:1;}
+tfoot td{font-size:12px;font-weight:700;color:var(--text);padding:10px 10px;border-top:2px solid var(--border);}
+.name-bold{font-weight:600;color:var(--text);}
+.sub-text{font-size:10px;color:var(--faint);}
+.badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;display:inline-block;}
+.b-held{background:rgba(16,185,129,.1);color:var(--accent);}
+.b-released{background:rgba(34,197,94,.1);color:var(--success);}
+.b-partial{background:rgba(59,130,246,.1);color:var(--info);}
+.b-overdue{background:rgba(239,68,68,.1);color:var(--danger);}
+.b-paid{background:rgba(34,197,94,.1);color:var(--success);}
+.b-pending{background:rgba(16,185,129,.1);color:var(--accent);}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;}
+/* SECTION */
+.sec-wrap{padding:14px 22px;}
+.sec-header{font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+/* CARD */
+.card{background:var(--surface2);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:14px;}
+.card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.card-desc{font-size:11px;color:var(--muted);margin-bottom:12px;}
+.card-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.card-cell{background:var(--surface3);border-radius:8px;padding:10px 12px;}
+.card-cell-lbl{font-size:10px;color:var(--faint);font-weight:600;margin-bottom:3px;text-transform:uppercase;}
+.card-cell-val{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;}
+/* P&L ROWS */
+.pnl-section{background:var(--surface2);border-radius:12px;padding:18px;border:1px solid var(--border);margin-bottom:14px;}
+.pnl-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.pnl-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:12px;}
+.pnl-row:last-child{border-bottom:none;}
+.pnl-row.subtotal{padding-top:10px;border-top:1px solid var(--border);font-weight:700;color:var(--text);}
+.pnl-row.total{padding-top:10px;border-top:2px solid var(--accent);font-weight:800;font-size:14px;color:var(--text);}
+/* CHART */
+.chart-wrap{background:var(--surface2);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:14px;}
+.chart-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:12px;}
+/* AGING TABLE */
+.aging-band{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;}
+.aging-cell{background:var(--surface2);border-radius:10px;padding:12px;border:1px solid var(--border);text-align:center;}
+.aging-cell-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px;}
+.aging-cell-val{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
+.aging-cell-cnt{font-size:10px;color:var(--faint);margin-top:2px;}
+/* OUTSTANDING */
+.stmt-header{background:var(--surface2);border-radius:10px;padding:14px 16px;border:1px solid var(--border);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+/* PRINT */
+@media print{
+  .tabs,.toolbar,.period-bar,.no-print{display:none!important;}
+  body{background:#fff;color:#000;}
+}
+/* EMPTY */
+.empty{text-align:center;padding:36px 20px;color:var(--faint);}
+.empty .ei{font-size:36px;margin-bottom:8px;}
+/* SPINNER */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+select{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:12px;color:var(--muted);outline:none;cursor:pointer;}
+select:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+input[type=date]{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:12px;color:var(--muted);outline:none;}
+input[type=date]:focus{border-color:var(--accent);}
+input[type=text],input[type=number],input[type=search],textarea{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px;font-size:12px;color:var(--text);outline:none;font-family:inherit;}
+input[type=text]:focus,input[type=number]:focus,input[type=search]:focus,textarea:focus{border-color:var(--accent);}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:760px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{cursor:pointer;color:var(--muted);font-size:20px;line-height:1;background:none;border:none;}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:22px;}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.field-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px;display:block;}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" data-tab="pnl">P&amp;L Summary</div>
+  <div class="tab" data-tab="recaging">Receivables Aging</div>
+  <div class="tab" data-tab="payaging">Payables Aging</div>
+  <div class="tab" data-tab="sitepnl">Site-wise P&amp;L</div>
+  <div class="tab" data-tab="wip">WIP / Project Profitability</div>
+  <div class="tab" data-tab="boqvar">BOQ Variance</div>
+  <div class="tab" data-tab="retention">Retention Register</div>
+  <div class="tab" data-tab="tdsrecv">TDS Receivable (26AS)</div>
+  <div class="tab" data-tab="outstanding">Outstanding Statement</div>
+  <div class="tab" data-tab="trialbal">Trial Balance</div>
+  <div class="tab" data-tab="balsheet">Balance Sheet</div>
+  <div class="tab" data-tab="genledger">General Ledger</div>
+  <div class="tab" data-tab="journals">Journal Vouchers</div>
+  <div class="tab" data-tab="capack">Year-End CA Pack</div>
+  <div class="tab" data-tab="audit">Audit Trail</div>
+</div>
+
+<!-- ═══════════════ P&L SUMMARY ═══════════════ -->
+<div id="tab-pnl">
+  <div class="period-bar">
+    <span class="period-lbl">Period:</span>
+    <select id="pnlPeriod" onchange="renderPnL()">
+      <option value="month">This Month</option>
+      <option value="quarter">This Quarter</option>
+      <option value="year" selected>This Financial Year</option>
+      <option value="custom">Custom Range</option>
+    </select>
+    <span id="pnlCustomRange" style="display:none;gap:8px;align-items:center;">
+      <input type="date" id="pnlFrom" onchange="renderPnL()">
+      <span style="color:var(--faint);font-size:11px;">to</span>
+      <input type="date" id="pnlTo" onchange="renderPnL()">
+    </span>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+      <span id="pnlMgmtBadge" style="display:none;font-size:10px;background:#4c1d95;color:#c4b5fd;padding:2px 8px;border-radius:12px;font-weight:700;">🔓 MGMT VIEW</span>
+      <button class="btn btn-sm no-print" id="pnlMgmtBtn" onclick="togglePnlMgmt()" style="background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.3);">🔒 Management View</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('pnl')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+
+  <!-- Inline Management PIN modal for reports -->
+  <div id="pnlPinModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
+    <div style="background:#1e293b;border:1px solid rgba(255,255,255,.08);border-radius:14px;width:340px;padding:28px;text-align:center;">
+      <div style="font-size:24px;margin-bottom:8px;">🔒</div>
+      <div style="font-weight:700;font-size:15px;color:#f1f5f9;margin-bottom:6px;">Management View</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:20px;line-height:1.5;">Enter your management PIN to overlay private entries on this P&amp;L report.</div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-bottom:12px;">
+        <input id="rp1" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="rPinNext(this,'rp2')" onkeydown="rPinBack(event,'','rp1')">
+        <input id="rp2" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="rPinNext(this,'rp3')" onkeydown="rPinBack(event,'rp1','rp2')">
+        <input id="rp3" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="rPinNext(this,'rp4')" onkeydown="rPinBack(event,'rp2','rp3')">
+        <input id="rp4" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="rPinNext(this,null)" onkeydown="rPinBack(event,'rp3','rp4')" onkeypress="if(event.key==='Enter')verifyPnlPin()">
+      </div>
+      <div id="rPinErr" style="color:#f87171;font-size:12px;min-height:18px;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button onclick="closePnlPinModal()" style="padding:8px 18px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,.15);color:#94a3b8;cursor:pointer;font-size:12px;">Cancel</button>
+        <button onclick="verifyPnlPin()" style="padding:8px 18px;border-radius:8px;background:#7c3aed;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:600;">Unlock →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-row" id="pnlKPIRow">
+    <div class="kpi"><div class="kpi-lbl">Revenue</div><div class="kpi-val cr" id="pnlRevenue">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Expenses</div><div class="kpi-val dr" id="pnlExpenses">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Salaries</div><div class="kpi-val am" id="pnlSalaries">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Gross Profit</div><div class="kpi-val" id="pnlGrossProfit">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Margin %</div><div class="kpi-val" id="pnlMargin">0%</div></div>
+  </div>
+  <div class="sec-wrap">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div class="pnl-section">
+        <div class="pnl-title">Income</div>
+        <div class="pnl-row"><span class="name-bold">Revenue from Contracts</span><span class="amount cr" id="pnlRevRow">₹0</span></div>
+        <div class="pnl-row subtotal"><span>Gross Revenue</span><span class="amount cr" id="pnlGrossRevRow">₹0</span></div>
+      </div>
+      <div class="pnl-section">
+        <div class="pnl-title">Expenditure</div>
+        <div class="pnl-row"><span>Direct Expenses</span><span class="amount dr" id="pnlExpRow">₹0</span></div>
+        <div class="pnl-row"><span>Salaries &amp; Wages</span><span class="amount dr" id="pnlSalRow">₹0</span></div>
+        <div class="pnl-row" id="pnlMgmtRow" style="display:none;"><span>Procurement Commission <span style="font-size:10px;opacity:0.6;">(Private)</span></span><span class="amount dr" id="pnlMgmtCommRow">₹0</span></div>
+        <div class="pnl-row subtotal"><span>Total Expenditure</span><span class="amount dr" id="pnlTotalExpRow">₹0</span></div>
+      </div>
+    </div>
+    <div class="pnl-section" style="margin-bottom:16px;">
+      <div class="pnl-title">Profit &amp; Loss</div>
+      <div class="pnl-row"><span>Gross Revenue</span><span class="amount cr" id="pnlGP1">₹0</span></div>
+      <div class="pnl-row"><span>(-) Total Expenditure</span><span class="amount dr" id="pnlExp1">₹0</span></div>
+      <div class="pnl-row total"><span>Gross Profit / (Loss)</span><span class="amount" id="pnlNetProfit">₹0</span></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">Revenue vs Expenses vs Salaries</div>
+      <canvas id="pnlChart" height="100"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ RECEIVABLES AGING ═══════════════ -->
+<div id="tab-recaging" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">Receivables Aging — as of today</span>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportAgingCSV('rec')"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('recaging')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div id="recAgingBands" class="aging-band" style="padding:12px 22px 0;"></div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <table><thead><tr>
+      <th>Client</th><th>Invoice No.</th><th>Invoice Date</th><th>Due Date</th>
+      <th>Amount</th><th>Paid</th><th>Balance</th><th>Days Outstanding</th><th>Bucket</th>
+    </tr></thead>
+    <tbody id="recAgingBody"></tbody>
+    <tfoot id="recAgingFoot"></tfoot></table>
+    <div id="recAgingEmpty" style="display:none;" class="empty"><div class="ei">✅</div><p>No outstanding receivables</p></div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAYABLES AGING ═══════════════ -->
+<div id="tab-payaging" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">Payables Aging — as of today</span>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportAgingCSV('pay')"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('payaging')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div id="payAgingBands" class="aging-band" style="padding:12px 22px 0;"></div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <table><thead><tr>
+      <th>Vendor</th><th>Bill No.</th><th>Bill Date</th><th>Due Date</th>
+      <th>Amount</th><th>Paid</th><th>Balance</th><th>Days Outstanding</th><th>Bucket</th>
+    </tr></thead>
+    <tbody id="payAgingBody"></tbody>
+    <tfoot id="payAgingFoot"></tfoot></table>
+    <div id="payAgingEmpty" style="display:none;" class="empty"><div class="ei">✅</div><p>No outstanding payables</p></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SITE-WISE P&L ═══════════════ -->
+<div id="tab-sitepnl" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">View:</span>
+    <select id="sitePnLSelect" onchange="renderSitePnL()">
+      <option value="">Select a site...</option>
+      <option value="__all__">📊 All Sites — comparison &amp; totals</option>
+    </select>
+    <span class="period-lbl" style="margin-left:6px;">Client:</span>
+    <select id="clientPnLSelect" onchange="renderClientPnL()">
+      <option value="">By client — all sites...</option>
+    </select>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-outline btn-sm no-print" onclick="exportSitePnLCSV()"><i data-lucide="download" style="width:12px;height:12px;"></i> CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('sitepnl')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div id="sitePnLContent" class="sec-wrap">
+    <div class="empty"><div class="ei">🏗️</div><p>Pick a single site, “All Sites” for a portfolio comparison, or a client to roll up all their sites</p></div>
+  </div>
+</div>
+
+<!-- ═══════════════ WIP / PROJECT PROFITABILITY ═══════════════ -->
+<div id="tab-wip" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">Work-in-Progress Statement</span>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportWipCSV()"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('wip')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <div style="font-size:11px;color:var(--faint);margin-bottom:12px;">
+      Percentage-of-completion (cost-to-cost) method per AS-7: % complete = cost incurred to date ÷ the site's budgeted estimated cost. Recognized revenue is the contract value scaled by that %. Comparing recognized revenue to what's actually been billed shows <b>under-billing</b> (work done ahead of invoicing — an asset) or <b>over-billing</b> (invoiced ahead of work done — a liability). Set a site's Estimated Cost on its edit screen to enable this for that site.
+    </div>
+    <div id="wipKPI" class="kpi-row-4" style="margin-bottom:14px;"></div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table style="min-width:980px;"><thead><tr>
+        <th>Site</th><th>Client</th>
+        <th style="text-align:right;">Contract Value</th>
+        <th style="text-align:right;">Estimated Cost</th>
+        <th style="text-align:right;">Cost to Date</th>
+        <th style="text-align:right;">% Complete</th>
+        <th style="text-align:right;">Recognized Revenue</th>
+        <th style="text-align:right;">Billed to Date</th>
+        <th style="text-align:right;">Over / (Under) Billing</th>
+        <th style="text-align:right;">Est. Margin</th>
+      </tr></thead>
+      <tbody id="wipBody"></tbody>
+      <tfoot id="wipFoot"></tfoot></table>
+    </div>
+    <div id="wipEmpty" style="display:none;" class="empty"><div class="ei">🏗️</div><p>No active sites found</p></div>
+  </div>
+</div>
+
+<!-- ═══════════════ BOQ VARIANCE (THEORETICAL vs ACTUAL) ═══════════════ -->
+<div id="tab-boqvar" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">BOQ Theoretical (contracted) vs Actual (measured) — as of today</span>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportBoqVarianceCSV()"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('boqvar')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div id="boqvarKPI" class="kpi-row-4" style="padding:12px 22px;"></div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <div style="font-size:11px;color:var(--faint);margin-bottom:12px;">
+      Compares each BOQ line's contracted quantity (what the work order was priced on) against the quantity actually measured on site. Positive variance = over-execution (cost-overrun risk); negative = work still pending. Executed value re-prices the measured quantity at the BOQ rate.
+    </div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table style="min-width:1040px;"><thead><tr>
+        <th>Site</th><th>Work Order</th><th>BOQ Item</th><th>Unit</th>
+        <th style="text-align:right;">Contracted Qty</th><th style="text-align:right;">Measured Qty</th>
+        <th style="text-align:right;">Variance</th>
+        <th style="text-align:right;">Contracted Value</th><th style="text-align:right;">Executed Value</th><th>Status</th>
+      </tr></thead>
+      <tbody id="boqvarBody"></tbody>
+      <tfoot id="boqvarFoot"></tfoot></table>
+    </div>
+    <div id="boqvarEmpty" style="display:none;" class="empty"><div class="ei">📐</div><p>No BOQ items found. Add a BOQ to a subcontractor work order to track variance.</p></div>
+  </div>
+</div>
+
+<!-- ═══════════════ RETENTION REGISTER ═══════════════ -->
+<div id="tab-retention" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">Retention Register</span>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportRetentionCSV()"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('retention')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div id="retentionKPI" class="kpi-row-4" style="padding:12px 22px;"></div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <table><thead><tr>
+      <th>Invoice No.</th><th>Client</th><th>Site</th><th>Invoice Date</th>
+      <th>Invoice Amount</th><th>Retention Amount</th><th>Status</th><th>Expected Release</th>
+    </tr></thead>
+    <tbody id="retentionBody"></tbody>
+    <tfoot id="retentionFoot"></tfoot></table>
+    <div id="retentionEmpty" style="display:none;" class="empty"><div class="ei">📋</div><p>No retention records found</p></div>
+  </div>
+</div>
+
+<!-- ═══════════════ TDS RECEIVABLE (26AS) ═══════════════ -->
+<div id="tab-tdsrecv" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">TDS Receivable — Form 26AS / GST cash-ledger reconciliation</span>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('tdsrecv')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <p class="muted" style="font-size:12px;margin-bottom:10px;">TDS your clients actually withheld at the time of each receipt — tick this against your Form 26AS download (income-tax) and the GST electronic cash ledger (Sec 51).</p>
+    <table><thead><tr>
+      <th>Payment Date</th><th>Invoice No.</th><th>Client</th><th>GSTIN</th>
+      <th style="text-align:right;">Amount Received</th><th style="text-align:right;">Income-tax TDS</th><th style="text-align:right;">GST TDS (Sec 51)</th>
+    </tr></thead>
+    <tbody id="tdsRecvBody"></tbody>
+    <tfoot id="tdsRecvFoot"></tfoot></table>
+    <div id="tdsRecvEmpty" style="display:none;" class="empty"><div class="ei">🧾</div><p>No client TDS recorded yet. It appears here once you record a receipt with TDS deducted at source.</p></div>
+  </div>
+</div>
+
+<!-- ═══════════════ OUTSTANDING STATEMENT ═══════════════ -->
+<div id="tab-outstanding" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">Client:</span>
+    <select id="outstandingClient" onchange="renderOutstanding()">
+      <option value="">Select a client...</option>
+    </select>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportOutstandingCSV()"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('outstanding')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print Statement / PDF</button>
+    </div>
+  </div>
+  <div id="outstandingContent" class="sec-wrap">
+    <div class="empty"><div class="ei">👤</div><p>Select a client to generate outstanding statement</p></div>
+  </div>
+</div>
+
+<!-- ═══════════════ TRIAL BALANCE ═══════════════ -->
+<div id="tab-trialbal" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">Financial Year:</span>
+    <select id="tbFY" onchange="renderTrialBalance()">
+      <option value="2026-27" selected>2026-27</option>
+      <option value="2025-26">2025-26</option>
+      <option value="2024-25">2024-25</option>
+    </select>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportTrialBalanceCSV()"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('trialbal')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <div style="font-size:11px;color:var(--faint);margin-bottom:6px;">
+      Derived from a real double-entry general ledger: every invoice, bill, payment, payroll run, RA bill, journal voucher and credit/debit note posts balanced debits and credits. Income &amp; expense cover the selected financial year; asset/liability balances are cumulative to date, with prior-year profit carried as Retained Earnings. <b style="color:var(--info);">Click any row to drill into its General Ledger.</b> Have your CA verify before statutory filing.
+    </div>
+    <div id="tbStatus" style="margin-bottom:10px;"></div>
+    <table><thead><tr>
+      <th>Ledger Account</th><th>Group</th><th style="text-align:right;">Debit (₹)</th><th style="text-align:right;">Credit (₹)</th>
+    </tr></thead>
+    <tbody id="tbBody"></tbody>
+    <tfoot id="tbFoot"></tfoot></table>
+  </div>
+</div>
+
+<!-- ═══════════════ BALANCE SHEET ═══════════════ -->
+<div id="tab-balsheet" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">Financial Year:</span>
+    <select id="bsFY" onchange="renderBalanceSheet()">
+      <option value="2026-27" selected>2026-27</option>
+      <option value="2025-26">2025-26</option>
+      <option value="2024-25">2024-25</option>
+    </select>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportBalanceSheetCSV()"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('balsheet')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div class="sec-wrap" id="bsContent">
+    <div class="empty"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ GENERAL LEDGER / VOUCHERS ═══════════════ -->
+<div id="tab-genledger" style="display:none;">
+  <div class="period-bar" style="flex-wrap:wrap;gap:10px;">
+    <span class="period-lbl">FY:</span>
+    <select id="glFY" onchange="renderGeneralLedger()">
+      <option value="2026-27" selected>2026-27</option>
+      <option value="2025-26">2025-26</option>
+      <option value="2024-25">2024-25</option>
+    </select>
+    <span class="period-lbl">Ledger Account:</span>
+    <select id="glAccount" onchange="renderGeneralLedger()" style="min-width:200px;">
+      <option value="">All Accounts</option>
+    </select>
+    <input type="search" id="glSearch" placeholder="Search voucher, reference, account…" oninput="filterGL()"
+      style="flex:1;min-width:160px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;">
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportGeneralLedgerCSV()"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+      <button class="btn btn-outline btn-sm no-print" onclick="printReport('genledger')"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print / PDF</button>
+    </div>
+  </div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <div style="font-size:11px;color:var(--faint);margin-bottom:6px;">
+      Every line below is a real double-entry posting — sales invoices, vendor bills, receipts &amp; payments, payroll, labour wages, RA bills, credit/debit notes and posted journal vouchers. Pick a single account to see its running balance. This is the detail behind the Trial Balance &amp; Balance Sheet.
+    </div>
+    <div id="glStatus" style="margin-bottom:10px;font-size:12px;color:var(--muted);"></div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table style="min-width:760px;"><thead><tr>
+        <th>Date</th><th>Voucher Type</th><th>Particulars (what · whom · site · bank)</th><th>Ledger Account</th><th>Group</th>
+        <th style="text-align:right;">Debit (₹)</th><th style="text-align:right;">Credit (₹)</th><th style="text-align:right;">Balance (₹)</th>
+      </tr></thead>
+      <tbody id="glBody"></tbody>
+      <tfoot id="glFoot"></tfoot></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ JOURNAL VOUCHERS ═══════════════ -->
+<div id="tab-journals" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">Manual Journal Vouchers</span>
+    <input type="search" id="jvSearch" placeholder="Search JV no., narration…" oninput="filterJVList()"
+      style="flex:1;min-width:160px;">
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-primary btn-sm no-print" onclick="openJVModal()"><i data-lucide="plus" style="width:12px;height:12px;"></i> New Journal Voucher</button>
+    </div>
+  </div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <div style="font-size:11px;color:var(--faint);margin-bottom:10px;">
+      For adjustments with no source document — depreciation, write-offs, opening balances, corrections. A draft has not affected the books; only a <b>posted</b> voucher shows up in the General Ledger / Trial Balance / Balance Sheet. A posted voucher can't be deleted — reverse it with a new correcting voucher instead.
+    </div>
+    <table><thead><tr>
+      <th>JV No.</th><th>Date</th><th>Narration</th>
+      <th style="text-align:right;">Debit</th><th style="text-align:right;">Credit</th>
+      <th>Status</th><th></th>
+    </tr></thead>
+    <tbody id="jvBody"></tbody></table>
+    <div id="jvEmpty" style="display:none;" class="empty"><div class="ei">📒</div><p>No journal vouchers yet</p></div>
+  </div>
+</div>
+
+<!-- Journal Voucher entry/view modal -->
+<div class="modal-overlay" id="jvModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="jvModalTitle">New Journal Voucher</div>
+      <button class="modal-close" onclick="closeJVModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px;">
+        <div>
+          <label class="field-lbl">Date</label>
+          <input type="date" id="jvDate" style="width:100%;">
+        </div>
+        <div>
+          <label class="field-lbl">Narration</label>
+          <input type="text" id="jvNarration" placeholder="e.g. Depreciation for March 2026" style="width:100%;">
+        </div>
+      </div>
+      <table><thead><tr>
+        <th style="min-width:160px;">Account</th>
+        <th style="min-width:110px;">Type</th>
+        <th style="text-align:right;min-width:110px;">Debit (₹)</th>
+        <th style="text-align:right;min-width:110px;">Credit (₹)</th>
+        <th>Line Narration</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="jvLinesBody"></tbody></table>
+      <datalist id="jvCoaList"></datalist>
+      <button class="btn btn-outline btn-sm" id="jvAddLineBtn" onclick="addJVLine()" style="margin-top:10px;">
+        <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Line
+      </button>
+      <div style="display:flex;justify-content:flex-end;gap:24px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;">
+        <div>Total Debit: <b id="jvTotalDr">₹0</b></div>
+        <div>Total Credit: <b id="jvTotalCr">₹0</b></div>
+        <div id="jvDiff" style="font-weight:700;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div id="jvDeleteWrap"><button class="btn btn-danger btn-sm" id="jvDeleteBtn" onclick="deleteCurrentJV()" style="display:none;">Delete Draft</button></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline btn-sm" onclick="closeJVModal()">Cancel</button>
+        <button class="btn btn-outline btn-sm" id="jvSaveDraftBtn" onclick="saveJV('draft')">Save as Draft</button>
+        <button class="btn btn-primary btn-sm" id="jvPostBtn" onclick="saveJV('posted')">Post</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ YEAR-END CA PACK ═══════════════ -->
+<div id="tab-capack" style="display:none;">
+  <div class="sec-wrap">
+    <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">Year-End CA Export Pack</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:16px;">One click — download everything your CA needs to file ITR, GST returns and audit.</div>
+    <div style="margin-bottom:12px;">
+      <span class="period-lbl">Financial Year: </span>
+      <select id="capackFY" style="display:inline-block;">
+        <option value="2025-26" selected>2025-26</option>
+        <option value="2024-25">2024-25</option>
+        <option value="2026-27">2026-27</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+      <div class="card">
+        <div style="font-size:20px;margin-bottom:8px;">📊</div>
+        <div class="card-title">Invoices / Sales Register</div>
+        <div class="card-desc">All sales invoices with GST breakup</div>
+        <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;" onclick="caExportInvoices()"><i data-lucide="download" style="width:12px;height:12px;"></i> Download CSV</button>
+      </div>
+      <div class="card">
+        <div style="font-size:20px;margin-bottom:8px;">📦</div>
+        <div class="card-title">Expenses Register</div>
+        <div class="card-desc">All expenses / vendor bills</div>
+        <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;" onclick="caExportExpenses()"><i data-lucide="download" style="width:12px;height:12px;"></i> Download CSV</button>
+      </div>
+      <div class="card">
+        <div style="font-size:20px;margin-bottom:8px;">👷</div>
+        <div class="card-title">Payroll Summary</div>
+        <div class="card-desc">Employee salary register</div>
+        <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;" onclick="caExportPayroll()"><i data-lucide="download" style="width:12px;height:12px;"></i> Download CSV</button>
+      </div>
+      <div class="card">
+        <div style="font-size:20px;margin-bottom:8px;">🧾</div>
+        <div class="card-title">TDS Summary</div>
+        <div class="card-desc">TDS deducted from invoices</div>
+        <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;" onclick="caExportTDS()"><i data-lucide="download" style="width:12px;height:12px;"></i> Download CSV</button>
+      </div>
+      <div class="card">
+        <div style="font-size:20px;margin-bottom:8px;">📋</div>
+        <div class="card-title">Retention Register</div>
+        <div class="card-desc">All retention amounts held/released</div>
+        <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;" onclick="caExportRetention()"><i data-lucide="download" style="width:12px;height:12px;"></i> Download CSV</button>
+      </div>
+      <div class="card">
+        <div style="font-size:20px;margin-bottom:8px;">📁</div>
+        <div class="card-title">Print Full Pack</div>
+        <div class="card-desc">Print all reports for physical filing</div>
+        <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;" onclick="window.print()"><i data-lucide="printer" style="width:12px;height:12px;"></i> Print</button>
+      </div>
+    </div>
+    <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:18px;">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">Year-End Closing Checklist for Your CA</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="checklistGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ AUDIT TRAIL ═══════════════ -->
+<div id="tab-audit" style="display:none;">
+  <div class="period-bar">
+    <span class="period-lbl">From:</span>
+    <input type="date" id="auditFrom">
+    <span style="color:var(--faint);font-size:11px;">to</span>
+    <input type="date" id="auditTo">
+    <select id="auditUser" style="margin-left:4px;">
+      <option value="">All Users</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="renderAudit()" style="margin-left:4px;">Filter</button>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-info btn-sm no-print" onclick="exportAuditCSV()"><i data-lucide="download" style="width:12px;height:12px;"></i> Export CSV</button>
+    </div>
+  </div>
+  <div class="tc" style="padding:14px 22px 20px;">
+    <table><thead><tr>
+      <th>Timestamp</th><th>User</th><th>Action</th><th>Module</th><th>Record ID</th><th>Details</th>
+    </tr></thead>
+    <tbody id="auditBody"></tbody></table>
+    <div id="auditEmpty" style="display:none;" class="empty"><div class="ei">🔍</div><p>No audit log entries found for selected filters</p></div>
+  </div>
+</div>
+
+<script>
+  // ---- compatibility shim: unwrap {success,data,error} from IPC so this page can use raw results ----
+  const erpc = new Proxy({}, { get(_,k){ const t=window.erp||{}; const v=t[k]; if(typeof v!=='function') return v;
+    return async (...a)=>{ const r = await v.apply(t,a);
+      if (r && typeof r==='object' && !Array.isArray(r) && 'success' in r){ if(!r.success) throw new Error(r.error||'Operation failed'); return r.data; }
+      return r; }; } });
+lucide.createIcons();
+
+// ─── UTILS
+const fmt = n => {
+  const v = Math.round(Math.abs(n) || 0);
+  return v.toLocaleString('en-IN');
+};
+const fmtC = n => '₹' + fmt(n);
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+const fmtSigned = n => (n < 0 ? '-' : '') + '₹' + fmt(n);
+
+function getFYDates(fy) {
+  const [startY] = fy.split('-').map(Number);
+  return {
+    from: `${startY}-04-01`,
+    to: `${startY + 1}-03-31`
+  };
+}
+
+function dlCSV(csv, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = name;
+  a.click();
+}
+
+// ─── PROFESSIONAL PRINT / PDF ─────────────────────────────────────────────
+// Until now every report's "Print" button just called window.print() on the
+// dark app UI — no company letterhead, no client/party, no period header. This
+// wraps the already-rendered report tables in a proper accounting document
+// (company header pulled from the company profile, report title, period / as-on
+// sub-header, signature block) and opens it in a print window the browser can
+// "Save as PDF" — the same proven pattern the Tax Invoice print uses.
+function _rToday() {
+  return new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function _rAsOn() { return 'As on ' + _rToday(); }
+function _rOptText(id) { const el = document.querySelector('#' + id + ' option:checked'); return el ? el.textContent.trim() : ''; }
+
+const REPORT_PRINT = {
+  pnl:         { title: 'Profit & Loss Statement',                  landscape: false, sel: ['#pnlKPIRow', '#tab-pnl .sec-wrap'],
+                 sub: () => { const p = document.getElementById('pnlPeriod'); if (p && p.value === 'custom') { const f = (document.getElementById('pnlFrom')||{}).value, t = (document.getElementById('pnlTo')||{}).value; return 'Period: ' + (f || '…') + ' to ' + (t || '…'); } return 'Period: ' + _rOptText('pnlPeriod'); } },
+  recaging:    { title: 'Receivables Ageing Statement',             landscape: false, sel: ['#recAgingBands', '#tab-recaging .tc table'], sub: _rAsOn },
+  payaging:    { title: 'Payables Ageing Statement',                landscape: false, sel: ['#payAgingBands', '#tab-payaging .tc table'], sub: _rAsOn },
+  sitepnl:     { title: 'Site-wise Profit & Loss',                  landscape: false, sel: ['#sitePnLContent'],
+                 sub: () => { const c = document.getElementById('clientPnLSelect'); if (c && c.value) return 'Client: ' + _rOptText('clientPnLSelect'); const s = document.getElementById('sitePnLSelect'); return (s && s.value && s.value !== '__all__') ? _rOptText('sitePnLSelect') : 'All Sites — Portfolio'; } },
+  wip:         { title: 'Work-in-Progress / Project Profitability', landscape: true,  sel: ['#wipKPI', '#tab-wip .tc table'], sub: _rAsOn },
+  boqvar:      { title: 'BOQ Variance — Contracted vs Executed',    landscape: true,  sel: ['#boqvarKPI', '#tab-boqvar .tc table'], sub: _rAsOn },
+  retention:   { title: 'Retention Register',                       landscape: false, sel: ['#retentionKPI', '#tab-retention .tc table'], sub: _rAsOn },
+  tdsrecv:     { title: 'TDS Receivable (Form 26AS)',               landscape: true,  sel: ['#tab-tdsrecv .tc table'], sub: _rAsOn },
+  outstanding: { title: 'Statement of Account',                     landscape: false, sel: ['#outstandingContent'],
+                 sub: () => { const c = _rOptText('outstandingClient'); return (c ? 'Client: ' + c + '  ·  ' : '') + _rAsOn(); } },
+  trialbal:    { title: 'Trial Balance',                            landscape: false, sel: ['#tbStatus', '#tab-trialbal .tc table'],
+                 sub: () => 'Financial Year ' + ((document.getElementById('tbFY')||{}).value || '') + '  ·  ' + _rAsOn() },
+  balsheet:    { title: 'Balance Sheet',                            landscape: false, sel: ['#bsContent'],
+                 sub: () => 'Financial Year ' + ((document.getElementById('bsFY')||{}).value || '') + '  ·  ' + _rAsOn() },
+  genledger:   { title: 'General Ledger',                           landscape: true,  sel: ['#tab-genledger .tc table'],
+                 sub: () => 'Financial Year ' + ((document.getElementById('glFY')||{}).value || '') + '  ·  Account: ' + (_rOptText('glAccount') || 'All Accounts') },
+};
+
+function buildReportDoc({ co, title, subtitle, body, landscape }) {
+  const addr    = [co.address, co.city, co.state, co.pincode].filter(Boolean).map(esc).join(', ');
+  const gstpan  = [co.gstin && ('GSTIN: ' + esc(co.gstin)), co.pan && ('PAN: ' + esc(co.pan))].filter(Boolean).join('  ·  ');
+  const contact = [co.phone && ('Ph: ' + esc(co.phone)), co.email && esc(co.email), co.website && esc(co.website)].filter(Boolean).join('  ·  ');
+  const logo    = (co.logo_path && /^data:image\//.test(co.logo_path))
+    ? `<img src="${co.logo_path}" alt="" style="max-height:58px;max-width:190px;object-fit:contain;">`
+    : `<div class="r-cn">${esc(co.name) || 'Your Company'}</div>`;
+  const now = new Date().toLocaleString('en-IN');
+  return `<html><head><meta charset="UTF-8"><title>${esc(title)}</title><style>
+    @page{size:${landscape ? 'A4 landscape' : 'A4'};margin:14mm;}
+    *{box-sizing:border-box;}
+    html,body{background:#fff;}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;font-size:12px;padding:22px;max-width:${landscape ? '1180px' : '900px'};margin:auto;}
+    .r-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0f172a;padding-bottom:12px;}
+    .r-cn{font-size:19px;font-weight:800;}
+    .r-meta{font-size:11px;color:#475569;line-height:1.6;margin-top:5px;}
+    .r-titlebox{text-align:right;min-width:240px;}
+    .r-title{font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
+    .r-sub{font-size:11px;color:#475569;margin-top:5px;}
+    .rbody{margin-top:16px;}
+    .rbody *{color:#0f172a !important;background-color:transparent !important;box-shadow:none !important;border-color:#cbd5e1 !important;}
+    .rbody table{width:100% !important;min-width:0 !important;border-collapse:collapse !important;margin:8px 0 16px;}
+    .rbody th,.rbody td{border:1px solid #cbd5e1 !important;padding:6px 9px !important;font-size:11px !important;vertical-align:top;}
+    .rbody thead th{background:#0f172a !important;color:#fff !important;font-size:10px !important;text-transform:uppercase;letter-spacing:.3px;text-align:left;}
+    .rbody tfoot td,.rbody tfoot th{font-weight:700;background:#f1f5f9 !important;}
+    .rbody canvas,.rbody .no-print,.rbody button,.rbody .spinner,.rbody select,.rbody input,.rbody .chart-wrap,.rbody .empty{display:none !important;}
+    .rbody .kpi,.rbody .kpi-row>div,.rbody .kpi-row-4>div{display:inline-block !important;border:1px solid #cbd5e1 !important;border-radius:6px;padding:7px 14px;margin:0 8px 8px 0;vertical-align:top;}
+    .rbody .kpi-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#64748b !important;}
+    .rbody .kpi-val{font-size:15px;font-weight:800;}
+    .rbody .pnl-section{border:1px solid #cbd5e1;border-radius:6px;padding:10px 12px;margin-bottom:12px;}
+    .rbody .pnl-title{font-weight:700;font-size:12px;border-bottom:1px solid #e2e8f0;padding-bottom:5px;margin-bottom:6px;}
+    .rbody .pnl-row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;}
+    .rbody .pnl-row.subtotal,.rbody .pnl-row.total{font-weight:700;border-top:1px solid #e2e8f0;margin-top:4px;padding-top:5px;}
+    .rbody .aging-band{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+    .r-foot{margin-top:22px;border-top:1px solid #cbd5e1;padding-top:10px;display:flex;justify-content:space-between;align-items:flex-end;font-size:9px;color:#64748b;}
+    .r-sign{text-align:right;font-size:10px;color:#0f172a;}
+    .r-signline{height:34px;}
+    @media print{body{padding:0;}}
+  </style></head><body>
+    <div class="r-head">
+      <div>${logo}<div class="r-meta">${addr ? addr + '<br>' : ''}${gstpan ? gstpan + '<br>' : ''}${contact || ''}</div></div>
+      <div class="r-titlebox"><div class="r-title">${esc(title)}</div>${subtitle ? `<div class="r-sub">${esc(subtitle)}</div>` : ''}</div>
+    </div>
+    <div class="rbody">${body}</div>
+    <div class="r-foot">
+      <div>Generated on ${esc(now)}<br>Computer-generated report — please have your CA verify before statutory use.</div>
+      <div class="r-sign">For ${esc(co.name) || 'Company'}<div class="r-signline"></div>Authorised Signatory</div>
+    </div>
+  </body></html>`;
+}
+
+async function printReport(type) {
+  const cfg = REPORT_PRINT[type];
+  if (!cfg) { window.print(); return; }
+  let co = { name: 'Your Company' };
+  try { const r = await window.erp.getCompany(); if (r && r.success && r.data) co = r.data; } catch (e) {}
+  // Clone each container and drop placeholder / spinner / control nodes before
+  // measuring — an empty-state card ("Select a client…") has text but is NOT a
+  // report, so it must not produce a hollow letterhead PDF.
+  let body = '', hasContent = false;
+  for (const s of cfg.sel) {
+    const el = document.querySelector(s);
+    if (!el) continue;
+    const clone = el.cloneNode(true);
+    clone.querySelectorAll('.empty, .spinner, .no-print, button, script').forEach(n => n.remove());
+    if (clone.textContent.replace(/\s+/g, ' ').trim()) hasContent = true;
+    body += clone.outerHTML;
+  }
+  if (!hasContent) {
+    alert('Generate the report first, then use Print / PDF.');
+    return;
+  }
+  const subtitle = (typeof cfg.sub === 'function') ? cfg.sub() : (cfg.sub || '');
+  const html = buildReportDoc({ co, title: cfg.title, subtitle, body, landscape: !!cfg.landscape });
+  const w = window.open('', '_blank');
+  if (!w) { alert('Please allow pop-ups to print this report.'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { try { w.focus(); w.print(); } catch (e) {} }, 350);
+}
+
+// ─── TABS
+const TABS = ['pnl','recaging','payaging','sitepnl','wip','boqvar','retention','tdsrecv','outstanding','trialbal','balsheet','genledger','journals','capack','audit'];
+
+document.querySelectorAll('.tab').forEach(el => {
+  el.addEventListener('click', () => switchTab(el.dataset.tab));
+});
+
+function switchTab(t) {
+  TABS.forEach(x => {
+    document.getElementById('tab-' + x).style.display = x === t ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === t);
+  });
+  if (t === 'pnl') renderPnL();
+  if (t === 'recaging') renderReceivablesAging();
+  if (t === 'payaging') renderPayablesAging();
+  if (t === 'sitepnl') initSitePnL();
+  if (t === 'wip') renderWip();
+  if (t === 'boqvar') renderBoqVariance();
+  if (t === 'retention') renderRetention();
+  if (t === 'tdsrecv') renderTdsReceivable();
+  if (t === 'outstanding') initOutstanding();
+  if (t === 'trialbal') renderTrialBalance();
+  if (t === 'balsheet') renderBalanceSheet();
+  if (t === 'genledger') renderGeneralLedger();
+  if (t === 'journals') renderJournalVouchers();
+  if (t === 'capack') renderCAPack();
+  if (t === 'audit') renderAudit();
+}
+
+// ─── PERIOD HELPERS
+function getPnLDates() {
+  const period = document.getElementById('pnlPeriod').value;
+  const now = new Date();
+  let from, to;
+  if (period === 'month') {
+    from = new Date(now.getFullYear(), now.getMonth(), 1);
+    to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  } else if (period === 'quarter') {
+    const qStart = Math.floor(now.getMonth() / 3) * 3;
+    from = new Date(now.getFullYear(), qStart, 1);
+    to = new Date(now.getFullYear(), qStart + 3, 0);
+  } else if (period === 'year') {
+    const y = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    from = new Date(y, 3, 1);
+    to = new Date(y + 1, 2, 31);
+  } else {
+    from = document.getElementById('pnlFrom').value || null;
+    to = document.getElementById('pnlTo').value || null;
+    return { from_date: from, to_date: to };
+  }
+  return {
+    from_date: from.toISOString().slice(0, 10),
+    to_date: to.toISOString().slice(0, 10)
+  };
+}
+
+document.getElementById('pnlPeriod').addEventListener('change', () => {
+  const isCustom = document.getElementById('pnlPeriod').value === 'custom';
+  document.getElementById('pnlCustomRange').style.display = isCustom ? 'flex' : 'none';
+});
+
+// ─── P&L SUMMARY
+let pnlChartInstance = null;
+
+// ─── Management PIN for P&L overlay
+let pnlMgmtPin = null;
+
+function togglePnlMgmt() {
+  if (pnlMgmtPin) {
+    // Lock: clear the pin and refresh
+    pnlMgmtPin = null;
+    document.getElementById('pnlMgmtBtn').textContent = '🔒 Management View';
+    document.getElementById('pnlMgmtBtn').style.cssText = 'background:rgba(124,58,237,.15);color:#a78bfa;border:1px solid rgba(124,58,237,.3);';
+    document.getElementById('pnlMgmtBadge').style.display = 'none';
+    renderPnL();
+  } else {
+    openPnlPinModal();
+  }
+}
+
+function openPnlPinModal() {
+  ['rp1','rp2','rp3','rp4'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('rPinErr').textContent = '';
+  document.getElementById('pnlPinModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('rp1').focus(), 80);
+}
+
+function closePnlPinModal() {
+  document.getElementById('pnlPinModal').style.display = 'none';
+}
+
+function rPinNext(el, nextId) { if (el.value && nextId) document.getElementById(nextId).focus(); }
+function rPinBack(e, prevId, curId) {
+  if (e.key === 'Backspace' && !document.getElementById(curId).value && prevId)
+    document.getElementById(prevId).focus();
+}
+
+async function verifyPnlPin() {
+  const pin = ['rp1','rp2','rp3','rp4'].map(id => document.getElementById(id).value).join('');
+  if (pin.length < 4) { document.getElementById('rPinErr').textContent = 'Enter 4-digit PIN'; return; }
+  const r = await window.erp.verifyManagementPin(pin);
+  if (r.success && r.data.valid) {
+    pnlMgmtPin = pin;
+    closePnlPinModal();
+    document.getElementById('pnlMgmtBtn').textContent = '🔓 Lock Management View';
+    document.getElementById('pnlMgmtBtn').style.cssText = 'background:rgba(124,58,237,.4);color:#e9d5ff;border:1px solid rgba(124,58,237,.6);';
+    document.getElementById('pnlMgmtBadge').style.display = '';
+    renderPnL();
+  } else {
+    document.getElementById('rPinErr').textContent = 'Incorrect PIN';
+    ['rp1','rp2','rp3','rp4'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('rp1').focus();
+  }
+}
+
+async function renderPnL() {
+  const filters = getPnLDates();
+  if (!filters.from_date || !filters.to_date) return;
+  if (pnlMgmtPin) filters.management_pin = pnlMgmtPin;
+  try {
+    const data = await erpc.getPnLReport(filters);
+    const revenue = data.revenue || 0;
+    const expenses = data.expenses || 0;
+    const salaries = data.salaries || 0;
+    const gross = data.gross_profit || 0;
+    const margin = revenue > 0 ? ((gross / revenue) * 100).toFixed(1) : 0;
+
+    document.getElementById('pnlRevenue').textContent = fmtC(revenue);
+    document.getElementById('pnlExpenses').textContent = fmtC(expenses);
+    document.getElementById('pnlSalaries').textContent = fmtC(salaries);
+    const gpEl = document.getElementById('pnlGrossProfit');
+    gpEl.textContent = fmtSigned(gross);
+    gpEl.className = 'kpi-val ' + (gross >= 0 ? 'cr' : 'dr');
+    const marginEl = document.getElementById('pnlMargin');
+    marginEl.textContent = margin + '%';
+    marginEl.className = 'kpi-val ' + (margin >= 0 ? 'cr' : 'dr');
+
+    document.getElementById('pnlRevRow').textContent = fmtC(revenue);
+    document.getElementById('pnlGrossRevRow').textContent = fmtC(revenue);
+    document.getElementById('pnlExpRow').textContent = fmtC(expenses);
+    document.getElementById('pnlSalRow').textContent = fmtC(salaries);
+    const mgmtComm = data.mgmt_commission || 0;
+    if (mgmtComm > 0 && pnlMgmtPin) {
+      document.getElementById('pnlMgmtRow').style.display = '';
+      document.getElementById('pnlMgmtCommRow').textContent = fmtC(mgmtComm);
+    } else {
+      document.getElementById('pnlMgmtRow').style.display = 'none';
+    }
+    const totalExp = expenses + salaries + mgmtComm;
+    document.getElementById('pnlTotalExpRow').textContent = fmtC(totalExp);
+    document.getElementById('pnlGP1').textContent = fmtC(revenue);
+    document.getElementById('pnlExp1').textContent = fmtC(totalExp);
+    const netEl = document.getElementById('pnlNetProfit');
+    netEl.textContent = fmtSigned(gross);
+    netEl.className = 'amount ' + (gross >= 0 ? 'cr' : 'dr');
+
+    // Chart
+    if (pnlChartInstance) pnlChartInstance.destroy();
+    const ctx = document.getElementById('pnlChart').getContext('2d');
+    pnlChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Revenue', 'Expenses', 'Salaries', 'Gross Profit'],
+        datasets: [{
+          data: [revenue, expenses, salaries, Math.max(0, gross)],
+          backgroundColor: ['rgba(34,197,94,.7)', 'rgba(239,68,68,.7)', 'rgba(16,185,129,.7)', 'rgba(59,130,246,.7)'],
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: {
+          callbacks: { label: ctx => '₹' + fmt(ctx.raw) }
+        }},
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8' } },
+          y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8', callback: v => '₹' + fmt(v) } }
+        }
+      }
+    });
+  } catch (e) {
+    console.error('P&L error', e);
+  }
+}
+
+// ─── AGING HELPERS
+function agingBucket(days) {
+  if (days <= 0) return 'Current';
+  if (days <= 30) return '0–30 days';
+  if (days <= 60) return '31–60 days';
+  if (days <= 90) return '61–90 days';
+  return '90+ days';
+}
+function agingBadge(bucket) {
+  if (bucket === 'Current') return 'b-paid';
+  if (bucket === '0–30 days') return 'b-pending';
+  if (bucket === '31–60 days') return 'b-partial';
+  if (bucket === '61–90 days') return 'b-held';
+  return 'b-overdue';
+}
+function renderAgingBands(containerId, data) {
+  const bands = [
+    { key: 'current', label: 'Current', color: 'var(--success)' },
+    { key: 'd0_30', label: '0–30 Days', color: 'var(--accent)' },
+    { key: 'd31_60', label: '31–60 Days', color: 'var(--info)' },
+    { key: 'd61_90', label: '61–90 Days', color: 'var(--purple)' },
+    { key: 'd90plus', label: '90+ Days', color: 'var(--danger)' }
+  ];
+  const cont = document.getElementById(containerId);
+  cont.innerHTML = bands.map(b => {
+    const items = (data[b.key] || []);
+    const total = items.reduce((s, x) => s + (x.balance || x.amount || 0), 0);
+    return `<div class="aging-cell">
+      <div class="aging-cell-lbl">${b.label}</div>
+      <div class="aging-cell-val" style="color:${b.color};">${fmtC(total)}</div>
+      <div class="aging-cell-cnt">${items.length} record${items.length !== 1 ? 's' : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── RECEIVABLES AGING
+let _recAgingData = null;
+
+async function renderReceivablesAging() {
+  try {
+    const data = await erpc.getReceivablesAging();
+    _recAgingData = data;
+    renderAgingBands('recAgingBands', data);
+
+    const all = [
+      ...(data.current || []).map(x => ({ ...x, _bucket: 'Current' })),
+      ...(data.d0_30 || []).map(x => ({ ...x, _bucket: '0–30 days' })),
+      ...(data.d31_60 || []).map(x => ({ ...x, _bucket: '31–60 days' })),
+      ...(data.d61_90 || []).map(x => ({ ...x, _bucket: '61–90 days' })),
+      ...(data.d90plus || []).map(x => ({ ...x, _bucket: '90+ days' }))
+    ];
+
+    const body = document.getElementById('recAgingBody');
+    const empty = document.getElementById('recAgingEmpty');
+    empty.style.display = all.length ? 'none' : 'block';
+
+    let totalAmt = 0, totalPaid = 0, totalBal = 0;
+    body.innerHTML = all.map(r => {
+      const amt = r.amount || 0, paid = r.paid || 0, bal = r.balance || (amt - paid);
+      totalAmt += amt; totalPaid += paid; totalBal += bal;
+      const days = r.days_outstanding || 0;
+      return `<tr>
+        <td class="name-bold">${esc(r.client_name || '—')}</td>
+        <td>${esc(r.invoice_no || '—')}</td>
+        <td>${r.invoice_date || '—'}</td>
+        <td>${r.due_date || '—'}</td>
+        <td class="amount">${fmtC(amt)}</td>
+        <td class="amount cr">${fmtC(paid)}</td>
+        <td class="amount dr">${fmtC(bal)}</td>
+        <td style="text-align:right;">${days} days</td>
+        <td><span class="badge ${agingBadge(r._bucket)}">${r._bucket}</span></td>
+      </tr>`;
+    }).join('') || '';
+
+    document.getElementById('recAgingFoot').innerHTML = all.length ? `<tr>
+      <td colspan="4"><b>TOTAL</b></td>
+      <td class="amount"><b>${fmtC(totalAmt)}</b></td>
+      <td class="amount"><b>${fmtC(totalPaid)}</b></td>
+      <td class="amount dr"><b>${fmtC(totalBal)}</b></td>
+      <td colspan="2"></td>
+    </tr>` : '';
+  } catch (e) {
+    console.error('Receivables aging error', e);
+  }
+}
+
+function exportAgingCSV(type) {
+  const data = type === 'rec' ? _recAgingData : _payAgingData;
+  if (!data) return;
+  let csv = 'Party,Reference No.,Date,Due Date,Amount,Paid,Balance,Days,Bucket\n';
+  ['current','d0_30','d31_60','d61_90','d90plus'].forEach((k, i) => {
+    const bucket = ['Current','0-30 days','31-60 days','61-90 days','90+ days'][i];
+    (data[k] || []).forEach(r => {
+      const amt = r.amount || 0, paid = r.paid || 0, bal = r.balance || (amt - paid);
+      csv += `"${r.client_name || r.vendor_name || ''}","${r.invoice_no || r.bill_no || ''}","${r.invoice_date || r.bill_date || ''}","${r.due_date || ''}",${amt},${paid},${bal},${r.days_outstanding || 0},"${bucket}"\n`;
+    });
+  });
+  dlCSV(csv, type === 'rec' ? 'Receivables_Aging.csv' : 'Payables_Aging.csv');
+}
+
+// ─── PAYABLES AGING
+let _payAgingData = null;
+
+async function renderPayablesAging() {
+  try {
+    const data = await erpc.getPayablesAging();
+    _payAgingData = data;
+    renderAgingBands('payAgingBands', data);
+
+    const all = [
+      ...(data.current || []).map(x => ({ ...x, _bucket: 'Current' })),
+      ...(data.d0_30 || []).map(x => ({ ...x, _bucket: '0–30 days' })),
+      ...(data.d31_60 || []).map(x => ({ ...x, _bucket: '31–60 days' })),
+      ...(data.d61_90 || []).map(x => ({ ...x, _bucket: '61–90 days' })),
+      ...(data.d90plus || []).map(x => ({ ...x, _bucket: '90+ days' }))
+    ];
+
+    const body = document.getElementById('payAgingBody');
+    const empty = document.getElementById('payAgingEmpty');
+    empty.style.display = all.length ? 'none' : 'block';
+
+    let totalAmt = 0, totalPaid = 0, totalBal = 0;
+    body.innerHTML = all.map(r => {
+      const amt = r.amount || 0, paid = r.paid || 0, bal = r.balance || (amt - paid);
+      totalAmt += amt; totalPaid += paid; totalBal += bal;
+      const days = r.days_outstanding || 0;
+      return `<tr>
+        <td class="name-bold">${esc(r.vendor_name || r.client_name || '—')}</td>
+        <td>${esc(r.bill_no || r.invoice_no || '—')}</td>
+        <td>${r.bill_date || r.invoice_date || '—'}</td>
+        <td>${r.due_date || '—'}</td>
+        <td class="amount">${fmtC(amt)}</td>
+        <td class="amount cr">${fmtC(paid)}</td>
+        <td class="amount dr">${fmtC(bal)}</td>
+        <td style="text-align:right;">${days} days</td>
+        <td><span class="badge ${agingBadge(r._bucket)}">${r._bucket}</span></td>
+      </tr>`;
+    }).join('') || '';
+
+    document.getElementById('payAgingFoot').innerHTML = all.length ? `<tr>
+      <td colspan="4"><b>TOTAL</b></td>
+      <td class="amount"><b>${fmtC(totalAmt)}</b></td>
+      <td class="amount"><b>${fmtC(totalPaid)}</b></td>
+      <td class="amount dr"><b>${fmtC(totalBal)}</b></td>
+      <td colspan="2"></td>
+    </tr>` : '';
+  } catch (e) {
+    console.error('Payables aging error', e);
+  }
+}
+
+// ─── SITE P&L
+let _sitePnLExport = null;   // { title, rows, totals } captured for CSV export
+
+async function initSitePnL() {
+  try {
+    const sites = await erpc.getSites();
+    const sel = document.getElementById('sitePnLSelect');
+    sel.innerHTML = '<option value="">Select a site...</option>'
+      + '<option value="__all__">📊 All Sites — comparison &amp; totals</option>';
+    (sites || []).forEach(s => {
+      sel.innerHTML += `<option value="${s.id}">${esc(s.name || s.site_name)}</option>`;
+    });
+  } catch (e) { console.error('Sites error', e); }
+  try {
+    const clients = await erpc.getClients();
+    const csel = document.getElementById('clientPnLSelect');
+    if (csel) {
+      csel.innerHTML = '<option value="">By client — all sites...</option>';
+      (clients || []).forEach(c => { csel.innerHTML += `<option value="${c.id}">${esc(c.name)}</option>`; });
+    }
+  } catch (e) { console.error('Clients error', e); }
+}
+
+// Number helper — accepts string or number, never throws.
+const pct = v => (v == null || isNaN(+v)) ? '0.0' : (+v).toFixed(1);
+
+async function renderSitePnL() {
+  const val = document.getElementById('sitePnLSelect').value;
+  const content = document.getElementById('sitePnLContent');
+  // Clearing the client selector keeps the two pickers from fighting.
+  const csel = document.getElementById('clientPnLSelect'); if (csel && val) csel.value = '';
+
+  if (!val) {
+    _sitePnLExport = null;
+    content.innerHTML = '<div class="empty"><div class="ei">🏗️</div><p>Pick a single site, “All Sites” for a portfolio comparison, or a client to roll up all their sites</p></div>';
+    return;
+  }
+  content.innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+
+  if (val === '__all__') { return renderAllSitesPnL(content); }
+
+  try {
+    const d = await erpc.getSitePnL(val);
+    _sitePnLExport = { title: 'Site P&L — ' + (d.site || ''), rows: [d], totals: null };
+    content.innerHTML = `
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">${esc(d.site || 'Site P&L')}${d.client ? ` <span style="font-weight:500;color:var(--muted);">· ${esc(d.client)}</span>` : ''}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+        <div class="kpi"><div class="kpi-lbl">Revenue</div><div class="kpi-val cr">${fmtC(d.revenue||0)}</div></div>
+        <div class="kpi"><div class="kpi-lbl">Direct Expenses</div><div class="kpi-val dr">${fmtC(d.expenses||0)}</div></div>
+        <div class="kpi"><div class="kpi-lbl">Labour Cost</div><div class="kpi-val am">${fmtC(d.labourCost||0)}</div></div>
+        <div class="kpi"><div class="kpi-lbl">Subcontract Cost</div><div class="kpi-val inf">${fmtC(d.subCost||0)}</div></div>
+      </div>
+      <div class="pnl-section">
+        <div class="pnl-title">Site P&amp;L Breakdown — ${esc(d.site || '')}</div>
+        <div class="pnl-row"><span>Revenue from Site</span><span class="amount cr">${fmtC(d.revenue||0)}</span></div>
+        <div class="pnl-row"><span>(-) Direct Expenses</span><span class="amount dr">${fmtC(d.expenses||0)}</span></div>
+        <div class="pnl-row"><span>(-) Labour Cost</span><span class="amount dr">${fmtC(d.labourCost||0)}</span></div>
+        <div class="pnl-row"><span>(-) Subcontract Cost</span><span class="amount dr">${fmtC(d.subCost||0)}</span></div>
+        <div class="pnl-row total">
+          <span>Gross Profit</span>
+          <span class="amount ${(d.gross_profit||0) >= 0 ? 'cr' : 'dr'}">${fmtSigned(d.gross_profit||0)} (${pct(d.margin_pct)}%)</span>
+        </div>
+      </div>`;
+  } catch (e) {
+    content.innerHTML = '<div class="empty"><div class="ei">⚠️</div><p>Failed to load site P&amp;L</p></div>';
+    console.error('Site P&L error', e);
+  }
+}
+
+// Renders a comparison table given { rows, totals } and a heading.
+function pnlComparisonHTML(heading, rows, totals) {
+  const body = (rows || []).map(r => `
+    <tr>
+      <td class="name-bold">${esc(r.site || '—')}</td>
+      ${r.client !== undefined ? `<td>${esc(r.client || '—')}</td>` : ''}
+      <td class="amount cr">${fmtC(r.revenue||0)}</td>
+      <td class="amount dr">${fmtC(r.expenses||0)}</td>
+      <td class="amount dr">${fmtC(r.labourCost||0)}</td>
+      <td class="amount dr">${fmtC(r.subCost||0)}</td>
+      <td class="amount ${(r.gross_profit||0)>=0?'cr':'dr'}">${fmtSigned(r.gross_profit||0)}</td>
+      <td class="amount ${(r.gross_profit||0)>=0?'cr':'dr'}">${pct(r.margin_pct)}%</td>
+    </tr>`).join('');
+  const hasClient = (rows || []).some(r => r.client !== undefined);
+  const tot = totals ? `
+    <tr class="pnl-row total" style="background:var(--surface2);font-weight:800;">
+      <td>TOTAL</td>${hasClient ? '<td></td>' : ''}
+      <td class="amount cr">${fmtC(totals.revenue||0)}</td>
+      <td class="amount dr">${fmtC(totals.expenses||0)}</td>
+      <td class="amount dr">${fmtC(totals.labourCost||0)}</td>
+      <td class="amount dr">${fmtC(totals.subCost||0)}</td>
+      <td class="amount ${(totals.gross_profit||0)>=0?'cr':'dr'}">${fmtSigned(totals.gross_profit||0)}</td>
+      <td class="amount ${(totals.gross_profit||0)>=0?'cr':'dr'}">${pct(totals.margin_pct)}%</td>
+    </tr>` : '';
+  return `
+    <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;">${heading}</div>
+    <table class="data-table" style="width:100%;border-collapse:collapse;">
+      <thead><tr>
+        <th>Site</th>${hasClient ? '<th>Client</th>' : ''}
+        <th style="text-align:right;">Revenue</th>
+        <th style="text-align:right;">Expenses</th>
+        <th style="text-align:right;">Labour</th>
+        <th style="text-align:right;">Subcontract</th>
+        <th style="text-align:right;">Gross Profit</th>
+        <th style="text-align:right;">Margin</th>
+      </tr></thead>
+      <tbody>${body || ''}</tbody>
+      <tfoot>${tot}</tfoot>
+    </table>`;
+}
+
+async function renderAllSitesPnL(content) {
+  try {
+    const d = await erpc.getAllSitesPnL();
+    if (!d.rows || !d.rows.length) {
+      content.innerHTML = '<div class="empty"><div class="ei">🏗️</div><p>No sites found yet</p></div>';
+      _sitePnLExport = null; return;
+    }
+    _sitePnLExport = { title: 'All Sites P&L', rows: d.rows, totals: d.totals };
+    content.innerHTML = pnlComparisonHTML('All Sites — Profitability Comparison', d.rows, d.totals);
+  } catch (e) {
+    content.innerHTML = '<div class="empty"><div class="ei">⚠️</div><p>Failed to load all-sites P&amp;L</p></div>';
+    console.error('All-sites P&L error', e);
+  }
+}
+
+async function renderClientPnL() {
+  const clientId = document.getElementById('clientPnLSelect').value;
+  const content = document.getElementById('sitePnLContent');
+  const ssel = document.getElementById('sitePnLSelect'); if (ssel && clientId) ssel.value = '';
+  if (!clientId) { return renderSitePnL(); }
+  content.innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+  try {
+    const d = await erpc.getClientPnL(clientId);
+    if (!d.rows || !d.rows.length) {
+      content.innerHTML = `<div class="empty"><div class="ei">📁</div><p>No sites linked to ${esc(d.client || 'this client')} yet</p></div>`;
+      _sitePnLExport = null; return;
+    }
+    _sitePnLExport = { title: 'Client P&L — ' + (d.client || ''), rows: d.rows, totals: d.totals };
+    content.innerHTML = pnlComparisonHTML(`Client P&L — ${esc(d.client || '')} (all sites)`, d.rows, d.totals);
+  } catch (e) {
+    content.innerHTML = '<div class="empty"><div class="ei">⚠️</div><p>Failed to load client P&amp;L</p></div>';
+    console.error('Client P&L error', e);
+  }
+}
+
+function exportSitePnLCSV() {
+  if (!_sitePnLExport || !_sitePnLExport.rows || !_sitePnLExport.rows.length) {
+    return alert('Select a site, All Sites, or a client first.');
+  }
+  const q = s => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
+  let csv = 'Site,Client,Revenue,Expenses,Labour,Subcontract,Gross Profit,Margin %\n';
+  _sitePnLExport.rows.forEach(r => {
+    csv += [q(r.site), q(r.client || ''), r.revenue||0, r.expenses||0, r.labourCost||0, r.subCost||0, r.gross_profit||0, pct(r.margin_pct)].join(',') + '\n';
+  });
+  if (_sitePnLExport.totals) {
+    const t = _sitePnLExport.totals;
+    csv += [q('TOTAL'), '""', t.revenue||0, t.expenses||0, t.labourCost||0, t.subCost||0, t.gross_profit||0, pct(t.margin_pct)].join(',') + '\n';
+  }
+  dlCSV(csv, (_sitePnLExport.title || 'site-pnl').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.csv');
+}
+
+// ─── WIP / PROJECT PROFITABILITY (AS-7 cost-to-cost % of completion)
+let _wipData = null;
+
+async function renderWip() {
+  const body = document.getElementById('wipBody');
+  const kpi = document.getElementById('wipKPI');
+  body.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px;"><span class="spinner"></span></td></tr>`;
+  try {
+    const d = await erpc.getWipReport({});
+    _wipData = d;
+    const rows = d.rows || [];
+    document.getElementById('wipEmpty').style.display = rows.length ? 'none' : 'block';
+    const t = d.totals || {};
+    kpi.innerHTML = `
+      <div class="kpi"><div class="kpi-lbl">Contract Value (all sites)</div><div class="kpi-val">${fmtC(t.contract_value||0)}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Cost to Date</div><div class="kpi-val dr">${fmtC(t.cost_to_date||0)}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Over / (Under) Billing</div><div class="kpi-val ${(t.over_under_billing||0) <= 0 ? 'cr' : 'dr'}">${fmtSigned(t.over_under_billing||0)}</div>
+        <div class="kpi-sub">${(t.over_under_billing||0) < 0 ? 'Net underbilled (asset)' : (t.over_under_billing||0) > 0 ? 'Net overbilled (liability)' : 'Even'}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Sites Missing an Estimate</div><div class="kpi-val ${t.sites_missing_estimate ? 'dr' : 'cr'}">${t.sites_missing_estimate||0}</div>
+        <div class="kpi-sub">${t.sites_missing_estimate ? 'Set Estimated Cost on these sites' : 'All sites have an estimate'}</div></div>`;
+
+    if (!rows.length) { body.innerHTML = ''; document.getElementById('wipFoot').innerHTML = ''; return; }
+
+    body.innerHTML = rows.map(r => `
+      <tr>
+        <td class="name-bold">${esc(r.site)}</td>
+        <td>${esc(r.client || '—')}</td>
+        <td class="amount" style="text-align:right;">${fmtC(r.contract_value)}</td>
+        <td class="amount" style="text-align:right;">${r.has_estimate ? fmtC(r.estimated_cost) : '<span style="color:var(--danger);">not set</span>'}</td>
+        <td class="amount" style="text-align:right;">${fmtC(r.cost_to_date)}</td>
+        <td class="amount" style="text-align:right;">${r.has_estimate ? r.pct_complete + '%' : '—'}</td>
+        <td class="amount" style="text-align:right;">${r.has_estimate ? fmtC(r.recognized_revenue) : '—'}</td>
+        <td class="amount" style="text-align:right;">${fmtC(r.billed_to_date)}</td>
+        <td class="amount ${r.has_estimate ? (r.over_under_billing <= 0 ? 'cr' : 'dr') : ''}" style="text-align:right;">${r.has_estimate ? fmtSigned(r.over_under_billing) : '—'}</td>
+        <td class="amount ${r.has_estimate ? (r.estimated_margin >= 0 ? 'cr' : 'dr') : ''}" style="text-align:right;">${r.has_estimate ? fmtSigned(r.estimated_margin) : '—'}</td>
+      </tr>`).join('');
+
+    document.getElementById('wipFoot').innerHTML = `<tr>
+      <td colspan="2"><b>TOTAL</b></td>
+      <td class="amount" style="text-align:right;"><b>${fmtC(t.contract_value||0)}</b></td>
+      <td class="amount" style="text-align:right;"><b>${fmtC(t.estimated_cost||0)}</b></td>
+      <td class="amount" style="text-align:right;"><b>${fmtC(t.cost_to_date||0)}</b></td>
+      <td></td>
+      <td class="amount" style="text-align:right;"><b>${fmtC(t.recognized_revenue||0)}</b></td>
+      <td class="amount" style="text-align:right;"><b>${fmtC(t.billed_to_date||0)}</b></td>
+      <td class="amount ${(t.over_under_billing||0) <= 0 ? 'cr' : 'dr'}" style="text-align:right;"><b>${fmtSigned(t.over_under_billing||0)}</b></td>
+      <td></td></tr>`;
+  } catch (e) {
+    console.error('WIP report error', e);
+    body.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--danger);">⚠️ Failed to load WIP report.</td></tr>`;
+  }
+}
+
+function exportWipCSV() {
+  if (!_wipData || !_wipData.rows || !_wipData.rows.length) return alert('Nothing to export yet.');
+  const q = s => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
+  let csv = 'Site,Client,Contract Value,Estimated Cost,Cost to Date,% Complete,Recognized Revenue,Billed to Date,Over/(Under) Billing,Estimated Margin\n';
+  _wipData.rows.forEach(r => {
+    csv += [q(r.site), q(r.client || ''), r.contract_value, r.has_estimate ? r.estimated_cost : '', r.cost_to_date,
+      r.has_estimate ? r.pct_complete : '', r.has_estimate ? r.recognized_revenue : '', r.billed_to_date,
+      r.has_estimate ? r.over_under_billing : '', r.has_estimate ? r.estimated_margin : ''].join(',') + '\n';
+  });
+  const t = _wipData.totals || {};
+  csv += [q('TOTAL'), '""', t.contract_value||0, t.estimated_cost||0, t.cost_to_date||0, '', t.recognized_revenue||0, t.billed_to_date||0, t.over_under_billing||0, ''].join(',') + '\n';
+  dlCSV(csv, 'WIP_Project_Profitability.csv');
+}
+
+// ─── BOQ VARIANCE (THEORETICAL vs ACTUAL)
+let _boqVar = { rows: [] };
+
+async function renderBoqVariance() {
+  try { _boqVar = await erpc.getBoqVariance({}) || { rows: [] }; } catch (e) { _boqVar = { rows: [] }; }
+  const d = _boqVar;
+  document.getElementById('boqvarKPI').innerHTML = `
+    <div class="kpi"><div class="kpi-lbl">Contracted Value</div><div class="kpi-val">${fmtC(d.total_contracted)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Executed Value</div><div class="kpi-val cr">${fmtC(d.total_executed)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Variance Value</div><div class="kpi-val ${(d.total_variance||0)>0?'dr':'cr'}">${fmtSigned(d.total_variance)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">BOQ Lines</div><div class="kpi-val">${(d.rows||[]).length}</div></div>`;
+  const rows = d.rows || [];
+  document.getElementById('boqvarEmpty').style.display = rows.length ? 'none' : 'block';
+  const stColor = { over: '#ef4444', under: '#f59e0b', 'on-track': '#22c55e' };
+  document.getElementById('boqvarBody').innerHTML = rows.map(r => {
+    const vpct = r.variance_pct != null ? ` (${r.variance_pct > 0 ? '+' : ''}${r.variance_pct}%)` : '';
+    const vcol = r.status === 'over' ? '#f87171' : (r.status === 'under' ? '#fbbf24' : '#4ade80');
+    return `<tr>
+      <td>${esc(r.site_name) || '—'}</td>
+      <td>${esc(r.wo_no) || '—'}</td>
+      <td><div class="name-bold">${esc(r.description)}</div></td>
+      <td>${esc(r.unit) || '—'}</td>
+      <td style="text-align:right;">${fmt(r.contracted_qty)}</td>
+      <td style="text-align:right;">${fmt(r.measured_qty)}</td>
+      <td style="text-align:right;color:${vcol};">${r.variance_qty > 0 ? '+' : ''}${fmt(r.variance_qty)}${vpct}</td>
+      <td style="text-align:right;">${fmtC(r.contracted_amount)}</td>
+      <td style="text-align:right;">${fmtC(r.measured_amount)}</td>
+      <td><span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:${stColor[r.status]}22;color:${stColor[r.status]};">${r.status}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('boqvarFoot').innerHTML = rows.length ? `<tr style="font-weight:700;">
+    <td colspan="7" style="text-align:right;">Totals</td>
+    <td style="text-align:right;">${fmtC(d.total_contracted)}</td>
+    <td style="text-align:right;">${fmtC(d.total_executed)}</td>
+    <td></td></tr>` : '';
+  lucide.createIcons();
+}
+
+function exportBoqVarianceCSV() {
+  const rows = (_boqVar && _boqVar.rows) || [];
+  if (!rows.length) { alert('Open the BOQ Variance report first.'); return; }
+  const head = ['Site','Work Order','BOQ Item','Unit','Contracted Qty','Measured Qty','Variance Qty','Variance %','Contracted Value','Executed Value','Status'];
+  const lines = [head.join(',')].concat(rows.map(r => [
+    r.site_name || '', r.wo_no || '', '"' + String(r.description || '').replace(/"/g, '""') + '"', r.unit || '',
+    r.contracted_qty, r.measured_qty, r.variance_qty, r.variance_pct == null ? '' : r.variance_pct,
+    r.contracted_amount, r.measured_amount, r.status,
+  ].join(',')));
+  dlCSV(lines.join('\n'), 'BOQ_Variance.csv');
+}
+
+// ─── RETENTION REGISTER
+let _retentionData = null;
+
+async function renderRetention() {
+  try {
+    const rows = await erpc.getRetentionRegister();
+    _retentionData = rows || [];
+
+    let totalRet = 0, heldRet = 0, releasedRet = 0, overdueRet = 0;
+    const today = new Date();
+
+    _retentionData.forEach(r => {
+      const amt = r.retention_amount || 0;
+      totalRet += amt;
+      if (r.status === 'released') releasedRet += amt;
+      else {
+        heldRet += amt;
+        if (r.expected_release_date && new Date(r.expected_release_date) < today) overdueRet += amt;
+      }
+    });
+
+    document.getElementById('retentionKPI').innerHTML = `
+      <div class="kpi"><div class="kpi-lbl">Total Retention</div><div class="kpi-val am">${fmtC(totalRet)}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Held</div><div class="kpi-val dr">${fmtC(heldRet)}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Released</div><div class="kpi-val cr">${fmtC(releasedRet)}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Overdue Release</div><div class="kpi-val dr">${fmtC(overdueRet)}</div><div class="kpi-sub">Past expected date</div></div>`;
+
+    const body = document.getElementById('retentionBody');
+    const empty = document.getElementById('retentionEmpty');
+    empty.style.display = _retentionData.length ? 'none' : 'block';
+
+    body.innerHTML = _retentionData.map(r => {
+      const amt = r.retention_amount || 0;
+      const isOverdue = r.status !== 'released' && r.expected_release_date && new Date(r.expected_release_date) < today;
+      const badgeClass = r.status === 'released' ? 'b-released' : isOverdue ? 'b-overdue' : 'b-held';
+      const statusLabel = r.status === 'released' ? 'Released' : isOverdue ? 'Overdue' : 'Held';
+      return `<tr>
+        <td class="name-bold">${r.invoice_no || '—'}</td>
+        <td>${r.client_name || '—'}</td>
+        <td>${r.site_name || '—'}</td>
+        <td>${r.invoice_date || '—'}</td>
+        <td class="amount">${fmtC(r.invoice_amount || 0)}</td>
+        <td class="amount am">${fmtC(amt)}</td>
+        <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+        <td>${r.expected_release_date || '—'}</td>
+      </tr>`;
+    }).join('') || '';
+
+    document.getElementById('retentionFoot').innerHTML = _retentionData.length ? `<tr>
+      <td colspan="5"><b>TOTAL</b></td>
+      <td class="amount am"><b>${fmtC(totalRet)}</b></td>
+      <td colspan="2"></td>
+    </tr>` : '';
+  } catch (e) {
+    console.error('Retention error', e);
+  }
+}
+
+function exportRetentionCSV() {
+  if (!_retentionData) return;
+  let csv = 'Invoice No,Client,Site,Invoice Date,Invoice Amount,Retention Amount,Status,Expected Release\n';
+  _retentionData.forEach(r => {
+    csv += `"${r.invoice_no||''}","${r.client_name||''}","${r.site_name||''}","${r.invoice_date||''}",${r.invoice_amount||0},${r.retention_amount||0},"${r.status||''}","${r.expected_release_date||''}"\n`;
+  });
+  dlCSV(csv, 'Retention_Register.csv');
+}
+
+// ─── TDS RECEIVABLE (Form 26AS)
+async function renderTdsReceivable() {
+  try {
+    const res = await erpc.getTdsReceivable26AS({});
+    const rows = (res && res.rows) || [];
+    const totals = (res && res.totals) || { it_tds: 0, gst_tds: 0, received: 0 };
+    const body = document.getElementById('tdsRecvBody');
+    document.getElementById('tdsRecvEmpty').style.display = rows.length ? 'none' : 'block';
+    body.innerHTML = rows.map(r => `<tr>
+      <td>${r.payment_date || '—'}</td>
+      <td class="name-bold">${r.invoice_no || '—'}</td>
+      <td>${r.client_name || '—'}</td>
+      <td>${r.client_gstin || '—'}</td>
+      <td class="amount">${fmtC(r.amount || 0)}</td>
+      <td class="amount am">${fmtC(r.tds_deducted || 0)}</td>
+      <td class="amount am">${fmtC(r.gst_tds_deducted || 0)}</td>
+    </tr>`).join('') || '';
+    document.getElementById('tdsRecvFoot').innerHTML = rows.length ? `<tr>
+      <td colspan="4"><b>TOTAL</b></td>
+      <td class="amount"><b>${fmtC(totals.received)}</b></td>
+      <td class="amount am"><b>${fmtC(totals.it_tds)}</b></td>
+      <td class="amount am"><b>${fmtC(totals.gst_tds)}</b></td>
+    </tr>` : '';
+  } catch (e) {
+    console.error('TDS receivable error', e);
+  }
+}
+
+function caExportRetention() {
+  exportRetentionCSV();
+}
+
+// ─── OUTSTANDING STATEMENT
+let _outstandingData = null;
+
+async function initOutstanding() {
+  try {
+    const clients = await erpc.getClients();
+    const sel = document.getElementById('outstandingClient');
+    sel.innerHTML = '<option value="">Select a client...</option>';
+    (clients || []).forEach(c => {
+      sel.innerHTML += `<option value="${c.id}">${esc(c.name || c.client_name)}</option>`;
+    });
+  } catch (e) {
+    console.error('Clients error', e);
+  }
+}
+
+async function renderOutstanding() {
+  const clientId = document.getElementById('outstandingClient').value;
+  const content = document.getElementById('outstandingContent');
+  if (!clientId) {
+    content.innerHTML = '<div class="empty"><div class="ei">👤</div><p>Select a client to generate outstanding statement</p></div>';
+    return;
+  }
+  content.innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+  try {
+    const d = await erpc.getOutstandingStatement(clientId);
+    _outstandingData = d;
+    // Drafts aren't issued documents, so they're not part of a statement of account.
+    const invoices = (d.invoices || []).filter(i => i.status !== 'draft');
+    const payments = d.payments || [];
+    const creditNotes = d.creditNotes || [];
+    const client = d.client || {};
+
+    // Authoritative figures straight off the invoice records (total_amount /
+    // paid_amount / balance_amount), plus credit notes the client holds.
+    const totalInv     = invoices.reduce((s, i) => s + (i.total_amount || 0), 0);
+    const totalPaid    = invoices.reduce((s, i) => s + (i.paid_amount || 0), 0);
+    const totalCredits = creditNotes.reduce((s, c) => s + (c.total_amount || 0), 0);
+    const balance      = totalInv - totalPaid - totalCredits;
+
+    content.innerHTML = `
+      <div class="stmt-header">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);">${esc(client.name) || 'Client Statement'}</div>
+          <div style="font-size:11px;color:var(--muted);">${client.gstin ? 'GSTIN: ' + esc(client.gstin) : ''} ${client.phone ? '| ' + esc(client.phone) : ''}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--muted);">Statement as of: ${new Date().toLocaleDateString('en-IN')}</div>
+          <div style="font-size:16px;font-weight:800;color:${balance > 0 ? 'var(--danger)' : 'var(--success)'};">${fmtC(balance)} ${balance > 0 ? 'Due' : (balance < 0 ? 'Advance/Credit' : 'Settled')}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+        <div class="kpi"><div class="kpi-lbl">Total Invoiced</div><div class="kpi-val cr">${fmtC(totalInv)}</div></div>
+        <div class="kpi"><div class="kpi-lbl">Total Received</div><div class="kpi-val inf">${fmtC(totalPaid)}</div></div>
+        <div class="kpi"><div class="kpi-lbl">Credit Notes</div><div class="kpi-val">${fmtC(totalCredits)}</div></div>
+        <div class="kpi"><div class="kpi-lbl">Balance Due</div><div class="kpi-val ${balance > 0 ? 'dr' : 'cr'}">${fmtC(balance)}</div></div>
+      </div>
+      <div class="sec-header">Invoices</div>
+      <div style="overflow-x:auto;margin-bottom:16px;">
+        <table><thead><tr>
+          <th>Invoice No.</th><th>Date</th><th>Description</th><th>Amount</th><th>Received</th><th>Balance</th><th>Status</th>
+        </tr></thead><tbody>
+        ${invoices.map(i => {
+          const bal = i.balance_amount != null ? i.balance_amount : ((i.total_amount || 0) - (i.paid_amount || 0));
+          const st = (i.status || (bal <= 0.01 ? 'paid' : (i.paid_amount > 0 ? 'partial' : 'pending')));
+          const stCls = bal <= 0.01 ? 'b-paid' : (i.paid_amount > 0 ? 'b-partial' : 'b-pending');
+          return `<tr>
+            <td class="name-bold">${esc(i.invoice_no) || '—'}</td>
+            <td>${esc(i.invoice_date) || '—'}</td>
+            <td>${esc(i.work_description || i.site_name) || '—'}</td>
+            <td class="amount">${fmtC(i.total_amount||0)}</td>
+            <td class="amount cr">${fmtC(i.paid_amount||0)}</td>
+            <td class="amount dr">${fmtC(bal)}</td>
+            <td><span class="badge ${stCls}">${esc(st)}</span></td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--faint);">No invoices</td></tr>'}
+        </tbody><tfoot><tr>
+          <td colspan="3"><b>TOTAL</b></td>
+          <td class="amount"><b>${fmtC(totalInv)}</b></td>
+          <td class="amount"><b>${fmtC(totalPaid)}</b></td>
+          <td class="amount dr"><b>${fmtC(totalInv - totalPaid)}</b></td>
+          <td></td>
+        </tr></tfoot></table>
+      </div>
+      <div class="sec-header">Payments Received</div>
+      <div style="overflow-x:auto;margin-bottom:16px;">
+        <table><thead><tr>
+          <th>Date</th><th>Against Invoice</th><th>Mode</th><th>Reference</th><th>Amount</th><th>Remarks</th>
+        </tr></thead><tbody>
+        ${payments.map(p => `<tr>
+          <td>${esc(p.payment_date) || '—'}</td>
+          <td>${esc(p.invoice_no) || '—'}</td>
+          <td>${esc(p.payment_mode) || '—'}</td>
+          <td>${esc(p.reference_no || p.cheque_no) || '—'}</td>
+          <td class="amount cr">${fmtC(p.amount||0)}</td>
+          <td>${esc(p.notes) || '—'}</td>
+        </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--faint);">No payments recorded</td></tr>'}
+        </tbody></table>
+      </div>
+      ${creditNotes.length ? `
+      <div class="sec-header">Credit Notes Issued</div>
+      <div style="overflow-x:auto;">
+        <table><thead><tr>
+          <th>CN No.</th><th>Date</th><th>Reason</th><th>Against Invoice</th><th>Amount</th>
+        </tr></thead><tbody>
+        ${creditNotes.map(c => {
+          const linked = c.invoice_id ? (invoices.find(i => i.id === c.invoice_id) || {}).invoice_no : c.original_invoice_no;
+          return `<tr>
+            <td class="name-bold">${esc(c.cn_no) || '—'}</td>
+            <td>${esc(c.cn_date) || '—'}</td>
+            <td>${esc(c.reason) || '—'}</td>
+            <td>${esc(linked) || '<span class="sub-text">Unapplied</span>'}</td>
+            <td class="amount dr">${fmtC(c.total_amount||0)}</td>
+          </tr>`;
+        }).join('')}
+        </tbody></table>
+      </div>` : ''}`;
+  } catch (e) {
+    content.innerHTML = '<div class="empty"><div class="ei">⚠️</div><p>Failed to load outstanding statement</p></div>';
+    console.error('Outstanding error', e);
+  }
+}
+
+function exportOutstandingCSV() {
+  if (!_outstandingData) { alert('Select a client first.'); return; }
+  const d = _outstandingData;
+  let csv = 'Type,Date,Reference,Description,Debit,Credit\n';
+  (d.invoices || []).filter(i => i.status !== 'draft').forEach(i => {
+    csv += `"Invoice","${i.invoice_date||''}","${i.invoice_no||''}","${String(i.work_description||i.site_name||'').replace(/"/g,'""')}",${i.total_amount||0},0\n`;
+  });
+  (d.payments || []).forEach(p => {
+    csv += `"Payment","${p.payment_date||''}","${p.reference_no||p.cheque_no||''}","${String(p.notes||'').replace(/"/g,'""')}",0,${p.amount||0}\n`;
+  });
+  (d.creditNotes || []).forEach(c => {
+    csv += `"Credit Note","${c.cn_date||''}","${c.cn_no||''}","${String(c.reason||'').replace(/"/g,'""')}",0,${c.total_amount||0}\n`;
+  });
+  dlCSV(csv, `Statement_${(d.client||{}).name || 'Client'}.csv`);
+}
+
+// ─── TRIAL BALANCE
+let _tbData = null;
+
+// Many small loan accounts (Loan: X / Loan Given: X) would otherwise flood the
+// Trial Balance with one row each. Collapse them under a single "Loans Payable"
+// / "Loans Receivable" subtotal, with the individual loans nested and still
+// click-through to their ledger. Every figure stays — the total is unchanged.
+function tbBadge(g){ return g==='Income'?'b-released':g==='Expenses'?'b-overdue':g==='Assets'?'b-partial':g==='Liabilities'?'b-held':'b-pending'; }
+function tbGroupedRows(ledgers){
+  const idx = (ledgers||[]).map((l,i)=>({l,i}));
+  const isPay  = x => /^Loan:/i.test(x.l.ledger||'');
+  const isRecv = x => /^Loan Given:/i.test(x.l.ledger||'');
+  const fullRow = (l,i) => `<tr class="drill" onclick="drillToGL(${i})" title="Open the General Ledger for ${esc(l.ledger)}">
+      <td class="name-bold">${esc(l.ledger)} <i data-lucide="arrow-right-circle" class="drill-ico" style="width:12px;height:12px;"></i></td>
+      <td><span class="badge ${tbBadge(l.group)}">${esc(l.group)}</span></td>
+      <td class="amount" style="text-align:right;">${l.debit ? fmtC(l.debit) : '—'}</td>
+      <td class="amount" style="text-align:right;">${l.credit ? fmtC(l.credit) : '—'}</td>
+    </tr>`;
+  const groupRows = (list, label, group) => {
+    if(!list.length) return '';
+    const d = list.reduce((s,x)=>s+(x.l.debit||0),0), c = list.reduce((s,x)=>s+(x.l.credit||0),0);
+    let h = `<tr style="background:rgba(255,255,255,0.02);">
+      <td class="name-bold">🏦 ${label} <span style="font-size:10px;color:var(--faint);font-weight:500;">(${list.length} ${list.length===1?'account':'accounts'})</span></td>
+      <td><span class="badge ${tbBadge(group)}">${group}</span></td>
+      <td class="amount" style="text-align:right;"><b>${d?fmtC(d):'—'}</b></td>
+      <td class="amount" style="text-align:right;"><b>${c?fmtC(c):'—'}</b></td></tr>`;
+    h += list.map(x=>`<tr class="drill" onclick="drillToGL(${x.i})" title="Open this loan's ledger">
+      <td style="padding-left:26px;font-size:12px;color:var(--muted);">${esc((x.l.ledger||'').replace(/^Loan(?: Given)?:\s*/i,''))} <i data-lucide="arrow-right-circle" class="drill-ico" style="width:11px;height:11px;"></i></td>
+      <td></td>
+      <td class="amount" style="text-align:right;font-size:12px;">${x.l.debit?fmtC(x.l.debit):'—'}</td>
+      <td class="amount" style="text-align:right;font-size:12px;">${x.l.credit?fmtC(x.l.credit):'—'}</td></tr>`).join('');
+    return h;
+  };
+  const rest = idx.filter(x=>!isPay(x)&&!isRecv(x));
+  return rest.map(x=>fullRow(x.l,x.i)).join('')
+    + groupRows(idx.filter(isPay),'Loans Payable','Liabilities')
+    + groupRows(idx.filter(isRecv),'Loans Receivable','Assets');
+}
+async function renderTrialBalance() {
+  try {
+    const dates = getFYDates(document.getElementById('tbFY').value);
+    const data = await erpc.getTrialBalance({ from_date: dates.from, to_date: dates.to });
+    _tbData = data;
+    const body = document.getElementById('tbBody');
+    body.innerHTML = tbGroupedRows(data.ledgers || []);
+    if (window.lucide) lucide.createIcons();
+    document.getElementById('tbFoot').innerHTML = `<tr>
+      <td colspan="2"><b>TOTAL</b></td>
+      <td class="amount" style="text-align:right;"><b>${fmtC(data.total_debit||0)}</b></td>
+      <td class="amount" style="text-align:right;"><b>${fmtC(data.total_credit||0)}</b></td>
+    </tr>`;
+    const tbStatus = document.getElementById('tbStatus');
+    if (tbStatus) {
+      if (data.balanced) {
+        tbStatus.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;color:var(--success);font-size:12px;font-weight:600;">✓ Books balance — every entry is a real double-entry posting (no balancing figure)</span>';
+      } else {
+        tbStatus.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;color:var(--danger);font-size:12px;font-weight:600;">⚠️ Difference in books: ${fmtC(Math.abs(data.difference||0))} — check for an unbalanced journal voucher</span>`;
+      }
+    }
+  } catch (e) { console.error('Trial balance error', e); }
+}
+
+// Drill from a Trial Balance row straight into that account's General Ledger —
+// the click-through an accountant expects when a balance looks off. The GL FY is
+// aligned to the TB FY, and the account is handed off so the GL opens already
+// filtered to it (with its running balance).
+async function drillToGL(i) {
+  const l = _tbData && _tbData.ledgers && _tbData.ledgers[i];
+  if (!l) return;
+  const glFY = document.getElementById('glFY'), tbFY = document.getElementById('tbFY');
+  if (glFY && tbFY) glFY.value = tbFY.value;
+  _pendingGLAccount = l.ledger;
+  switchTab('genledger');            // fires a single GL render that consumes _pendingGLAccount
+  try { window.scrollTo(0, 0); } catch (_) {}
+}
+window.drillToGL = drillToGL;
+
+function exportTrialBalanceCSV() {
+  if (!_tbData) return;
+  let csv = 'Ledger Account,Group,Debit,Credit\n';
+  (_tbData.ledgers || []).forEach(l => {
+    csv += `"${l.ledger}","${l.group}",${l.debit||0},${l.credit||0}\n`;
+  });
+  csv += `"TOTAL","",${_tbData.total_debit||0},${_tbData.total_credit||0}\n`;
+  dlCSV(csv, `Trial_Balance_${document.getElementById('tbFY').value}.csv`);
+}
+
+// ─── BALANCE SHEET
+let _bsData = null;
+
+// Group all individual loan accounts (Loan: X / Loan Given: X) under ONE header
+// in the report — "Loans Payable" / "Loans Receivable" — with the per-loan lines
+// nested beneath it. The full per-loan ledger lives in the Loans screen.
+function bsGrouped(items, kind) {
+  const isLoan = x => /^Loan(?: Given)?:/i.test(x.item || '');
+  const loans = items.filter(isLoan), rest = items.filter(x => !isLoan(x));
+  const cls = kind === 'asset' ? 'cr' : 'inf';
+  const tag = kind === 'asset' ? '' : ' <span style="font-size:10px;color:var(--faint);">(Liabilities)</span>';
+  let html = rest.map(a => `<div class="pnl-row"><span>${esc(a.item)}${tag}</span><span class="amount ${a.amount < 0 ? 'dr' : cls}">${fmtSigned(a.amount)}</span></div>`).join('');
+  if (loans.length) {
+    const sub = loans.reduce((s, l) => s + (l.amount || 0), 0);
+    html += `<div class="pnl-row" style="font-weight:700;border-top:1px dashed var(--border);margin-top:4px;padding-top:6px;"><span>🏦 ${kind === 'asset' ? 'Loans Receivable' : 'Loans Payable'} <span style="font-size:10px;color:var(--faint);">(${loans.length} ${loans.length === 1 ? 'account' : 'accounts'})</span></span><span class="amount ${cls}">${fmtC(sub)}</span></div>`
+      + loans.map(l => `<div class="pnl-row" style="padding-left:18px;"><span style="font-size:12px;color:var(--muted);">${esc((l.item || '').replace(/^Loan(?: Given)?:\s*/i, ''))}</span><span class="amount ${cls}" style="font-size:12px;">${fmtC(l.amount)}</span></div>`).join('');
+  }
+  return html;
+}
+
+async function renderBalanceSheet() {
+  const content = document.getElementById('bsContent');
+  content.innerHTML = '<div class="empty"><div class="spinner"></div></div>';
+  try {
+    const dates = getFYDates(document.getElementById('bsFY').value);
+    const d = await erpc.getBalanceSheet({ from_date: dates.from, to_date: dates.to });
+    _bsData = d;
+    const equityHtml = (d.equity||[]).map(l=>`<div class="pnl-row"><span>${esc(l.item)} <span style="font-size:10px;color:var(--faint);">(Capital &amp; Reserves)</span></span><span class="amount ${l.amount<0?'dr':'inf'}">${fmtSigned(l.amount)}</span></div>`).join('');
+    content.innerHTML = `
+      <div style="font-size:11px;color:var(--faint);margin-bottom:12px;">
+        Statement of assets and liabilities derived from the double-entry general ledger, cumulative to date. Capital reflects bank opening balances plus accumulated profit (Retained Earnings + current-period P&amp;L) — not a balancing figure. Loans are grouped here; open the <b>Loans</b> screen for each loan's full ledger. ${d.balanced === false ? `<span style="color:var(--danger);font-weight:600;">⚠️ Difference of ${fmtC(Math.abs(d.difference||0))} — review unbalanced journals.</span>` : '<span style="color:var(--success);font-weight:600;">✓ Balanced.</span>'} Have your CA verify before statutory filing.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="pnl-section">
+          <div class="pnl-title">Assets</div>
+          ${bsGrouped(d.assets||[], 'asset') || '<div class="pnl-row"><span style="color:var(--faint);">No assets recorded</span></div>'}
+          <div class="pnl-row total"><span>Total Assets</span><span class="amount cr">${fmtC(d.total_assets||0)}</span></div>
+        </div>
+        <div class="pnl-section">
+          <div class="pnl-title">Liabilities &amp; Capital</div>
+          ${bsGrouped(d.liabilities||[], 'liab')}${equityHtml}
+          <div class="pnl-row total"><span>Total Liabilities &amp; Capital</span><span class="amount inf">${fmtC(d.total_liabilities_equity||0)}</span></div>
+        </div>
+      </div>`;
+  } catch (e) {
+    content.innerHTML = '<div class="empty"><div class="ei">⚠️</div><p>Failed to load balance sheet</p></div>';
+    console.error('Balance sheet error', e);
+  }
+}
+
+function exportBalanceSheetCSV() {
+  if (!_bsData) return;
+  const d = _bsData;
+  let csv = 'Section,Item,Amount\n';
+  (d.assets||[]).forEach(a => { csv += `"Assets","${a.item}",${a.amount}\n`; });
+  csv += `"Assets","TOTAL ASSETS",${d.total_assets||0}\n`;
+  (d.liabilities||[]).forEach(l => { csv += `"Liabilities","${l.item}",${l.amount}\n`; });
+  (d.equity||[]).forEach(e2 => { csv += `"Capital & Reserves","${e2.item}",${e2.amount}\n`; });
+  csv += `"Liabilities & Capital","TOTAL",${d.total_liabilities_equity||0}\n`;
+  dlCSV(csv, `Balance_Sheet_${document.getElementById('bsFY').value}.csv`);
+}
+
+// ─── GENERAL LEDGER / VOUCHERS
+let _glData = null;
+// Set by a Trial-Balance / Balance-Sheet drill-through so the next GL render
+// opens straight onto that account (handed off before the dropdown is built).
+let _pendingGLAccount = null;
+const GL_SOURCE_LABEL = {
+  opening: 'Opening Balance', invoice: 'Sales Invoice', receipt: 'Receipt (Money In)',
+  payment: 'Payment (Money Out)', expense: 'Vendor Bill', payroll: 'Payroll',
+  attendance: 'Labour Wages', ra_bill: 'RA Bill (Subcontractor)',
+  credit_note: 'Credit Note', debit_note: 'Debit Note', journal: 'Journal Voucher',
+  advance: 'Advance',
+};
+const glSourceLabel = s => GL_SOURCE_LABEL[s] || (s ? esc(s) : '—');
+const glGroupBadge = g => g === 'Income' ? 'b-released' : g === 'Expense' ? 'b-overdue'
+  : g === 'Asset' ? 'b-partial' : g === 'Liability' ? 'b-held' : 'b-pending';
+
+async function renderGeneralLedger() {
+  const status = document.getElementById('glStatus');
+  status.textContent = 'Loading…';
+  try {
+    const dates = getFYDates(document.getElementById('glFY').value);
+    // A drill-through from Trial Balance / Balance Sheet hands the account in
+    // here so the very first render is already filtered to it.
+    let account = document.getElementById('glAccount').value || null;
+    if (_pendingGLAccount != null) account = _pendingGLAccount;
+    const data = await erpc.getGeneralLedger({ from_date: dates.from, to_date: dates.to, account });
+    _glData = data;
+    // Populate the account dropdown (full list comes back regardless of filter), keeping the selection.
+    const sel = document.getElementById('glAccount');
+    const cur = (_pendingGLAccount != null) ? _pendingGLAccount : sel.value;
+    _pendingGLAccount = null;
+    // Keep the dropdown clean: real heads at the top, all loan accounts tucked
+    // under one "🏦 Loans" group (their full name is still the value, so filtering
+    // and the per-loan ledger keep working).
+    const accs = data.accounts || [];
+    const loanAccs = accs.filter(a => /^Loan(?: Given)?:/i.test(a));
+    const normAccs = accs.filter(a => !/^Loan(?: Given)?:/i.test(a));
+    sel.innerHTML = '<option value="">All Accounts</option>' +
+      normAccs.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('') +
+      (loanAccs.length ? '<optgroup label="🏦 Loans">' +
+        loanAccs.map(a => `<option value="${esc(a)}">${esc(a.replace(/^Loan(?: Given)?:\s*/i, ''))}</option>`).join('') +
+        '</optgroup>' : '');
+    sel.value = cur;
+    filterGL();
+    const single = !!account;
+    status.innerHTML = `${(data.rows || []).length} postings · ` +
+      `Total Debit <b>${fmtC(data.total_debit || 0)}</b> · Total Credit <b>${fmtC(data.total_credit || 0)}</b>` +
+      (single ? '' : ' · pick a single account above to see a running balance');
+  } catch (e) {
+    console.error('General ledger error', e);
+    status.innerHTML = '<span style="color:var(--danger);">⚠️ Failed to load the general ledger.</span>';
+    document.getElementById('glBody').innerHTML = '';
+    document.getElementById('glFoot').innerHTML = '';
+  }
+}
+
+function filterGL() {
+  if (!_glData) return;
+  const q = (document.getElementById('glSearch').value || '').trim().toLowerCase();
+  const single = !!document.getElementById('glAccount').value;
+  const rows = (_glData.rows || []).filter(r => !q ||
+    (r.account && r.account.toLowerCase().includes(q)) ||
+    (r.ref && String(r.ref).toLowerCase().includes(q)) ||
+    (r.particulars && r.particulars.toLowerCase().includes(q)) ||
+    (r.party && r.party.toLowerCase().includes(q)) ||
+    (r.site && r.site.toLowerCase().includes(q)) ||
+    (r.bank && r.bank.toLowerCase().includes(q)) ||
+    glSourceLabel(r.source).toLowerCase().includes(q));
+  const body = document.getElementById('glBody');
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--faint);padding:24px;">No postings${q ? ' match your search' : ' in this period'}.</td></tr>`;
+    document.getElementById('glFoot').innerHTML = '';
+    return;
+  }
+  body.innerHTML = rows.map(r => {
+    // Complete particulars line: what it was (description), then whom / where /
+    // which bank — so the ledger reads on its own, not just amounts.
+    const sub = [r.party, r.site, r.bank].filter(Boolean).join(' · ');
+    const part = r.particulars || (r.ref && r.ref !== r.account ? r.ref : '') || '—';
+    return `<tr>
+    <td style="white-space:nowrap;">${esc(r.date)}</td>
+    <td>${glSourceLabel(r.source)}</td>
+    <td><div>${esc(part)}</div>${sub ? `<div style="font-size:11px;color:var(--muted);">${esc(sub)}</div>` : ''}${(r.ref && r.particulars && r.ref !== r.particulars && r.ref !== r.account) ? `<div style="font-size:10px;color:var(--faint);">ref: ${esc(r.ref)}</div>` : ''}</td>
+    <td class="name-bold">${esc(r.account)}</td>
+    <td><span class="badge ${glGroupBadge(r.group)}">${esc(r.group || '—')}</span></td>
+    <td class="amount" style="text-align:right;">${r.debit ? fmtC(r.debit) : '—'}</td>
+    <td class="amount" style="text-align:right;">${r.credit ? fmtC(r.credit) : '—'}</td>
+    <td class="amount" style="text-align:right;">${single && r.balance != null ? fmtSigned(r.balance) : '—'}</td>
+  </tr>`;}).join('');
+  const td = rows.reduce((s, r) => s + (r.debit || 0), 0);
+  const tc = rows.reduce((s, r) => s + (r.credit || 0), 0);
+  document.getElementById('glFoot').innerHTML = `<tr>
+    <td colspan="5"><b>TOTAL${q ? ' (filtered)' : ''}</b></td>
+    <td class="amount" style="text-align:right;"><b>${fmtC(td)}</b></td>
+    <td class="amount" style="text-align:right;"><b>${fmtC(tc)}</b></td>
+    <td></td></tr>`;
+}
+
+function exportGeneralLedgerCSV() {
+  if (!_glData) return;
+  const single = !!document.getElementById('glAccount').value;
+  let csv = 'Date,Voucher Type,Reference,Ledger Account,Group,Debit,Credit,Balance\n';
+  (_glData.rows || []).forEach(r => {
+    csv += `"${r.date}","${glSourceLabel(r.source).replace(/&[a-z]+;/g,'')}","${(r.ref||'').toString().replace(/"/g,"'")}",`
+      + `"${(r.account||'').replace(/"/g,"'")}","${r.group||''}",${r.debit||0},${r.credit||0},`
+      + `${single && r.balance != null ? r.balance : ''}\n`;
+  });
+  csv += `"TOTAL","","","","",${_glData.total_debit||0},${_glData.total_credit||0},\n`;
+  const acc = document.getElementById('glAccount').value || 'All';
+  dlCSV(csv, `General_Ledger_${acc.replace(/[^\w]+/g,'_')}_${document.getElementById('glFY').value}.csv`);
+}
+
+// ─── JOURNAL VOUCHERS (manual double-entry, for adjustments with no source document)
+let _jvList = [];
+let jvLines = [];
+let _jvCoa = [];
+let jvCurrentId = null;
+let jvCurrentStatus = null;
+let jvReadOnly = false;
+
+async function renderJournalVouchers() {
+  const body = document.getElementById('jvBody');
+  body.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;"><span class="spinner"></span></td></tr>`;
+  try {
+    _jvList = await erpc.getJournalVouchers() || [];
+    filterJVList();
+  } catch (e) {
+    console.error('Journal vouchers error', e);
+    body.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--danger);">⚠️ Failed to load journal vouchers.</td></tr>`;
+  }
+}
+
+function filterJVList() {
+  const q = (document.getElementById('jvSearch').value || '').trim().toLowerCase();
+  const rows = _jvList.filter(j => !q ||
+    (j.jv_no && j.jv_no.toLowerCase().includes(q)) ||
+    (j.narration && j.narration.toLowerCase().includes(q)));
+  rows.sort((a, b) => (b.jv_date || '').localeCompare(a.jv_date || '') || b.id - a.id);
+  document.getElementById('jvEmpty').style.display = _jvList.length ? 'none' : 'block';
+  const body = document.getElementById('jvBody');
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--faint);padding:24px;">${_jvList.length ? 'No journal vouchers match your search.' : ''}</td></tr>`;
+    return;
+  }
+  body.innerHTML = rows.map(j => `
+    <tr>
+      <td class="name-bold">${esc(j.jv_no)}</td>
+      <td style="white-space:nowrap;">${esc(j.jv_date)}</td>
+      <td>${esc(j.narration || '—')}</td>
+      <td class="amount" style="text-align:right;">${fmtC(j.total_debit || 0)}</td>
+      <td class="amount" style="text-align:right;">${fmtC(j.total_credit || 0)}</td>
+      <td><span class="badge ${j.status === 'posted' ? 'b-released' : 'b-pending'}">${esc(j.status)}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="openJVModal(${j.id})">
+          ${j.status === 'posted' ? 'View' : 'Edit'}
+        </button>
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+async function openJVModal(jvId) {
+  jvCurrentId = jvId || null;
+  jvCurrentStatus = null;
+  jvReadOnly = false;
+  jvLines = [{ account_name: '', account_type: 'expense', debit: '', credit: '', narration: '' },
+             { account_name: '', account_type: 'asset',   debit: '', credit: '', narration: '' }];
+
+  await loadJVCoa();
+
+  if (jvId) {
+    const jv = _jvList.find(j => j.id === jvId);
+    jvCurrentStatus = jv ? jv.status : null;
+    jvReadOnly = jvCurrentStatus === 'posted';
+    document.getElementById('jvModalTitle').textContent = (jvReadOnly ? 'View' : 'Edit') + ' Journal Voucher' + (jv ? ' — ' + jv.jv_no : '');
+    document.getElementById('jvDate').value = jv ? jv.jv_date : new Date().toISOString().slice(0, 10);
+    document.getElementById('jvNarration').value = jv ? (jv.narration || '') : '';
+    try {
+      const entries = await erpc.getJournalEntries(jvId);
+      if (entries && entries.length) {
+        jvLines = entries.map(e => ({ account_name: e.account_name, account_type: e.account_type || 'expense', debit: e.debit || '', credit: e.credit || '', narration: e.narration || '' }));
+      }
+    } catch (e) { console.error('Load JV entries error', e); }
+  } else {
+    document.getElementById('jvModalTitle').textContent = 'New Journal Voucher';
+    document.getElementById('jvDate').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('jvNarration').value = '';
+  }
+
+  document.getElementById('jvDate').disabled = jvReadOnly;
+  document.getElementById('jvNarration').disabled = jvReadOnly;
+  document.getElementById('jvAddLineBtn').style.display = jvReadOnly ? 'none' : '';
+  document.getElementById('jvSaveDraftBtn').style.display = jvReadOnly ? 'none' : '';
+  document.getElementById('jvPostBtn').style.display = jvReadOnly ? 'none' : '';
+  document.getElementById('jvDeleteBtn').style.display = (jvId && jvCurrentStatus === 'draft') ? '' : 'none';
+
+  renderJVLines();
+  document.getElementById('jvModal').classList.add('open');
+}
+
+function closeJVModal() {
+  document.getElementById('jvModal').classList.remove('open');
+}
+
+async function loadJVCoa() {
+  try {
+    _jvCoa = await erpc.getChartOfAccounts({}) || [];
+  } catch (e) {
+    console.error('Load Chart of Accounts error', e);
+    _jvCoa = [];
+  }
+  buildJVCoaDatalist();
+}
+
+function buildJVCoaDatalist() {
+  const dl = document.getElementById('jvCoaList');
+  if (!dl) return;
+  dl.innerHTML = (_jvCoa || [])
+    .filter(a => a && a.name && a.active !== 0)
+    .map(a => `<option value="${esc(a.name)}"></option>`).join('');
+}
+
+// When a line's account name matches a Chart of Accounts entry, adopt its
+// account_type so the GL engine (buildLedgerPostings) groups the posting
+// correctly. New/free-typed names keep whatever type the user selects.
+function onJVAccountInput(idx) {
+  const accInput = document.querySelectorAll('#jvLinesBody .jv-acc')[idx];
+  const typeSel  = document.querySelectorAll('#jvLinesBody .jv-type')[idx];
+  if (!accInput) return;
+  const name = accInput.value.trim();
+  jvLines[idx].account_name = name;
+  const match = (_jvCoa || []).find(a => a && a.name && a.name.toLowerCase() === name.toLowerCase());
+  if (match && match.account_type) {
+    jvLines[idx].account_type = match.account_type;
+    if (typeSel) typeSel.value = match.account_type;
+  }
+}
+
+function renderJVLines() {
+  const accTypes = ['asset', 'liability', 'equity', 'income', 'expense'];
+  document.getElementById('jvLinesBody').innerHTML = jvLines.map((l, idx) => `
+    <tr>
+      <td><input type="text" class="jv-acc" list="jvCoaList" value="${esc(l.account_name)}" placeholder="Account name" oninput="onJVAccountInput(${idx})" onchange="onJVAccountInput(${idx})" style="width:100%;" ${jvReadOnly ? 'disabled' : ''}></td>
+      <td><select class="jv-type" style="width:100%;" ${jvReadOnly ? 'disabled' : ''}>
+        ${accTypes.map(t => `<option value="${t}" ${l.account_type === t ? 'selected' : ''}>${t[0].toUpperCase() + t.slice(1)}</option>`).join('')}
+      </select></td>
+      <td><input type="number" class="jv-dr" value="${l.debit === '' ? '' : l.debit}" min="0" step="0.01" oninput="recalcJVTotals()" style="width:100%;text-align:right;" ${jvReadOnly ? 'disabled' : ''}></td>
+      <td><input type="number" class="jv-cr" value="${l.credit === '' ? '' : l.credit}" min="0" step="0.01" oninput="recalcJVTotals()" style="width:100%;text-align:right;" ${jvReadOnly ? 'disabled' : ''}></td>
+      <td><input type="text" class="jv-narr" value="${esc(l.narration)}" placeholder="optional" style="width:100%;" ${jvReadOnly ? 'disabled' : ''}></td>
+      <td>${jvReadOnly ? '' : `<button type="button" class="btn btn-outline btn-sm" onclick="removeJVLine(${idx})"><i data-lucide="x" style="width:12px;height:12px;"></i></button>`}</td>
+    </tr>`).join('');
+  lucide.createIcons();
+  recalcJVTotals();
+}
+
+function addJVLine() {
+  jvLines.push({ account_name: '', account_type: 'expense', debit: '', credit: '', narration: '' });
+  renderJVLines();
+}
+
+function removeJVLine(idx) {
+  if (jvLines.length <= 1) return;
+  jvLines.splice(idx, 1);
+  renderJVLines();
+}
+
+function recalcJVTotals() {
+  const drs = [...document.querySelectorAll('#jvLinesBody .jv-dr')].map(i => +i.value || 0);
+  const crs = [...document.querySelectorAll('#jvLinesBody .jv-cr')].map(i => +i.value || 0);
+  const totalDr = drs.reduce((s, n) => s + n, 0);
+  const totalCr = crs.reduce((s, n) => s + n, 0);
+  document.getElementById('jvTotalDr').textContent = fmtC(totalDr);
+  document.getElementById('jvTotalCr').textContent = fmtC(totalCr);
+  const diff = Math.round((totalDr - totalCr) * 100) / 100;
+  const diffEl = document.getElementById('jvDiff');
+  const balanced = Math.abs(diff) < 0.01 && totalDr > 0;
+  diffEl.textContent = balanced ? '✓ Balanced' : `Difference: ${fmtSigned(diff)}`;
+  diffEl.style.color = balanced ? 'var(--success)' : 'var(--danger)';
+  const postBtn = document.getElementById('jvPostBtn');
+  if (postBtn) postBtn.disabled = !balanced;
+  postBtn.style.opacity = balanced ? '1' : '.5';
+  postBtn.style.cursor = balanced ? 'pointer' : 'not-allowed';
+}
+
+function gatherJVLines() {
+  const accs  = [...document.querySelectorAll('#jvLinesBody .jv-acc')].map(i => i.value.trim());
+  const types = [...document.querySelectorAll('#jvLinesBody .jv-type')].map(i => i.value);
+  const drs   = [...document.querySelectorAll('#jvLinesBody .jv-dr')].map(i => +i.value || 0);
+  const crs   = [...document.querySelectorAll('#jvLinesBody .jv-cr')].map(i => +i.value || 0);
+  const narrs = [...document.querySelectorAll('#jvLinesBody .jv-narr')].map(i => i.value.trim());
+  return accs.map((account_name, i) => ({ account_name, account_type: types[i], debit: drs[i], credit: crs[i], narration: narrs[i] || null }))
+    .filter(l => l.account_name && (l.debit > 0 || l.credit > 0));
+}
+
+async function saveJV(status) {
+  const jv_date = document.getElementById('jvDate').value;
+  const narration = document.getElementById('jvNarration').value.trim();
+  if (!jv_date) return alert('Date is required.');
+  const entries = gatherJVLines();
+  if (entries.length < 2) return alert('A journal voucher needs at least two lines (one debit, one credit).');
+  const totalDr = entries.reduce((s, e) => s + e.debit, 0);
+  const totalCr = entries.reduce((s, e) => s + e.credit, 0);
+  if (status === 'posted' && Math.abs(totalDr - totalCr) > 0.01) {
+    return alert(`Cannot post an unbalanced voucher. Debit ${fmtC(totalDr)} vs Credit ${fmtC(totalCr)}.`);
+  }
+  const payload = { jv_date, narration: narration || null, status, entries };
+  if (jvCurrentId) payload.id = jvCurrentId;
+  try {
+    await erpc.saveJournalVoucher(payload);
+    closeJVModal();
+    renderJournalVouchers();
+  } catch (e) {
+    alert('Error saving journal voucher: ' + (e.message || e));
+  }
+}
+
+async function deleteCurrentJV() {
+  if (!jvCurrentId) return;
+  if (!confirm('Delete this draft journal voucher? This cannot be undone.')) return;
+  try {
+    await erpc.deleteJournalVoucher(jvCurrentId);
+    closeJVModal();
+    renderJournalVouchers();
+  } catch (e) {
+    alert('Error deleting journal voucher: ' + (e.message || e));
+  }
+}
+
+// ─── CA PACK
+async function renderCAPack() {
+  const checks = [
+    'All sales invoices raised and GST applied',
+    'All vendor bills entered with GSTIN for ITC',
+    'Petty cash vouchers accounted',
+    'TDS deducted and challan filed quarterly',
+    'Bank reconciliation done for all accounts',
+    'Employee salaries and advances settled',
+    'Subcontractor bills with PAN/GSTIN collected',
+    'Retention released/pending reconciled',
+    'GSTR-1 filed for all months',
+    'GSTR-3B filed for all months',
+    'P&L prepared and shared with CA',
+    'ITR filed before 31st July'
+  ];
+  document.getElementById('checklistGrid').innerHTML = checks.map(lbl => `
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer;padding:6px 0;">
+      <input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;"> ${lbl}
+    </label>`).join('');
+  lucide.createIcons();
+}
+
+async function caExportInvoices() {
+  try {
+    const fy = document.getElementById('capackFY').value;
+    const dates = getFYDates(fy);
+    const invoices = await erpc.getInvoices({ from_date: dates.from, to_date: dates.to });
+    let csv = 'Invoice No,Date,Client,GSTIN,Site,Subtotal,GST,Total,TDS Deducted,Status\n';
+    (invoices || []).forEach(i => {
+      csv += `"${i.invoice_no||''}","${i.invoice_date||''}","${i.client_name||''}","${i.client_gstin||''}","${i.site_name||''}",${i.subtotal||0},${i.total_gst||0},${i.total_amount||0},${i.tds_amount||0},"${i.status||''}"\n`;
+    });
+    dlCSV(csv, `Invoices_${fy}.csv`);
+  } catch (e) { console.error('Export invoices error', e); }
+}
+
+async function caExportExpenses() {
+  try {
+    const fy = document.getElementById('capackFY').value;
+    const dates = getFYDates(fy);
+    const expenses = await erpc.getExpenses({ from_date: dates.from, to_date: dates.to });
+    let csv = 'Bill No,Date,Vendor,Category,Site,Subtotal,GST,Total,TDS,Vendor GSTIN\n';
+    (expenses || []).forEach(e => {
+      csv += `"${e.bill_no||''}","${e.bill_date||''}","${e.vendor_name||''}","${e.category||''}","${e.site_name||''}",${e.subtotal||0},${e.gst_amount||0},${e.total_amount||0},${e.tds_amount||0},"${e.vendor_gstin||''}"\n`;
+    });
+    dlCSV(csv, `Expenses_${fy}.csv`);
+  } catch (e) { console.error('Export expenses error', e); }
+}
+
+async function caExportPayroll() {
+  try {
+    const fy = document.getElementById('capackFY').value;
+    const dates = getFYDates(fy);
+    const payroll = await erpc.getPayroll({ from_date: dates.from, to_date: dates.to });
+    let csv = 'Employee,Emp Code,Department,Month,Year,Gross Salary,Total Deductions,Net Salary,PF (Employee),TDS,Status\n';
+    (payroll || []).forEach(p => {
+      csv += `"${p.emp_name||''}","${p.emp_code||''}","${p.department||''}","${p.month||''}",${p.year||''},${p.gross_salary||0},${p.total_deductions||0},${p.net_salary||0},${p.pf_employee||0},${p.tds_deduction||0},"${p.status||''}"\n`;
+    });
+    dlCSV(csv, `Payroll_${fy}.csv`);
+  } catch (e) { console.error('Export payroll error', e); }
+}
+
+async function caExportTDS() {
+  try {
+    const fy = document.getElementById('capackFY').value;
+    const dates = getFYDates(fy);
+    const invoices = await erpc.getInvoices({ from_date: dates.from, to_date: dates.to });
+    let csv = 'Invoice No,Date,Client,GSTIN,Invoice Amount,TDS Rate%,TDS Amount\n';
+    (invoices || []).filter(i => (i.tds_amount || 0) > 0).forEach(i => {
+      csv += `"${i.invoice_no||''}","${i.invoice_date||''}","${i.client_name||''}","${i.client_gstin||''}",${i.total_amount||0},${i.tds_rate||0},${i.tds_amount||0}\n`;
+    });
+    dlCSV(csv, `TDS_${fy}.csv`);
+  } catch (e) { console.error('Export TDS error', e); }
+}
+
+// ─── AUDIT TRAIL
+let _auditData = null;
+
+// Set default audit date range to last 30 days
+(function initAuditDates() {
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - 30);
+  document.getElementById('auditTo').value = to.toISOString().slice(0, 10);
+  document.getElementById('auditFrom').value = from.toISOString().slice(0, 10);
+})();
+
+async function renderAudit() {
+  try {
+    const from = document.getElementById('auditFrom').value;
+    const to = document.getElementById('auditTo').value;
+    const user = document.getElementById('auditUser').value;
+    const filters = { from_date: from, to_date: to };
+    if (user) filters.user = user;
+
+    const rows = await erpc.getAuditLog(filters);
+    _auditData = rows || [];
+
+    // Populate user filter with unique users
+    const users = [...new Set(_auditData.map(r => r.user || r.username).filter(Boolean))];
+    const userSel = document.getElementById('auditUser');
+    const currentUser = userSel.value;
+    userSel.innerHTML = '<option value="">All Users</option>';
+    users.forEach(u => {
+      userSel.innerHTML += `<option value="${u}" ${u === currentUser ? 'selected' : ''}>${u}</option>`;
+    });
+
+    const body = document.getElementById('auditBody');
+    const empty = document.getElementById('auditEmpty');
+    empty.style.display = _auditData.length ? 'none' : 'block';
+
+    body.innerHTML = _auditData.map(r => {
+      return `<tr>
+        <td style="white-space:nowrap;color:var(--faint);font-size:11px;">${r.timestamp || r.created_at || '—'}</td>
+        <td class="name-bold">${r.user || r.username || '—'}</td>
+        <td><span class="badge ${r.action === 'delete' ? 'b-overdue' : r.action === 'create' ? 'b-released' : 'b-partial'}">${r.action || '—'}</span></td>
+        <td>${r.module || r.table_name || '—'}</td>
+        <td style="font-family:monospace;font-size:11px;color:var(--muted);">${r.record_id || '—'}</td>
+        <td style="font-size:11px;color:var(--faint);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.details || r.description || '—'}</td>
+      </tr>`;
+    }).join('') || '';
+  } catch (e) {
+    console.error('Audit log error', e);
+  }
+}
+
+function exportAuditCSV() {
+  if (!_auditData) return;
+  let csv = 'Timestamp,User,Action,Module,Record ID,Details\n';
+  _auditData.forEach(r => {
+    csv += `"${r.timestamp||r.created_at||''}","${r.user||r.username||''}","${r.action||''}","${r.module||r.table_name||''}","${r.record_id||''}","${(r.details||r.description||'').replace(/"/g,"'")}"\n`;
+  });
+  dlCSV(csv, 'Audit_Trail.csv');
+}
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+(function boot(tries) {
+  if (window.erp) { renderPnL(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+
+<!-- Management Entry Quick-Widget (so P&L refreshes after a new private entry) -->
+<script src="vendor/mgmt-quick-entry.js"></script>
+<script>
+window._mgmtCtx = function() { return {}; };
+window._mgmtSaved = function() { try { renderPnL(); } catch(_) {} };
+</script>
+</body>
+</html>

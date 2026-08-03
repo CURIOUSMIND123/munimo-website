@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Employees & Payroll</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;--info:#3b82f6;--purple:#a855f7;
+  --radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:0;}
+
+/* TABS */
+.tabs{display:flex;gap:4px;padding:20px 24px 0;border-bottom:1px solid var(--border);background:var(--surface);}
+.tab{padding:10px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;gap:12px;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 14px;flex:1;max-width:320px;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%;}
+.search-box input::placeholder{color:var(--faint);}
+.toolbar-right{display:flex;gap:10px;align-items:center;}
+.btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2);}
+.btn-danger:hover{background:rgba(239,68,68,0.2);}
+.btn-sm{padding:5px 12px;font-size:12px;}
+
+/* TABLE */
+.table-container{padding:0 24px 24px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:13px;color:var(--muted);padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+.emp-name{font-weight:600;color:var(--text);}
+.emp-code{font-size:11px;color:var(--faint);}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.badge-active{background:rgba(34,197,94,0.12);color:var(--success);}
+.badge-inactive{background:rgba(148,163,184,0.1);color:var(--muted);}
+.badge-ft{background:rgba(59,130,246,0.12);color:var(--info);}
+.badge-pt{background:rgba(168,85,247,0.12);color:var(--purple);}
+.badge-labour{background:rgba(16,185,129,0.12);color:var(--accent);}
+.salary{font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);}
+.action-btns{display:flex;gap:6px;}
+
+/* MODAL OVERLAY */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:16px;font-weight:700;}
+.modal-body{padding:24px;}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px;}
+.close-btn:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+input,select,textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:10px 14px;font-size:13px;color:var(--text);outline:none;
+  transition:border-color 0.2s,background 0.2s;width:100%;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);background:rgba(16,185,129,0.04);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:70px;}
+.section-divider{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:0.5px;text-transform:uppercase;padding:8px 0 4px;border-bottom:1px solid rgba(16,185,129,0.15);margin-bottom:4px;grid-column:1/-1;}
+.checkbox-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);}
+.checkbox-row input{width:auto;padding:0;}
+
+/* PAYROLL TAB */
+.payroll-header{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:20px 24px;border-bottom:1px solid var(--border);}
+.pay-stat{background:var(--surface2);border-radius:10px;padding:16px;border:1px solid var(--border);}
+.pay-stat-label{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;}
+.pay-stat-val{font-size:20px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;}
+.pay-stat-sub{font-size:11px;color:var(--faint);margin-top:3px;}
+.month-selector{display:flex;align-items:center;gap:12px;padding:16px 24px;}
+.month-selector select{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 14px;font-size:13px;color:var(--text);outline:none;}
+
+/* PAYSLIP MODAL */
+.payslip{background:#fff;color:#000;padding:32px;border-radius:8px;max-width:600px;margin:0 auto;font-family:'Segoe UI',sans-serif;}
+.payslip-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #10b981;padding-bottom:16px;margin-bottom:16px;}
+.payslip h2{color:#0f172a;font-size:18px;}
+.payslip .comp-name{font-size:20px;font-weight:800;color:#0f172a;}
+.payslip .comp-sub{font-size:11px;color:#64748b;}
+.payslip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.payslip-field{display:flex;flex-direction:column;}
+.payslip-field .fl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;}
+.payslip-field .fv{font-size:13px;font-weight:600;color:#0f172a;}
+.payslip-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+.payslip-table th{background:#f1f5f9;font-size:11px;padding:8px 12px;text-align:left;color:#475569;text-transform:uppercase;}
+.payslip-table td{font-size:13px;padding:8px 12px;border-bottom:1px solid #f1f5f9;color:#1e293b;}
+.payslip-table .total-row td{font-weight:800;background:#fef3c7;font-size:14px;}
+.payslip-footer{border-top:1px solid #e2e8f0;padding-top:12px;font-size:11px;color:#94a3b8;text-align:center;}
+.net-box{background:#0f172a;color:#10b981;border-radius:8px;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.net-box .nl{font-size:12px;opacity:0.7;}
+.net-box .nv{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 24px;color:var(--faint);}
+.empty .eicon{font-size:48px;margin-bottom:12px;}
+.empty p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+</style>
+</head>
+<body>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('employees')">👷 Employees</div>
+  <div class="tab" onclick="switchTab('payroll')">💰 Payroll</div>
+  <div class="tab" onclick="switchTab('attendance')">📅 Attendance</div>
+  <div class="tab" onclick="switchTab('payslip')">📄 Payslips</div>
+  <div class="tab" onclick="switchTab('advances')">💳 Advances</div>
+</div>
+
+<!-- ═══ EMPLOYEES TAB ═══ -->
+<div id="tab-employees">
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+      <input type="text" placeholder="Search employees..." id="empSearch" oninput="filterEmps()">
+    </div>
+    <div class="toolbar-right">
+      <select id="deptFilter" onchange="filterEmps()" style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 14px;font-size:13px;color:var(--muted);outline:none;">
+        <option value="">All Departments</option>
+        <option>Site</option><option>Office</option><option>Labour</option><option>Accounts</option><option>Management</option><option>Transport</option>
+      </select>
+      <button class="btn btn-primary" onclick="openAddEmp()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Employee
+      </button>
+    </div>
+  </div>
+  <div class="table-container">
+    <table id="empTable">
+      <thead>
+        <tr>
+          <th>Emp Code</th><th>Name & Designation</th><th>Department</th>
+          <th>Type</th><th>Phone</th><th>Basic Salary</th><th>Gross Salary</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="empBody"></tbody>
+    </table>
+    <div class="empty" id="empEmpty" style="display:none;">
+      <div class="eicon">👷</div>
+      <p>No employees added yet.<br>Click "Add Employee" to get started.</p>
+      <button class="btn btn-primary" onclick="openAddEmp()">+ Add First Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAYROLL TAB ═══ -->
+<div id="tab-payroll" style="display:none;">
+  <div class="payroll-header">
+    <div class="pay-stat">
+      <div class="pay-stat-label">TOTAL EMPLOYEES</div>
+      <div class="pay-stat-val" id="totalEmpCount">0</div>
+      <div class="pay-stat-sub">Active on payroll</div>
+    </div>
+    <div class="pay-stat">
+      <div class="pay-stat-label">GROSS PAYROLL THIS MONTH</div>
+      <div class="pay-stat-val" id="grossPayroll">₹0</div>
+      <div class="pay-stat-sub">Before deductions</div>
+    </div>
+    <div class="pay-stat">
+      <div class="pay-stat-label">NET PAYROLL THIS MONTH</div>
+      <div class="pay-stat-val" id="netPayroll">₹0</div>
+      <div class="pay-stat-sub">After PF, ESI, TDS</div>
+    </div>
+  </div>
+  <div class="month-selector">
+    <label style="text-transform:uppercase;font-size:11px;font-weight:700;color:var(--muted);">Pay Month:</label>
+    <select id="payMonth" onchange="renderPayroll()">
+      <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+      <option value="4">April</option><option value="5">May</option><option value="6" selected>June</option>
+      <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+      <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+    </select>
+    <select id="payYear" onchange="renderPayroll()">
+      <option>2025</option><option selected>2026</option><option>2027</option>
+    </select>
+    <select id="payStatusFilter" onchange="renderPayroll()">
+      <option value="all" selected>All</option>
+      <option value="notrun">Not Run</option>
+      <option value="draft">Draft</option>
+      <option value="paid">Paid</option>
+    </select>
+    <select id="payDeptFilter" onchange="renderPayroll()">
+      <option value="">All Departments</option>
+    </select>
+    <button class="btn btn-primary" onclick="runPayroll()">
+      <i data-lucide="play" style="width:14px;height:14px;"></i> Run Payroll
+    </button>
+    <button class="btn btn-primary" onclick="markSelectedPaid()">
+      <i data-lucide="check-check" style="width:14px;height:14px;"></i> Mark Selected Paid
+    </button>
+    <button class="btn btn-outline" onclick="exportPayroll()">
+      <i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV
+    </button>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="payChkAll" onclick="togglePayChkAll(this)"></th>
+          <th>Employee</th><th>Days Present</th><th>Basic</th><th>Allowances</th>
+          <th>Gross</th><th>PF</th><th>ESI</th><th>TDS</th><th>Deductions</th><th>Net Pay</th><th>Status</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="payrollBody"></tbody>
+    </table>
+    <div class="empty" id="payrollEmpty" style="display:none;">
+      <div class="eicon">💰</div>
+      <p>Add employees first, then run payroll for the selected month.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ATTENDANCE TAB ═══ -->
+<div id="tab-attendance" style="display:none;">
+  <div class="month-selector">
+    <label style="text-transform:uppercase;font-size:11px;font-weight:700;color:var(--muted);">Month:</label>
+    <select id="attMonth" onchange="renderAttendance()">
+      <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+      <option value="4">April</option><option value="5">May</option><option value="6" selected>June</option>
+      <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+      <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+    </select>
+    <select id="attYear" onchange="renderAttendance()">
+      <option>2025</option><option selected>2026</option><option>2027</option>
+    </select>
+    <button class="btn btn-primary" onclick="saveAttendance()">
+      <i data-lucide="save" style="width:14px;height:14px;"></i> Save Attendance
+    </button>
+  </div>
+  <div class="table-container" id="attContainer">
+    <div class="empty" id="attEmpty">
+      <div class="eicon">📅</div>
+      <p>No permanent employees found for attendance tracking.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAYSLIPS TAB ═══ -->
+<div id="tab-payslip" style="display:none;">
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+      <input type="text" placeholder="Search payslips..." id="payslipSearch" oninput="filterPayslips()">
+    </div>
+    <div class="toolbar-right">
+      <select id="payslipMonth" onchange="renderPayslips()" style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 14px;font-size:13px;color:var(--muted);outline:none;">
+        <option value="">All Months</option>
+        <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+        <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+        <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+        <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+      </select>
+      <select id="payslipYear" onchange="renderPayslips()" style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 14px;font-size:13px;color:var(--muted);outline:none;">
+        <option value="">All Years</option>
+        <option>2025</option><option selected>2026</option><option>2027</option>
+      </select>
+    </div>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Employee</th><th>Month/Year</th><th>Days Present</th><th>Gross</th><th>Deductions</th><th>Net Pay</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="payslipBody"></tbody>
+    </table>
+    <div class="empty" id="payslipEmpty">
+      <div class="eicon">📄</div>
+      <p>Run payroll first to generate payslips.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADVANCES TAB ═══ -->
+<div id="tab-advances" style="display:none;">
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+      <input type="text" placeholder="Search advances..." id="advSearch" oninput="filterAdvances()">
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-primary" onclick="openAdvModal()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> Give Advance
+      </button>
+    </div>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Employee</th><th>Date</th><th>Amount</th><th>Recovered</th><th>Balance</th><th>Notes</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="advBody"></tbody>
+    </table>
+    <div class="empty" id="advEmpty" style="display:none;">
+      <div class="eicon">💳</div>
+      <p>No advances recorded yet.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ ADD EMPLOYEE MODAL ═══════ -->
+<div class="modal-overlay" id="empModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="empModalTitle">Add New Employee</div>
+      <button class="close-btn" onclick="closeModal('empModal')">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="empForm">
+        <div class="form-grid">
+          <div class="section-divider">Personal Information</div>
+          <div class="form-group">
+            <label>Employee Code *</label>
+            <input type="text" id="fEmpCode" placeholder="EMP-001" required>
+          </div>
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="fName" placeholder="Full name" required>
+          </div>
+          <div class="form-group">
+            <label>Designation</label>
+            <input type="text" id="fDesig" placeholder="e.g. Site Engineer">
+          </div>
+          <div class="form-group">
+            <label>Department</label>
+            <select id="fDept">
+              <option>Site</option><option>Office</option><option>Labour</option>
+              <option>Accounts</option><option>Management</option><option>Transport</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date of Joining</label>
+            <input type="date" id="fDoj">
+          </div>
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" id="fDob">
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="fPhone" placeholder="Mobile number">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="fEmail" placeholder="email@example.com">
+          </div>
+          <div class="form-group full">
+            <label>Address</label>
+            <textarea id="fAddress" placeholder="Full residential address"></textarea>
+          </div>
+          <div class="form-group">
+            <label>City</label>
+            <input type="text" id="fCity" placeholder="City">
+          </div>
+          <div class="form-group">
+            <label>State</label>
+            <input type="text" id="fState" placeholder="State">
+          </div>
+
+          <div class="section-divider">Identity & Banking</div>
+          <div class="form-group">
+            <label>Aadhar Number</label>
+            <input type="text" id="fAadhar" placeholder="XXXX XXXX XXXX" maxlength="14">
+          </div>
+          <div class="form-group">
+            <label>PAN Number</label>
+            <input type="text" id="fPan" placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase;">
+          </div>
+          <div class="form-group">
+            <label>UAN Number</label>
+            <input type="text" id="fUan" placeholder="UAN (for PF)">
+          </div>
+          <div class="form-group">
+            <label>ESIC Number</label>
+            <input type="text" id="fEsic" placeholder="ESIC No.">
+          </div>
+          <div class="form-group">
+            <label>Bank Account No.</label>
+            <input type="text" id="fBankAcc" placeholder="Account number">
+          </div>
+          <div class="form-group">
+            <label>IFSC Code</label>
+            <input type="text" id="fIfsc" placeholder="SBIN0001234">
+          </div>
+          <div class="form-group">
+            <label>Bank Name</label>
+            <input type="text" id="fBankName" placeholder="e.g. SBI, UCO Bank">
+          </div>
+          <div class="form-group">
+            <label>Bank Branch</label>
+            <input type="text" id="fBankBranch" placeholder="Branch name">
+          </div>
+          <div class="form-group">
+            <label>Employment Type</label>
+            <select id="fEmpType">
+              <option value="full-time">Full Time</option>
+              <option value="part-time">Part Time</option>
+              <option value="labour">Daily Labour</option>
+              <option value="contract">Contract</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="fStatus">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="resigned">Resigned</option>
+            </select>
+          </div>
+
+          <div class="section-divider">Salary Structure</div>
+          <div class="form-group">
+            <label>Basic Salary (₹/month)</label>
+            <input type="number" id="fBasic" placeholder="0" oninput="calcGross()">
+          </div>
+          <div class="form-group">
+            <label>HRA (₹/month)</label>
+            <input type="number" id="fHra" placeholder="0" oninput="calcGross()">
+          </div>
+          <div class="form-group">
+            <label>DA (₹/month)</label>
+            <input type="number" id="fDa" placeholder="0" oninput="calcGross()">
+          </div>
+          <div class="form-group">
+            <label>Transport Allowance (₹)</label>
+            <input type="number" id="fTa" placeholder="0" oninput="calcGross()">
+          </div>
+          <div class="form-group">
+            <label>Other Allowance (₹)</label>
+            <input type="number" id="fOther" placeholder="0" oninput="calcGross()">
+          </div>
+          <div class="form-group">
+            <label>Gross Salary (Auto)</label>
+            <input type="text" id="fGross" readonly style="background:rgba(34,197,94,0.05);color:var(--success);font-weight:700;">
+          </div>
+          <div class="form-group">
+            <label>Professional Tax (₹/month)</label>
+            <input type="number" id="fProfTax" placeholder="0">
+          </div>
+
+          <div class="section-divider">Deductions Applicable</div>
+          <div class="form-group">
+            <div class="checkbox-row">
+              <input type="checkbox" id="fPf" style="width:16px;height:16px;">
+              <label style="text-transform:none;font-size:13px;">PF (12% of Basic)</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="checkbox-row">
+              <input type="checkbox" id="fEsi" style="width:16px;height:16px;">
+              <label style="text-transform:none;font-size:13px;">ESI (0.75% of Gross, if gross ≤ ₹21,000)</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="checkbox-row">
+              <input type="checkbox" id="fTds" style="width:16px;height:16px;">
+              <label style="text-transform:none;font-size:13px;">TDS Applicable</label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('empModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i> Save Employee
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PAYSLIP VIEW MODAL ═══════ -->
+<div class="modal-overlay" id="payslipModal">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <div class="modal-title">📄 Payslip</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="printPayslip()">
+          <i data-lucide="printer" style="width:13px;height:13px;"></i> Print
+        </button>
+        <button class="close-btn" onclick="closeModal('payslipModal')">
+          <i data-lucide="x" style="width:18px;height:18px;"></i>
+        </button>
+      </div>
+    </div>
+    <div class="modal-body" id="payslipContent"></div>
+  </div>
+</div>
+
+<!-- ═══════ DAYS PRESENT MODAL ═══════ -->
+<div class="modal-overlay" id="daysModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Edit Payroll Entry</div>
+      <button class="close-btn" onclick="closeModal('daysModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Employee</label>
+        <input type="text" id="daysEmpName" readonly style="background:var(--surface3);">
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Days in Month</label>
+          <input type="number" id="daysInMonth" value="30" min="28" max="31">
+        </div>
+        <div class="form-group">
+          <label>Days Present</label>
+          <input type="number" id="daysPresent" value="26" min="0" max="31">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Advance Deduction (₹)</label>
+        <input type="number" id="advanceDeduct" value="0" min="0">
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Other Deductions (₹)</label>
+        <input type="number" id="otherDeduct" value="0" min="0">
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Payment Mode</label>
+        <select id="daysPayMode">
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="cash">Cash</option>
+          <option value="cheque">Cheque</option>
+          <option value="upi">UPI</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Payment Date</label>
+        <input type="date" id="daysPayDate">
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Payment Reference</label>
+        <input type="text" id="daysPayRef" placeholder="UTR / Cheque No.">
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Notes</label>
+        <textarea id="daysNotes" placeholder="Optional notes..." style="min-height:50px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('daysModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmDays()">Confirm & Calculate</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ ADVANCE MODAL ═══════ -->
+<div class="modal-overlay" id="advModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="advModalTitle">Give Advance</div>
+      <button class="close-btn" onclick="closeModal('advModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Employee *</label>
+          <select id="advEmpId">
+            <option value="">Select Employee</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Amount (₹) *</label>
+          <input type="number" id="advAmount" placeholder="0" min="1">
+        </div>
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" id="advDate">
+        </div>
+        <div class="form-group">
+          <label>Payment Mode</label>
+          <select id="advPayMode">
+            <option value="cash">Cash</option>
+            <option value="bank_transfer">Bank Transfer</option>
+            <option value="upi">UPI</option>
+            <option value="cheque">Cheque</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Reference No.</label>
+          <input type="text" id="advRef" placeholder="UTR / Cheque No.">
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="advNotes" placeholder="Reason for advance..." style="min-height:60px;"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('advModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAdvance()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i> Save Advance
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ RECOVER ADVANCE MODAL ═══════ -->
+<div class="modal-overlay" id="recoverModal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Record Recovery</div>
+      <button class="close-btn" onclick="closeModal('recoverModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Advance</label>
+        <input type="text" id="recoverAdvInfo" readonly style="background:var(--surface3);">
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Recovery Amount (₹) *</label>
+          <input type="number" id="recoverAmt" placeholder="0" min="1">
+        </div>
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" id="recoverDate">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('recoverModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRecovery()">
+        <i data-lucide="check" style="width:14px;height:14px;"></i> Confirm Recovery
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+// ─── State
+let employees = [];
+let payrollRecords = [];
+let allPayslipRows = [];
+let allAdvances = [];
+let currentEditEmpId = null;
+let currentDaysPayrollId = null;
+let currentDaysEmpId = null;
+let currentDaysMonth = null;
+let currentDaysYear = null;
+let currentRecoverAdvId = null;
+let attGrid = {}; // { empId: { day: 'P'|'A' } }
+
+// Rubber banding for employee form
+let lastEmp = {};
+try { lastEmp = JSON.parse(localStorage.getItem('emp_lastUsed') || '{}'); } catch(_) {}
+function saveLastEmp(d) {
+  lastEmp = { department: d.department, designation: d.designation, employment_type: d.employment_type,
+              city: d.city, state: d.state, pf_applicable: d.pf_applicable, esi_applicable: d.esi_applicable };
+  try { localStorage.setItem('emp_lastUsed', JSON.stringify(lastEmp)); } catch(_) {}
+}
+
+// ─── Helpers
+function fmt(n) { return Math.round(n).toLocaleString('en-IN'); }
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function monthName(m) {
+  return ['January','February','March','April','May','June',
+          'July','August','September','October','November','December'][+m - 1] || '';
+}
+function daysInMonth(month, year) {
+  return new Date(year, month, 0).getDate();
+}
+
+// ─── Tab Switching
+const ALL_TABS = ['employees','payroll','attendance','payslip','advances'];
+function switchTab(tab) {
+  ALL_TABS.forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', ALL_TABS[i] === tab);
+  });
+  if (tab === 'payroll')    renderPayroll();
+  if (tab === 'attendance') renderAttendance();
+  if (tab === 'payslip')    renderPayslips();
+  if (tab === 'advances')   renderAdvances();
+}
+
+// ─── Gross Calc (form helper)
+function calcGross() {
+  const basic = +document.getElementById('fBasic').value || 0;
+  const hra   = +document.getElementById('fHra').value   || 0;
+  const da    = +document.getElementById('fDa').value    || 0;
+  const ta    = +document.getElementById('fTa').value    || 0;
+  const oth   = +document.getElementById('fOther').value || 0;
+  document.getElementById('fGross').value = '₹' + fmt(basic + hra + da + ta + oth);
+}
+
+// ─── Payroll Calculation Engine
+// Annual salary income-tax under the New Regime (default), FY 2024-25.
+function annualSalaryTax(annualGross) {
+  const ti = Math.max(0, (+annualGross || 0) - 75000); // standard deduction (new regime)
+  if (ti <= 700000) return 0;                           // Sec 87A rebate → nil tax up to ₹7L taxable
+  const bands = [[300000,0],[700000,0.05],[1000000,0.10],[1200000,0.15],[1500000,0.20],[Infinity,0.30]];
+  let tax = 0, lower = 0;
+  for (const [upper, rate] of bands) {
+    if (ti > lower) tax += (Math.min(ti, upper) - lower) * rate;
+    lower = upper;
+  }
+  return Math.round(tax * 1.04); // + 4% health & education cess
+}
+
+function calcPayroll(emp, daysPresent, daysInMo, advDeduction, otherDeduction) {
+  daysPresent   = +daysPresent   || 0;
+  daysInMo      = +daysInMo      || 30;
+  advDeduction  = +advDeduction  || 0;
+  otherDeduction= +otherDeduction|| 0;
+
+  const ratio        = daysInMo > 0 ? daysPresent / daysInMo : 0;
+  const basic        = Math.round((+emp.basic_salary || 0) * ratio);
+  const hra          = Math.round((+emp.hra          || 0) * ratio);
+  const da           = Math.round((+emp.da           || 0) * ratio);
+  const ta           = Math.round((+emp.ta           || 0) * ratio);
+  const other        = Math.round((+emp.other_allowance || 0) * ratio);
+  const gross        = basic + hra + da + ta + other;
+  const allowances   = hra + da + ta + other;
+
+  // Full (unprorated) monthly figures — used for statutory eligibility ceilings.
+  const fullBasic = +emp.basic_salary || 0;
+  const fullGross = (+emp.basic_salary||0) + (+emp.hra||0) + (+emp.da||0) + (+emp.ta||0) + (+emp.other_allowance||0);
+
+  // PF: 12% of basic, but PF wages are statutorily capped at ₹15,000/month.
+  const pfWage       = Math.min(basic, 15000);
+  const pf_employee  = emp.pf_applicable  ? Math.round(pfWage * 0.12) : 0;
+  const pf_employer  = emp.pf_applicable  ? Math.round(pfWage * 0.12) : 0;
+  // ESI: eligibility is decided on FULL monthly wage vs the ₹21,000 ceiling;
+  // contributions are charged on actual (prorated) gross. Both legs share the gate.
+  const esiEligible  = !!emp.esi_applicable && fullGross <= 21000;
+  const esi_employee = esiEligible ? Math.round(gross * 0.0075) : 0;
+  const esi_employer = esiEligible ? Math.round(gross * 0.0325) : 0;
+  // Salary TDS (Sec 192): proper annual projection + new-regime slabs (FY 2024-25),
+  // ₹75,000 standard deduction, 87A rebate (nil up to ₹7L taxable), 4% cess.
+  // Replaces the old flat 10% which massively over-deducted for most staff.
+  const tds          = emp.tds_applicable ? Math.round(annualSalaryTax(fullGross * 12) / 12) : 0;
+  const prof_tax     = +emp.professional_tax || 0;
+
+  const total_deductions = pf_employee + esi_employee + tds + prof_tax + advDeduction + otherDeduction;
+  const net_salary       = gross - total_deductions;
+
+  return {
+    basic, hra, da, ta, other_allowance: other, allowances, gross_salary: gross,
+    pf_employee, pf_employer, esi_employee, esi_employer, tds_deduction: tds,
+    professional_tax: prof_tax, advance_deduction: advDeduction,
+    other_deduction: otherDeduction, total_deductions, net_salary
+  };
+}
+
+// ─── Open Add/Edit Employee Modal
+async function openAddEmp(id = null) {
+  currentEditEmpId = id;
+  document.getElementById('empModalTitle').textContent = id ? 'Edit Employee' : 'Add New Employee';
+  document.getElementById('empForm').reset();
+  document.getElementById('fGross').value = '₹0';
+
+  if (id) {
+    const emp = employees.find(e => e.id === id);
+    if (!emp) return;
+    document.getElementById('fEmpCode').value    = emp.emp_code    || '';
+    document.getElementById('fName').value       = emp.name        || '';
+    document.getElementById('fDesig').value      = emp.designation || '';
+    document.getElementById('fDept').value       = emp.department  || 'Site';
+    document.getElementById('fDoj').value        = emp.doj         || '';
+    document.getElementById('fDob').value        = emp.dob         || '';
+    document.getElementById('fPhone').value      = emp.phone       || '';
+    document.getElementById('fEmail').value      = emp.email       || '';
+    document.getElementById('fAddress').value    = emp.address     || '';
+    document.getElementById('fCity').value       = emp.city        || '';
+    document.getElementById('fState').value      = emp.state       || '';
+    document.getElementById('fAadhar').value     = emp.aadhar      || '';
+    document.getElementById('fPan').value        = emp.pan         || '';
+    document.getElementById('fUan').value        = emp.uan         || '';
+    document.getElementById('fEsic').value       = emp.esic_no     || '';
+    document.getElementById('fBankAcc').value    = emp.bank_account|| '';
+    document.getElementById('fIfsc').value       = emp.bank_ifsc   || '';
+    document.getElementById('fBankName').value   = emp.bank_name   || '';
+    document.getElementById('fBankBranch').value = emp.bank_branch || '';
+    document.getElementById('fEmpType').value    = emp.employment_type || 'full-time';
+    document.getElementById('fStatus').value     = emp.status      || 'active';
+    document.getElementById('fBasic').value      = emp.basic_salary|| 0;
+    document.getElementById('fHra').value        = emp.hra         || 0;
+    document.getElementById('fDa').value         = emp.da          || 0;
+    document.getElementById('fTa').value         = emp.ta          || 0;
+    document.getElementById('fOther').value      = emp.other_allowance || 0;
+    document.getElementById('fProfTax').value    = emp.professional_tax || 0;
+    document.getElementById('fPf').checked       = !!emp.pf_applicable;
+    document.getElementById('fEsi').checked      = !!emp.esi_applicable;
+    document.getElementById('fTds').checked      = !!emp.tds_applicable;
+    calcGross();
+  } else {
+    // Auto-generate next code
+    try {
+      const r = await window.erp.getNextEmpCode();
+      document.getElementById('fEmpCode').value = r.data || 'EMP-001';
+    } catch(e) {
+      document.getElementById('fEmpCode').value = 'EMP-001';
+    }
+    // Rubber banding — smart defaults from last added employee
+    document.getElementById('fDept').value   = lastEmp.department      || 'Site';
+    document.getElementById('fDesig').value  = lastEmp.designation     || '';
+    document.getElementById('fEmpType').value= lastEmp.employment_type || 'full-time';
+    document.getElementById('fCity').value   = lastEmp.city            || '';
+    document.getElementById('fState').value  = lastEmp.state           || 'Assam';
+    document.getElementById('fPf').checked   = !!lastEmp.pf_applicable;
+    document.getElementById('fEsi').checked  = !!lastEmp.esi_applicable;
+    document.getElementById('fDoj').value    = new Date().toISOString().split('T')[0];
+    document.getElementById('fStatus').value = 'active';
+  }
+  document.getElementById('empModal').classList.add('open');
+  setTimeout(() => document.getElementById('fName').focus(), 100);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── Save Employee
+async function saveEmployee() {
+  const emp_code = document.getElementById('fEmpCode').value.trim();
+  const name     = document.getElementById('fName').value.trim();
+  if (!emp_code || !name) { alert('Employee code and name are required.'); return; }
+
+  const data = {
+    emp_code,
+    name,
+    designation:       document.getElementById('fDesig').value.trim(),
+    department:        document.getElementById('fDept').value,
+    doj:               document.getElementById('fDoj').value,
+    dob:               document.getElementById('fDob').value,
+    phone:             document.getElementById('fPhone').value.trim(),
+    email:             document.getElementById('fEmail').value.trim(),
+    address:           document.getElementById('fAddress').value.trim(),
+    city:              document.getElementById('fCity').value.trim(),
+    state:             document.getElementById('fState').value.trim(),
+    aadhar:            document.getElementById('fAadhar').value.trim(),
+    pan:               document.getElementById('fPan').value.trim().toUpperCase(),
+    uan:               document.getElementById('fUan').value.trim(),
+    esic_no:           document.getElementById('fEsic').value.trim(),
+    bank_account:      document.getElementById('fBankAcc').value.trim(),
+    bank_ifsc:         document.getElementById('fIfsc').value.trim(),
+    bank_name:         document.getElementById('fBankName').value.trim(),
+    bank_branch:       document.getElementById('fBankBranch').value.trim(),
+    employment_type:   document.getElementById('fEmpType').value,
+    status:            document.getElementById('fStatus').value,
+    basic_salary:      +document.getElementById('fBasic').value  || 0,
+    hra:               +document.getElementById('fHra').value    || 0,
+    da:                +document.getElementById('fDa').value     || 0,
+    ta:                +document.getElementById('fTa').value     || 0,
+    other_allowance:   +document.getElementById('fOther').value  || 0,
+    professional_tax:  +document.getElementById('fProfTax').value|| 0,
+    pf_applicable:     document.getElementById('fPf').checked  ? 1 : 0,
+    esi_applicable:    document.getElementById('fEsi').checked ? 1 : 0,
+    tds_applicable:    document.getElementById('fTds').checked ? 1 : 0,
+  };
+
+  if (currentEditEmpId) data.id = currentEditEmpId;
+
+  try {
+    const r = await window.erp.saveEmployee(data);
+    if (r && r.success === false) throw new Error(r.error || 'Save failed');
+    saveLastEmp(data);
+    closeModal('empModal');
+    await renderEmployees();
+  } catch(err) {
+    alert('Error saving employee: ' + (err.message || err));
+  }
+}
+
+// ─── Render Employees
+async function renderEmployees() {
+  const search = (document.getElementById('empSearch').value || '').trim();
+  const dept   = document.getElementById('deptFilter').value;
+
+  try {
+    const r = await window.erp.getEmployees({ search, department: dept });
+    employees = r.data || [];
+  } catch(err) {
+    employees = [];
+  }
+
+  // The backend now filters by department, so the list is exactly what was asked
+  // for. (Previously a client-side filter here re-filtered on an exact department
+  // string and could silently drop employees whose department wasn't in the
+  // dropdown's option set.)
+  const filtered = employees;
+
+  const body = document.getElementById('empBody');
+  document.getElementById('empEmpty').style.display = filtered.length ? 'none' : 'block';
+
+  body.innerHTML = filtered.map(e => {
+    const gross = (+e.basic_salary||0) + (+e.hra||0) + (+e.da||0) + (+e.ta||0) + (+e.other_allowance||0);
+    const typeClass = e.employment_type === 'full-time' ? 'ft'
+                    : e.employment_type === 'labour'    ? 'labour' : 'pt';
+    return `
+    <tr>
+      <td><span class="emp-code">${esc(e.emp_code || '')}</span></td>
+      <td><div class="emp-name">${esc(e.name)}</div><div class="emp-code">${esc(e.designation || '—')}</div></td>
+      <td>${esc(e.department || '—')}</td>
+      <td><span class="badge badge-${typeClass}">${esc(e.employment_type || 'full-time')}</span></td>
+      <td>${esc(e.phone || '—')}</td>
+      <td class="salary">₹${fmt(e.basic_salary || 0)}</td>
+      <td class="salary" style="color:var(--success);">₹${fmt(gross)}</td>
+      <td><span class="badge badge-${e.status === 'active' ? 'active' : 'inactive'}">${e.status || 'active'}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-outline btn-sm" onclick="openAddEmp(${e.id})">
+            <i data-lucide="edit-2" style="width:12px;height:12px;"></i>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEmp(${e.id}, '${esc(String(e.name||'')).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">
+            <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function filterEmps() { renderEmployees(); }
+
+async function deleteEmp(id, name) {
+  if (!confirm('Delete employee: ' + name + '?\nThis cannot be undone.')) return;
+  try {
+    await window.erp.deleteEmployee(id);
+    await renderEmployees();
+  } catch(err) {
+    alert('Error deleting employee: ' + (err.message || err));
+  }
+}
+
+// ─── PAYROLL TAB
+async function renderPayroll() {
+  const month = +document.getElementById('payMonth').value;
+  const year  = +document.getElementById('payYear').value;
+
+  let actives = [];
+  try {
+    const r = await window.erp.getEmployees({ status: 'active' });
+    actives = (r.data || []).filter(e => e.status === 'active');
+  } catch(e) { actives = []; }
+
+  let payrollForMonth = [];
+  try {
+    const pr = await window.erp.getPayroll({ month, year });
+    payrollForMonth = pr.data || [];
+  } catch(e) { payrollForMonth = []; }
+
+  document.getElementById('totalEmpCount').textContent = actives.length;
+
+  // Populate the department filter from the distinct departments of active
+  // employees, preserving the current selection.
+  const deptSel = document.getElementById('payDeptFilter');
+  if (deptSel) {
+    const prevDept = deptSel.value;
+    const depts = [...new Set(actives.map(e => e.department).filter(Boolean))].sort();
+    deptSel.innerHTML = '<option value="">All Departments</option>' +
+      depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+    deptSel.value = depts.includes(prevDept) ? prevDept : '';
+  }
+
+  const statusFilter = (document.getElementById('payStatusFilter') || {}).value || 'all';
+  const deptFilter   = deptSel ? deptSel.value : '';
+
+  // Reset the select-all checkbox on every render.
+  const chkAll = document.getElementById('payChkAll');
+  if (chkAll) chkAll.checked = false;
+
+  let totalGross = 0, totalNet = 0;
+  const body = document.getElementById('payrollBody');
+
+  const rows = actives.map(emp => {
+    const saved = payrollForMonth.find(p => p.employee_id === emp.id);
+    const dp  = saved ? saved.days_present    : 26;
+    const dim = saved ? saved.days_in_month   : daysInMonth(month, year);
+    const adv = saved ? saved.advance_deduction : 0;
+    const oth = saved ? saved.other_deduction   : 0;
+    const c   = calcPayroll(emp, dp, dim, adv, oth);
+
+    // Per-employee payroll state for this month.
+    const state = !saved ? 'notrun' : (saved.status === 'paid' ? 'paid' : 'draft');
+
+    return { emp, saved, dp, dim, c, state };
+  }).filter(row => {
+    if (deptFilter && (row.emp.department || '') !== deptFilter) return false;
+    if (statusFilter !== 'all' && row.state !== statusFilter) return false;
+    return true;
+  });
+
+  document.getElementById('payrollEmpty').style.display = rows.length ? 'none' : 'block';
+
+  body.innerHTML = rows.map(({ emp, saved, dp, dim, c, state }) => {
+    totalGross += c.gross_salary;
+    totalNet   += c.net_salary;
+
+    const statusBadge =
+      state === 'paid'  ? `<span class="badge badge-active">paid</span>` :
+      state === 'draft' ? `<span class="badge badge-ft">draft</span>` :
+                          `<span class="badge badge-inactive">Not Run</span>`;
+
+    return `
+    <tr>
+      <td><input type="checkbox" class="payChk" data-empid="${emp.id}" data-state="${state}"></td>
+      <td><div class="emp-name">${esc(emp.name)}</div><div class="emp-code">${esc(emp.emp_code)}</div></td>
+      <td>
+        <span style="cursor:pointer;color:var(--accent);font-weight:600;"
+              onclick="openDaysModal(${emp.id}, ${saved ? saved.id : 'null'}, ${month}, ${year})">
+          ${dp}/${dim}
+        </span>
+      </td>
+      <td>₹${fmt(c.gross_salary - c.allowances)}</td>
+      <td>₹${fmt(c.allowances)}</td>
+      <td style="font-weight:700;">₹${fmt(c.gross_salary)}</td>
+      <td style="color:var(--danger);">₹${fmt(c.pf_employee)}</td>
+      <td style="color:var(--danger);">₹${fmt(c.esi_employee)}</td>
+      <td style="color:var(--danger);">₹${fmt(c.tds_deduction)}</td>
+      <td style="color:var(--danger);">₹${fmt(c.total_deductions)}</td>
+      <td style="font-weight:800;color:var(--success);">₹${fmt(c.net_salary)}</td>
+      <td>${statusBadge}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-outline btn-sm" onclick="viewPayslip(${emp.id}, ${month}, ${year})">
+            <i data-lucide="file-text" style="width:12px;height:12px;"></i> Slip
+          </button>
+          ${saved && saved.status !== 'paid' ? `
+          <button class="btn btn-primary btn-sm" onclick="markPaid(${saved.id})">
+            <i data-lucide="check" style="width:12px;height:12px;"></i> Paid
+          </button>` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('grossPayroll').textContent = '₹' + fmt(totalGross);
+  document.getElementById('netPayroll').textContent   = '₹' + fmt(totalNet);
+  lucide.createIcons();
+}
+
+// Toggle every currently-visible row checkbox from the header "select all" box.
+function togglePayChkAll(master) {
+  document.querySelectorAll('#payrollBody .payChk').forEach(cb => { cb.checked = master.checked; });
+}
+
+// Employee ids whose row checkbox is checked (optionally filtered by state).
+function checkedPayEmpIds(state) {
+  return [...document.querySelectorAll('#payrollBody .payChk:checked')]
+    .filter(cb => !state || cb.getAttribute('data-state') === state)
+    .map(cb => +cb.getAttribute('data-empid'));
+}
+
+// Flip every CHECKED employee's DRAFT payroll record to 'paid' for the selected month.
+async function markSelectedPaid() {
+  const checked = checkedPayEmpIds();
+  if (!checked.length) { alert('Select one or more employees first (tick the checkboxes).'); return; }
+
+  const month = +document.getElementById('payMonth').value;
+  const year  = +document.getElementById('payYear').value;
+  const today = new Date().toISOString().split('T')[0];
+
+  let payrollForMonth = [];
+  try {
+    const pr = await window.erp.getPayroll({ month, year });
+    payrollForMonth = pr.data || [];
+  } catch(e) { payrollForMonth = []; }
+
+  // Only draft records of the checked employees can be paid.
+  const toPay = payrollForMonth.filter(p =>
+    checked.includes(p.employee_id) && p.status !== 'paid');
+
+  if (!toPay.length) { alert('None of the selected employees have a draft payroll record to mark paid.'); return; }
+  if (!confirm(`Mark ${toPay.length} selected employee(s) as PAID for ${monthName(month)} ${year}?`)) return;
+
+  let paid = 0, failed = 0;
+  for (const rec of toPay) {
+    rec.status = 'paid';
+    rec.payment_date = rec.payment_date || today;
+    try {
+      const res = await window.erp.savePayroll(rec);
+      if (res && res.success === false) { failed++; console.error('savePayroll failed', res.error); }
+      else paid++;
+    } catch(e) { failed++; console.error('savePayroll error', e); }
+  }
+
+  let msg = `${paid} employee(s) marked paid.`;
+  if (failed) msg += `\n⚠️ ${failed} record(s) FAILED — please retry.`;
+  alert(msg);
+  renderPayroll();
+}
+
+// Days actually present in a month from real attendance records (employee_attendance):
+// full present day = 1, a half day = 0.5. Returns null if no attendance was recorded
+// at all for that month, so callers can fall back to an assumption explicitly.
+function attendanceDaysPresent(records) {
+  if (!records || !records.length) return null;
+  return records.reduce((sum, rec) => sum + (rec.present ? (rec.half_day ? 0.5 : 1) : 0), 0);
+}
+
+async function runPayroll() {
+  const month = +document.getElementById('payMonth').value;
+  const year  = +document.getElementById('payYear').value;
+  const mn    = monthName(month);
+  const monthStr = `${year}-${String(month).padStart(2,'0')}`;
+
+  let actives = [];
+  try {
+    const r = await window.erp.getEmployees({ status: 'active' });
+    actives = (r.data || []).filter(e => e.status === 'active');
+  } catch(e) { actives = []; }
+
+  if (!actives.length) { alert('No active employees found.'); return; }
+
+  // If the user ticked any row checkboxes, restrict the run to ONLY those
+  // selected employees. With nothing checked we keep the original behaviour of
+  // processing every active employee that lacks a record for the month.
+  const selectedIds = checkedPayEmpIds();
+  let targets = actives;
+  if (selectedIds.length) {
+    targets = actives.filter(e => selectedIds.includes(e.id));
+    if (!targets.length) { alert('Selected employees are not active.'); return; }
+  }
+
+  if (!confirm(`Run payroll for ${mn} ${year} for ${targets.length} employee(s)?`)) return;
+
+  let existing = [];
+  try {
+    const pr = await window.erp.getPayroll({ month, year });
+    existing = pr.data || [];
+  } catch(e) { existing = []; }
+
+  // Pull real attendance for the whole month once, so payroll reflects who
+  // actually showed up instead of assuming everyone worked a flat 26 days.
+  let attRecords = [];
+  try {
+    const ar = await window.erp.getEmployeeAttendance({ month: monthStr });
+    attRecords = ar.data || [];
+  } catch(e) { attRecords = []; }
+
+  let created = 0, failed = 0, fromAttendance = 0, assumed = 0;
+  for (const emp of targets) {
+    if (existing.find(p => p.employee_id === emp.id)) continue;
+    const dim = daysInMonth(month, year);
+    const realDp = attendanceDaysPresent(attRecords.filter(r => r.employee_id === emp.id));
+    const dp = realDp != null ? realDp : 26;
+    if (realDp != null) fromAttendance++; else assumed++;
+    const c   = calcPayroll(emp, dp, dim, 0, 0);
+    const record = {
+      employee_id:      emp.id,
+      month,
+      year,
+      days_in_month:    dim,
+      days_present:     dp,
+      days_leave:       dim - dp,
+      basic:            c.gross_salary - c.allowances,
+      hra:              +emp.hra || 0,
+      da:               +emp.da  || 0,
+      ta:               +emp.ta  || 0,
+      other_allowance:  +emp.other_allowance || 0,
+      gross_salary:     c.gross_salary,
+      pf_employee:      c.pf_employee,
+      pf_employer:      c.pf_employer,
+      esi_employee:     c.esi_employee,
+      esi_employer:     c.esi_employer,
+      tds_deduction:    c.tds_deduction,
+      professional_tax: c.professional_tax,
+      advance_deduction:0,
+      other_deduction:  0,
+      total_deductions: c.total_deductions,
+      net_salary:       c.net_salary,
+      payment_mode:     'bank_transfer',
+      payment_date:     null,
+      payment_ref:      '',
+      status:           'draft',
+      notes:            ''
+    };
+    try {
+      const r = await window.erp.savePayroll(record);
+      if (r && r.success === false) { failed++; console.error('savePayroll failed', r.error); }
+      else created++;
+    } catch(e) { failed++; console.error('savePayroll error', e); }
+  }
+
+  let msg = `Payroll generated for ${mn} ${year}!\n${created} new record(s) created.`;
+  if (fromAttendance) msg += `\n${fromAttendance} used real attendance data.`;
+  if (assumed) msg += `\n${assumed} had no attendance marked yet — assumed 26 days; mark attendance and adjust the Days column if needed.`;
+  if (failed) msg += `\n⚠️ ${failed} record(s) FAILED — please retry.`;
+  msg += `\nReview and adjust days present for each employee.`;
+  alert(msg);
+  renderPayroll();
+}
+
+async function markPaid(payrollId) {
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    // Load current record, update status
+    const r = await window.erp.getPayroll({});
+    const all = r.data || [];
+    const rec = all.find(p => p.id === payrollId);
+    if (!rec) return;
+    rec.status = 'paid';
+    rec.payment_date = rec.payment_date || today;
+    // The web bridge resolves {success:false} on error instead of throwing, so
+    // check explicitly — otherwise a failed save still looked "paid" on screen.
+    const res = await window.erp.savePayroll(rec);
+    if (res && res.success === false) throw new Error(res.error || 'Server rejected the update.');
+    renderPayroll();
+  } catch(err) {
+    alert('Error marking as paid: ' + (err.message || err));
+  }
+}
+
+// ─── Days/Payroll Modal
+function openDaysModal(empId, payrollId, month, year) {
+  currentDaysEmpId   = empId;
+  currentDaysPayrollId = payrollId;
+  currentDaysMonth   = month;
+  currentDaysYear    = year;
+
+  const emp = employees.find(e => e.id === empId) ||
+              { name: 'Employee', emp_code: '' };
+  document.getElementById('daysEmpName').value = emp.name + ' (' + (emp.emp_code || '') + ')';
+
+  // Try to find saved payroll record in current DOM context
+  // Default values
+  document.getElementById('daysInMonth').value  = daysInMonth(month, year);
+  document.getElementById('daysPresent').value  = 26;
+  document.getElementById('advanceDeduct').value= 0;
+  document.getElementById('otherDeduct').value  = 0;
+  document.getElementById('daysPayMode').value  = 'bank_transfer';
+  document.getElementById('daysPayDate').value  = '';
+  document.getElementById('daysPayRef').value   = '';
+  document.getElementById('daysNotes').value    = '';
+
+  // Load existing data async then populate
+  loadDaysModalData(empId, month, year);
+  document.getElementById('daysModal').classList.add('open');
+}
+
+async function loadDaysModalData(empId, month, year) {
+  try {
+    const r = await window.erp.getPayroll({ month, year });
+    const all = r.data || [];
+    const saved = all.find(p => p.employee_id === empId);
+    if (!saved) {
+      // No payroll record yet for this employee/month — prefill Days Present
+      // from real attendance instead of always assuming 26.
+      try {
+        const monthStr = `${year}-${String(month).padStart(2,'0')}`;
+        const ar = await window.erp.getEmployeeAttendance({ employee_id: empId, month: monthStr });
+        const realDp = attendanceDaysPresent(ar.data || []);
+        if (realDp != null) document.getElementById('daysPresent').value = realDp;
+      } catch(e) { /* keep the 26 default */ }
+    }
+    if (saved) {
+      currentDaysPayrollId = saved.id;
+      document.getElementById('daysInMonth').value  = saved.days_in_month   || daysInMonth(month, year);
+      document.getElementById('daysPresent').value  = saved.days_present    || 26;
+      document.getElementById('advanceDeduct').value= saved.advance_deduction || 0;
+      document.getElementById('otherDeduct').value  = saved.other_deduction  || 0;
+      document.getElementById('daysPayMode').value  = saved.payment_mode    || 'bank_transfer';
+      document.getElementById('daysPayDate').value  = saved.payment_date    || '';
+      document.getElementById('daysPayRef').value   = saved.payment_ref     || '';
+      document.getElementById('daysNotes').value    = saved.notes           || '';
+    }
+  } catch(e) { /* keep defaults */ }
+}
+
+async function confirmDays() {
+  const dim = +document.getElementById('daysInMonth').value || 30;
+  const dp  = +document.getElementById('daysPresent').value || 0;
+  const adv = +document.getElementById('advanceDeduct').value || 0;
+  const oth = +document.getElementById('otherDeduct').value  || 0;
+
+  const emp = employees.find(e => e.id === currentDaysEmpId);
+  if (!emp) { closeModal('daysModal'); return; }
+
+  const c = calcPayroll(emp, dp, dim, adv, oth);
+
+  const record = {
+    employee_id:      emp.id,
+    month:            currentDaysMonth,
+    year:             currentDaysYear,
+    days_in_month:    dim,
+    days_present:     dp,
+    days_leave:       dim - dp,
+    basic:            c.gross_salary - c.allowances,
+    hra:              +emp.hra || 0,
+    da:               +emp.da  || 0,
+    ta:               +emp.ta  || 0,
+    other_allowance:  +emp.other_allowance || 0,
+    gross_salary:     c.gross_salary,
+    pf_employee:      c.pf_employee,
+    pf_employer:      c.pf_employer,
+    esi_employee:     c.esi_employee,
+    esi_employer:     c.esi_employer,
+    tds_deduction:    c.tds_deduction,
+    professional_tax: c.professional_tax,
+    advance_deduction: adv,
+    other_deduction:  oth,
+    total_deductions: c.total_deductions,
+    net_salary:       c.net_salary,
+    payment_mode:     document.getElementById('daysPayMode').value,
+    payment_date:     document.getElementById('daysPayDate').value || null,
+    payment_ref:      document.getElementById('daysPayRef').value,
+    status:           'draft',
+    notes:            document.getElementById('daysNotes').value
+  };
+
+  if (currentDaysPayrollId) record.id = currentDaysPayrollId;
+
+  try {
+    await window.erp.savePayroll(record);
+    closeModal('daysModal');
+    renderPayroll();
+  } catch(err) {
+    alert('Error saving payroll: ' + (err.message || err));
+  }
+}
+
+// ─── ATTENDANCE TAB
+async function renderAttendance() {
+  const month = +document.getElementById('attMonth').value;
+  const year  = +document.getElementById('attYear').value;
+  const dim   = daysInMonth(month, year);
+
+  let permanent = [];
+  try {
+    const r = await window.erp.getEmployees({ status: 'active' });
+    permanent = (r.data || []).filter(e =>
+      e.status === 'active' &&
+      (e.employment_type === 'full-time' || e.employment_type === 'part-time' || e.employment_type === 'contract')
+    );
+  } catch(e) { permanent = []; }
+
+  const container = document.getElementById('attContainer');
+  document.getElementById('attEmpty').style.display = permanent.length ? 'none' : 'block';
+
+  if (!permanent.length) return;
+
+  // Rebuild the grid from real saved attendance for this month (previously
+  // saveAttendance() silently failed on every save — see below — so this grid
+  // always started blank and switching months bled stale in-memory state from
+  // whatever month was open before. Reloading fresh per month fixes both.)
+  const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+  let saved = [];
+  try {
+    const r = await window.erp.getEmployeeAttendance({ month: monthStr });
+    saved = r.data || [];
+  } catch(e) { saved = []; }
+
+  attGrid = {};
+  permanent.forEach(emp => {
+    attGrid[emp.id] = {};
+    for (let d = 1; d <= dim; d++) {
+      attGrid[emp.id][d] = 'P';
+    }
+  });
+  saved.forEach(rec => {
+    const day = +String(rec.attendance_date).slice(8, 10);
+    if (attGrid[rec.employee_id] && day) attGrid[rec.employee_id][day] = rec.present ? 'P' : 'A';
+  });
+
+  const days = Array.from({ length: dim }, (_, i) => i + 1);
+  const tableStyle = 'overflow-x:auto;';
+
+  container.innerHTML = `
+    <div style="${tableStyle}">
+      <table style="min-width:${200 + dim * 36}px;">
+        <thead>
+          <tr>
+            <th style="min-width:180px;">Employee</th>
+            ${days.map(d => `<th style="text-align:center;min-width:32px;">${d}</th>`).join('')}
+            <th style="text-align:center;">Present</th>
+            <th style="text-align:center;">Absent</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${permanent.map(emp => {
+            const row = attGrid[emp.id] || {};
+            let p = 0, a = 0;
+            days.forEach(d => { if (row[d] === 'P') p++; else a++; });
+            return `
+            <tr>
+              <td>
+                <div class="emp-name">${esc(emp.name)}</div>
+                <div class="emp-code">${esc(emp.emp_code)}</div>
+              </td>
+              ${days.map(d => {
+                const isP = row[d] !== 'A';
+                return `<td style="text-align:center;padding:4px;">
+                  <button onclick="toggleAtt(${emp.id},${d},this)" style="
+                    width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:700;
+                    background:${isP ? 'rgba(34,197,94,0.18)' : 'rgba(239,68,68,0.18)'};
+                    color:${isP ? 'var(--success)' : 'var(--danger)'};
+                  ">${isP ? 'P' : 'A'}</button>
+                </td>`;
+              }).join('')}
+              <td style="text-align:center;font-weight:700;color:var(--success);" id="att-p-${emp.id}">${p}</td>
+              <td style="text-align:center;font-weight:700;color:var(--danger);" id="att-a-${emp.id}">${a}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function toggleAtt(empId, day, btn) {
+  if (!attGrid[empId]) attGrid[empId] = {};
+  const nowAbsent = attGrid[empId][day] !== 'A';   // flipping to Absent?
+  attGrid[empId][day] = nowAbsent ? 'A' : 'P';
+  // Repaint THIS button in place — letter + colour — so present/absent is always
+  // visually correct. (Previously this fired an un-awaited async re-render that
+  // raced the count update, so the cell could stay 'P' after marking Absent.)
+  const b = btn || (window.event && window.event.target);
+  if (b) {
+    b.textContent      = nowAbsent ? 'A' : 'P';
+    b.style.background = nowAbsent ? 'rgba(239,68,68,0.18)' : 'rgba(34,197,94,0.18)';
+    b.style.color      = nowAbsent ? 'var(--danger)' : 'var(--success)';
+  }
+  // Recompute and update this employee's Present/Absent totals.
+  const month = +document.getElementById('attMonth').value;
+  const year  = +document.getElementById('attYear').value;
+  const dim   = daysInMonth(month, year);
+  const row   = attGrid[empId];
+  let p = 0, a = 0;
+  for (let d = 1; d <= dim; d++) { if (row[d] === 'A') a++; else p++; }
+  const pEl = document.getElementById('att-p-' + empId);
+  const aEl = document.getElementById('att-a-' + empId);
+  if (pEl) pEl.textContent = p;
+  if (aEl) aEl.textContent = a;
+}
+
+async function saveAttendance() {
+  const month = +document.getElementById('attMonth').value;
+  const year  = +document.getElementById('attYear').value;
+  const dim   = daysInMonth(month, year);
+
+  const records = [];
+  for (const [empIdStr, days] of Object.entries(attGrid)) {
+    const empId = +empIdStr;
+    for (let d = 1; d <= dim; d++) {
+      records.push({
+        employee_id: empId,
+        date:        `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
+        status:      (days[d] || 'P') === 'A' ? 'absent' : 'present'
+      });
+    }
+  }
+  try {
+    const r = await window.erp.bulkSaveEmployeeAttendance(records);
+    if (r && r.success === false) throw new Error(r.error || 'Server rejected the save.');
+    alert(`Attendance saved for ${Object.keys(attGrid).length} employee(s) — ${month}/${year}.`);
+  } catch(e) {
+    alert('Error saving attendance: ' + (e.message || e));
+  }
+}
+
+// ─── PAYSLIPS TAB
+async function renderPayslips() {
+  const filterMonth = document.getElementById('payslipMonth').value;
+  const filterYear  = document.getElementById('payslipYear').value;
+  const search      = (document.getElementById('payslipSearch').value || '').toLowerCase();
+
+  let allPayroll = [];
+  try {
+    const filters = {};
+    if (filterMonth) filters.month = +filterMonth;
+    if (filterYear)  filters.year  = +filterYear;
+    const r = await window.erp.getPayroll(filters);
+    allPayroll = r.data || [];
+  } catch(e) { allPayroll = []; }
+
+  let allEmps = employees;
+  if (!allEmps.length) {
+    try {
+      const r = await window.erp.getEmployees({});
+      allEmps = r.data || [];
+    } catch(e) { allEmps = []; }
+  }
+
+  const rows = allPayroll.map(p => {
+    const emp = allEmps.find(e => e.id === p.employee_id);
+    if (!emp) return null;
+    if (search && !emp.name.toLowerCase().includes(search) && !emp.emp_code.toLowerCase().includes(search)) return null;
+    return { emp, p };
+  }).filter(Boolean);
+
+  allPayslipRows = rows; // cache for search
+
+  document.getElementById('payslipEmpty').style.display = rows.length ? 'none' : 'block';
+  document.getElementById('payslipBody').innerHTML = rows.map(({ emp, p }) => `
+    <tr>
+      <td><div class="emp-name">${esc(emp.name)}</div><div class="emp-code">${esc(emp.emp_code)}</div></td>
+      <td>${monthName(p.month)} ${p.year}</td>
+      <td>${p.days_present || 0}/${p.days_in_month || 30}</td>
+      <td class="salary">₹${fmt(p.gross_salary || 0)}</td>
+      <td class="salary" style="color:var(--danger);">₹${fmt(p.total_deductions || 0)}</td>
+      <td class="salary" style="color:var(--success);">₹${fmt(p.net_salary || 0)}</td>
+      <td><span class="badge badge-${ p.status === 'paid' ? 'active' : p.status === 'processed' ? 'ft' : 'pending' }">${p.status || 'draft'}</span></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="viewPayslip(${emp.id}, ${p.month}, ${p.year})">
+          <i data-lucide="eye" style="width:12px;height:12px;"></i> View
+        </button>
+      </td>
+    </tr>`).join('');
+  lucide.createIcons();
+}
+
+function filterPayslips() { renderPayslips(); }
+
+// ─── View Payslip
+async function viewPayslip(empId, month, year) {
+  let emp = employees.find(e => e.id === empId);
+  if (!emp) {
+    try {
+      const r = await window.erp.getEmployees({});
+      employees = r.data || [];
+      emp = employees.find(e => e.id === empId);
+    } catch(e) {}
+  }
+  if (!emp) return;
+
+  let payroll = null;
+  try {
+    const r = await window.erp.getPayroll({ month, year });
+    payroll = (r.data || []).find(p => p.employee_id === empId);
+  } catch(e) {}
+
+  const dp  = payroll ? payroll.days_present    : 26;
+  const dim = payroll ? payroll.days_in_month   : daysInMonth(month, year);
+  const adv = payroll ? payroll.advance_deduction: 0;
+  const oth = payroll ? payroll.other_deduction  : 0;
+
+  // Use stored payroll values if available, otherwise recalculate
+  let c;
+  if (payroll && payroll.gross_salary) {
+    c = {
+      basic:           payroll.basic || 0,
+      hra:             payroll.hra   || 0,
+      da:              payroll.da    || 0,
+      ta:              payroll.ta    || 0,
+      other_allowance: payroll.other_allowance || 0,
+      allowances:      (payroll.hra||0)+(payroll.da||0)+(payroll.ta||0)+(payroll.other_allowance||0),
+      gross_salary:    payroll.gross_salary,
+      pf_employee:     payroll.pf_employee     || 0,
+      pf_employer:     payroll.pf_employer     || 0,
+      esi_employee:    payroll.esi_employee    || 0,
+      esi_employer:    payroll.esi_employer    || 0,
+      tds_deduction:   payroll.tds_deduction   || 0,
+      professional_tax:payroll.professional_tax|| 0,
+      advance_deduction: adv,
+      other_deduction: oth,
+      total_deductions:payroll.total_deductions|| 0,
+      net_salary:      payroll.net_salary      || 0
+    };
+  } else {
+    c = calcPayroll(emp, dp, dim, adv, oth);
+  }
+
+  let co = { name: 'Your Construction Company', city: 'Guwahati', state: 'Assam', gstin: 'N/A' };
+  try {
+    const cr = await window.erp.getCompany();
+    if (cr.data) co = cr.data;
+  } catch(e) {}
+
+  const mn = monthName(month);
+
+  document.getElementById('payslipContent').innerHTML = `
+    <div class="payslip" id="printablePayslip">
+      <div class="payslip-header">
+        <div>
+          <div class="comp-name">${esc(co.name)}</div>
+          <div class="comp-sub">${esc(co.city || 'Guwahati')}, ${esc(co.state || 'Assam')} | GST: ${esc(co.gstin || 'N/A')}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:16px;font-weight:800;color:#0f172a;">PAYSLIP</div>
+          <div style="font-size:12px;color:#64748b;">${mn} ${year}</div>
+        </div>
+      </div>
+
+      <div class="payslip-grid">
+        <div class="payslip-field"><div class="fl">Employee Name</div><div class="fv">${esc(emp.name)}</div></div>
+        <div class="payslip-field"><div class="fl">Employee Code</div><div class="fv">${esc(emp.emp_code || '—')}</div></div>
+        <div class="payslip-field"><div class="fl">Designation</div><div class="fv">${esc(emp.designation || '—')}</div></div>
+        <div class="payslip-field"><div class="fl">Department</div><div class="fv">${esc(emp.department || '—')}</div></div>
+        <div class="payslip-field"><div class="fl">Days Present</div><div class="fv">${dp} / ${dim}</div></div>
+        <div class="payslip-field"><div class="fl">Bank Account</div><div class="fv">${esc(emp.bank_account || '—')}</div></div>
+        <div class="payslip-field"><div class="fl">PAN</div><div class="fv">${esc(emp.pan || '—')}</div></div>
+        <div class="payslip-field"><div class="fl">IFSC</div><div class="fv">${esc(emp.bank_ifsc || '—')}</div></div>
+        <div class="payslip-field"><div class="fl">UAN</div><div class="fv">${esc(emp.uan || '—')}</div></div>
+        <div class="payslip-field"><div class="fl">ESIC No.</div><div class="fv">${esc(emp.esic_no || '—')}</div></div>
+      </div>
+
+      <table class="payslip-table">
+        <thead>
+          <tr>
+            <th>Earnings</th><th style="text-align:right;">Amount (₹)</th>
+            <th>Deductions</th><th style="text-align:right;">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Basic Salary</td><td style="text-align:right;">${fmt(c.basic)}</td>
+            <td>PF Employee (12%)</td><td style="text-align:right;">${fmt(c.pf_employee)}</td>
+          </tr>
+          <tr>
+            <td>HRA</td><td style="text-align:right;">${fmt(c.hra)}</td>
+            <td>ESI Employee (0.75%)</td><td style="text-align:right;">${fmt(c.esi_employee)}</td>
+          </tr>
+          <tr>
+            <td>DA</td><td style="text-align:right;">${fmt(c.da)}</td>
+            <td>TDS</td><td style="text-align:right;">${fmt(c.tds_deduction)}</td>
+          </tr>
+          <tr>
+            <td>Transport Allow.</td><td style="text-align:right;">${fmt(c.ta)}</td>
+            <td>Professional Tax</td><td style="text-align:right;">${fmt(c.professional_tax)}</td>
+          </tr>
+          <tr>
+            <td>Other Allowance</td><td style="text-align:right;">${fmt(c.other_allowance)}</td>
+            <td>Advance Recovery</td><td style="text-align:right;">${fmt(c.advance_deduction)}</td>
+          </tr>
+          <tr>
+            <td></td><td></td>
+            <td>Other Deductions</td><td style="text-align:right;">${fmt(c.other_deduction)}</td>
+          </tr>
+          <tr class="total-row">
+            <td>GROSS EARNINGS</td><td style="text-align:right;">${fmt(c.gross_salary)}</td>
+            <td>TOTAL DEDUCTIONS</td><td style="text-align:right;">${fmt(c.total_deductions)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="font-size:11px;color:#64748b;margin-bottom:12px;">
+        PF Employer: ₹${fmt(c.pf_employer)} &nbsp;|&nbsp; ESI Employer: ₹${fmt(c.esi_employer)}
+        &nbsp;(employer contributions not deducted from salary)
+      </div>
+
+      <div class="net-box">
+        <div><div class="nl">NET PAY FOR ${mn.toUpperCase()} ${year}</div></div>
+        <div class="nv">₹${fmt(c.net_salary)}</div>
+      </div>
+
+      <div class="payslip-footer">
+        This is a computer-generated payslip and does not require a signature.<br>
+        For queries contact HR department. | ${co.name}
+      </div>
+    </div>`;
+
+  document.getElementById('payslipModal').classList.add('open');
+}
+
+function printPayslip() {
+  const content = document.getElementById('printablePayslip').outerHTML;
+  const win = window.open('', '_blank');
+  win.document.write(`<html><head><title>Payslip</title><style>
+    body{font-family:'Segoe UI',sans-serif;padding:20px;background:#fff;color:#000;}
+    .payslip{max-width:600px;margin:auto;}
+    .payslip-header{display:flex;justify-content:space-between;border-bottom:2px solid #10b981;padding-bottom:16px;margin-bottom:16px;}
+    .comp-name{font-size:20px;font-weight:800;}.comp-sub{font-size:11px;color:#64748b;}
+    .payslip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+    .payslip-field .fl{font-size:10px;color:#64748b;text-transform:uppercase;}
+    .payslip-field .fv{font-size:13px;font-weight:600;}
+    .payslip-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    .payslip-table th{background:#f1f5f9;font-size:11px;padding:8px 12px;text-align:left;}
+    .payslip-table td{font-size:13px;padding:8px 12px;border-bottom:1px solid #f1f5f9;}
+    .total-row td{font-weight:800;background:#fef3c7;}
+    .net-box{background:#0f172a;color:#10b981;border-radius:8px;padding:12px 20px;display:flex;justify-content:space-between;margin-bottom:16px;}
+    .nv{font-size:22px;font-weight:900;}
+    .nl{font-size:12px;opacity:0.7;}
+    .payslip-footer{border-top:1px solid #e2e8f0;padding-top:12px;font-size:11px;color:#94a3b8;text-align:center;}
+  </style></head><body>${content}</body></html>`);
+  win.document.close();
+  win.print();
+}
+
+// ─── ADVANCES TAB
+async function renderAdvances() {
+  try {
+    const r = await window.erp.getAdvances({ party_type: 'employee' });
+    allAdvances = r.data || [];
+  } catch(e) { allAdvances = []; }
+
+  let allEmps = employees;
+  if (!allEmps.length) {
+    try {
+      const r = await window.erp.getEmployees({});
+      allEmps = r.data || [];
+    } catch(e) { allEmps = []; }
+  }
+
+  filterAdvances(allEmps);
+}
+
+function filterAdvances(allEmps) {
+  const empsToUse = allEmps || employees;
+  const search = (document.getElementById('advSearch').value || '').toLowerCase();
+
+  const filtered = allAdvances.filter(adv => {
+    if (!search) return true;
+    const emp = empsToUse.find(e => e.id === adv.party_id);
+    const name = emp ? emp.name.toLowerCase() : '';
+    const code = emp ? (emp.emp_code || '').toLowerCase() : '';
+    return name.includes(search) || code.includes(search);
+  });
+
+  document.getElementById('advEmpty').style.display = filtered.length ? 'none' : 'block';
+  document.getElementById('advBody').innerHTML = filtered.map(adv => {
+    const emp = empsToUse.find(e => e.id === adv.party_id);
+    const empName = emp ? emp.name : 'Unknown';
+    const empCode = emp ? (emp.emp_code || '') : '';
+    const recovered = adv.recovered_amount || 0;
+    const balance   = (adv.amount || 0) - recovered;
+    return `
+    <tr>
+      <td><div class="emp-name">${esc(empName)}</div><div class="emp-code">${esc(empCode)}</div></td>
+      <td>${adv.advance_date || '—'}</td>
+      <td class="salary">₹${fmt(adv.amount || 0)}</td>
+      <td class="salary" style="color:var(--success);">₹${fmt(recovered)}</td>
+      <td class="salary" style="color:${balance > 0 ? 'var(--accent)' : 'var(--success)'};">₹${fmt(balance)}</td>
+      <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(adv.notes || '—')}</td>
+      <td>
+        <div class="action-btns">
+          ${balance > 0 ? `
+          <button class="btn btn-outline btn-sm" onclick="openRecoverModal(${adv.id}, '${jsArg(empName)}', ${balance})">
+            <i data-lucide="arrow-down-circle" style="width:12px;height:12px;"></i> Recover
+          </button>` : '<span style="color:var(--success);font-size:12px;font-weight:600;">Cleared</span>'}
+          <button class="btn btn-danger btn-sm" onclick="deleteAdvance(${adv.id})">
+            <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+async function openAdvModal() {
+  let allEmps = employees;
+  if (!allEmps.length) {
+    try {
+      const r = await window.erp.getEmployees({ status: 'active' });
+      allEmps = r.data || [];
+    } catch(e) { allEmps = []; }
+  }
+
+  const sel = document.getElementById('advEmpId');
+  const actives = allEmps.filter(e => e.status === 'active');
+  sel.innerHTML = '<option value="">Select Employee</option>' +
+    actives.map(e => `<option value="${e.id}">${e.name} (${e.emp_code || ''})</option>`).join('');
+
+  document.getElementById('advDate').value   = new Date().toISOString().split('T')[0];
+  document.getElementById('advAmount').value = '';
+  document.getElementById('advRef').value    = '';
+  document.getElementById('advNotes').value  = '';
+  document.getElementById('advPayMode').value= 'cash';
+  document.getElementById('advModalTitle').textContent = 'Give Advance';
+  document.getElementById('advModal').classList.add('open');
+}
+
+async function saveAdvance() {
+  const sel     = document.getElementById('advEmpId');
+  const partyId = +sel.value;
+  const amount  = +document.getElementById('advAmount').value || 0;
+  const date    = document.getElementById('advDate').value;
+  if (!partyId) { alert('Please select an employee.'); return; }
+  if (!amount || amount <= 0) { alert('Please enter a valid amount.'); return; }
+  if (!date)  { alert('Please enter a date.'); return; }
+
+  // Field names must match the save-advance handler / DB columns exactly:
+  // party_name and advance_date are NOT NULL, so a mismatch silently throws and
+  // nothing is recorded. Resolve the employee name from the dropdown.
+  const partyName = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+  const data = {
+    party_type:   'employee',
+    party_id:     partyId,
+    party_name:   partyName,
+    advance_date: date,
+    amount,
+    payment_mode: document.getElementById('advPayMode').value,
+    purpose:      document.getElementById('advNotes').value || null,
+  };
+
+  try {
+    const res = await window.erp.saveAdvance(data);
+    if (res && res.success === false) throw new Error(res.error || 'Save failed');
+    closeModal('advModal');
+    await renderAdvances();
+  } catch(err) {
+    alert('Error saving advance: ' + (err.message || err));
+  }
+}
+
+function openRecoverModal(advId, empName, balance) {
+  currentRecoverAdvId = advId;
+  document.getElementById('recoverAdvInfo').value = `${empName} — Balance: ₹${fmt(balance)}`;
+  document.getElementById('recoverAmt').value  = balance;
+  document.getElementById('recoverDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('recoverModal').classList.add('open');
+}
+
+async function confirmRecovery() {
+  const amount = +document.getElementById('recoverAmt').value || 0;
+  const date   = document.getElementById('recoverDate').value;
+  if (!amount || amount <= 0) { alert('Enter a valid recovery amount.'); return; }
+  if (!date) { alert('Enter recovery date.'); return; }
+
+  try {
+    // Bridge resolves {success:false} rather than throwing — check it, or a
+    // failed recovery would silently close the modal as if it worked.
+    const res = await window.erp.recoverAdvance({ advanceId: currentRecoverAdvId, amount, date });
+    if (res && res.success === false) throw new Error(res.error || 'Server rejected the recovery.');
+    closeModal('recoverModal');
+    await renderAdvances();
+    alert(`✅ Recovery of ₹${fmt(amount)} recorded.`);
+  } catch(err) {
+    alert('Error recording recovery: ' + (err.message || err));
+  }
+}
+
+async function deleteAdvance(id) {
+  if (!confirm('Delete this advance record?')) return;
+  try {
+    // Use saveAdvance with deleted flag or fall back gracefully
+    // The IPC API doesn't expose deleteAdvance directly; skip silently or use a workaround
+    alert('Advance deletion not supported via API. Please mark as recovered instead.');
+  } catch(err) {
+    alert('Error: ' + (err.message || err));
+  }
+}
+
+// ─── Export Payroll CSV
+async function exportPayroll() {
+  const month = +document.getElementById('payMonth').value;
+  const year  = +document.getElementById('payYear').value;
+  const mn    = monthName(month);
+
+  let actives = [];
+  try {
+    const r = await window.erp.getEmployees({ status: 'active' });
+    actives = (r.data || []).filter(e => e.status === 'active');
+  } catch(e) { actives = []; }
+
+  let payrollForMonth = [];
+  try {
+    const pr = await window.erp.getPayroll({ month, year });
+    payrollForMonth = pr.data || [];
+  } catch(e) { payrollForMonth = []; }
+
+  let csv = 'Emp Code,Name,Designation,Department,Days Present,Days in Month,Basic,HRA,DA,TA,Other Allow,Gross,PF(Emp),PF(Employer),ESI(Emp),ESI(Employer),TDS,Prof Tax,Advance,Other Ded,Total Ded,Net Pay,Status\n';
+
+  actives.forEach(emp => {
+    const saved = payrollForMonth.find(p => p.employee_id === emp.id);
+    const dp  = saved ? saved.days_present   : 26;
+    const dim = saved ? saved.days_in_month  : daysInMonth(month, year);
+    const adv = saved ? saved.advance_deduction : 0;
+    const oth = saved ? saved.other_deduction   : 0;
+    const c   = calcPayroll(emp, dp, dim, adv, oth);
+    const status = saved ? saved.status : 'pending';
+    csv += `${emp.emp_code},"${emp.name}","${emp.designation||''}","${emp.department||''}",${dp},${dim},${c.gross_salary - c.allowances},${c.hra},${c.da},${c.ta},${c.other_allowance},${c.gross_salary},${c.pf_employee},${c.pf_employer},${c.esi_employee},${c.esi_employer},${c.tds_deduction},${c.professional_tax},${adv},${oth},${c.total_deductions},${c.net_salary},${status}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Payroll_${mn}_${year}.csv`;
+  a.click();
+}
+
+// ─── Init
+async function init() {
+  await renderEmployees();
+}
+// Live auto-refresh from the app shell — re-render whichever tab is open.
+window.refreshPage = function(){
+  var a = document.querySelector('.tab.active');
+  var m = a && (a.getAttribute('onclick') || '').match(/switchTab\('([^']+)'/);
+  var t = m ? m[1] : 'employees';
+  if (t === 'employees') renderEmployees(); else switchTab(t);
+};
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+// Shows a visible error instead of a dead page if the bridge never appears.
+(function boot(tries) {
+  if (window.erp) { init(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

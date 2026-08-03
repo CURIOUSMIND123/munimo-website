@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>GST & TDS</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{--bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;--border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;--accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;--info:#3b82f6;--purple:#a855f7;--radius:12px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+.tabs{display:flex;gap:4px;padding:18px 24px 0;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;}
+.tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.period-bar{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.period-bar label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;}
+.period-bar input,.period-bar select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text);outline:none;}
+.period-bar input:focus,.period-bar select:focus{border-color:var(--accent);}
+.btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.tc{padding:0 24px 24px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:13px;color:var(--muted);padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.03);}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;}
+.cr{color:var(--success);}
+.dr{color:var(--danger);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+/* KPI SUMMARY CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 24px;}
+.kpi{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.kpi-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px;}
+.kpi-val{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.kpi-sub{font-size:11px;color:var(--faint);margin-top:3px;}
+/* GSTR-3B CARDS */
+.section-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 24px;}
+.g3b-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.g3b-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.g3b-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:var(--muted);}
+.g3b-row.total{font-weight:800;font-size:14px;color:var(--text);border-top:1px solid var(--border);padding-top:8px;margin-top:4px;}
+.net-box{padding:16px 24px;}
+.net-card{background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(217,119,6,0.1));border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:20px;display:flex;justify-content:space-between;align-items:center;}
+.net-lbl{font-size:13px;color:var(--muted);}
+.net-val{font-size:28px;font-weight:900;color:var(--accent);}
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px 24px;}
+.cal-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.cal-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.cal-due{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.cal-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.urgent{background:rgba(239,68,68,0.12);color:var(--danger);}
+.soon{background:rgba(16,185,129,0.12);color:var(--accent);}
+.ok{background:rgba(34,197,94,0.12);color:var(--success);}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;}
+.empty{text-align:center;padding:40px;color:var(--faint);font-size:13px;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('gstr1',this)">📋 GSTR-1</div>
+  <div class="tab" onclick="switchTab('gstr3b',this)">📊 GSTR-3B Summary</div>
+  <div class="tab" onclick="switchTab('tds',this)">💰 TDS Summary</div>
+  <div class="tab" onclick="switchTab('challans',this)">🧾 TDS Challans</div>
+  <div class="tab" onclick="switchTab('itc',this)">🔄 ITC Tracker</div>
+  <div class="tab" onclick="switchTab('gstr2b',this)">✅ 2B Reconciliation</div>
+  <div class="tab" onclick="switchTab('calendar',this)">📅 Filing Calendar</div>
+</div>
+
+<div class="period-bar">
+  <label>From</label><input type="date" id="fromDate">
+  <label>To</label><input type="date" id="toDate">
+  <button class="btn btn-primary btn-sm" onclick="loadAll()">Apply</button>
+  <button class="btn btn-outline btn-sm" onclick="setThisMonth()">This Month</button>
+  <button class="btn btn-outline btn-sm" onclick="setThisQuarter()">This Quarter</button>
+  <button class="btn btn-outline btn-sm" onclick="setThisYear()">This FY</button>
+  <span style="flex:1;"></span>
+  <button class="btn btn-outline btn-sm" onclick="exportTally('sales')" title="Download sales vouchers as Tally-importable XML"><i data-lucide="download" style="width:13px;height:13px;"></i> Sales → Tally</button>
+  <button class="btn btn-outline btn-sm" onclick="exportTally('purchase')" title="Download purchase vouchers as Tally-importable XML"><i data-lucide="download" style="width:13px;height:13px;"></i> Purchases → Tally</button>
+</div>
+
+<!-- GSTR-1 -->
+<div class="tab-content active" id="tab-gstr1">
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">Total Invoices</div><div class="kpi-val cr" id="g1Count">0</div><div class="kpi-sub">B2B + B2C</div></div>
+    <div class="kpi"><div class="kpi-lbl">Taxable Value</div><div class="kpi-val" id="g1Tax">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Total GST</div><div class="kpi-val" style="color:var(--accent);" id="g1Gst">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Invoice Value</div><div class="kpi-val cr" id="g1Total">₹0</div></div>
+  </div>
+  <div class="toolbar">
+    <div style="font-size:13px;color:var(--muted);">B2B Outward Supplies</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary btn-sm" onclick="exportGSTR1JSON()" title="Generates the JSON file you upload directly on gst.gov.in (Returns → GSTR-1 → Prepare Offline)"><i data-lucide="upload" style="width:13px;height:13px;"></i> GSTN Portal JSON</button>
+      <button class="btn btn-outline btn-sm" onclick="exportGSTR1CSV()"><i data-lucide="download" style="width:13px;height:13px;"></i> Export CSV</button>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Invoice No</th><th>Invoice Date</th><th>Client Name</th><th>GSTIN</th>
+      <th>Supply Type</th><th>Taxable Value</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total GST</th><th>Invoice Value</th>
+    </tr></thead>
+    <tbody id="gstr1Body"></tbody></table>
+    <div class="empty" id="gstr1Empty" style="display:none;">No invoices found for selected period.</div>
+  </div>
+</div>
+
+<!-- GSTR-3B -->
+<div class="tab-content" id="tab-gstr3b">
+  <div class="section-grid">
+    <div class="g3b-card">
+      <div class="g3b-title">3.1 — Outward Taxable Supplies</div>
+      <div class="g3b-row"><span>Taxable Value</span><span class="amount" id="g3bOutTax">₹0</span></div>
+      <div class="g3b-row"><span>CGST</span><span class="amount cr" id="g3bOutCgst">₹0</span></div>
+      <div class="g3b-row"><span>SGST</span><span class="amount cr" id="g3bOutSgst">₹0</span></div>
+      <div class="g3b-row"><span>IGST</span><span class="amount cr" id="g3bOutIgst">₹0</span></div>
+      <div class="g3b-row total"><span>Total Tax (Outward)</span><span class="amount cr" id="g3bOutTotal">₹0</span></div>
+    </div>
+    <div class="g3b-card">
+      <div class="g3b-title">3.1(d) — Inward Supplies (Reverse Charge)</div>
+      <div class="g3b-row"><span>Taxable Value</span><span class="amount" id="g3bRcmTax">₹0</span></div>
+      <div class="g3b-row"><span>CGST (self-assessed)</span><span class="amount cr" id="g3bRcmCgst">₹0</span></div>
+      <div class="g3b-row"><span>SGST (self-assessed)</span><span class="amount cr" id="g3bRcmSgst">₹0</span></div>
+      <div class="g3b-row"><span>IGST (self-assessed)</span><span class="amount cr" id="g3bRcmIgst">₹0</span></div>
+      <div class="g3b-row total"><span>RCM Tax Payable</span><span class="amount cr" id="g3bRcmTotal">₹0</span></div>
+    </div>
+    <div class="g3b-card">
+      <div class="g3b-title">4 — ITC Available (Input Tax Credit)</div>
+      <div class="g3b-row"><span>Taxable Value (Purchases)</span><span class="amount" id="g3bItcTax">₹0</span></div>
+      <div class="g3b-row"><span>CGST Credit</span><span class="amount cr" id="g3bItcCgst">₹0</span></div>
+      <div class="g3b-row"><span>SGST Credit</span><span class="amount cr" id="g3bItcSgst">₹0</span></div>
+      <div class="g3b-row"><span>IGST Credit</span><span class="amount cr" id="g3bItcIgst">₹0</span></div>
+      <div class="g3b-row total"><span>Total ITC Available</span><span class="amount cr" id="g3bItcTotal">₹0</span></div>
+    </div>
+  </div>
+  <div class="net-box">
+    <div class="net-card">
+      <div>
+        <div class="net-lbl">Net GST Payable (Outward Tax - ITC)</div>
+        <div style="font-size:12px;color:var(--faint);margin-top:4px;">TDS Deducted: <span id="g3bTds">₹0</span></div>
+      </div>
+      <div class="net-val" id="g3bNet">₹0</div>
+    </div>
+  </div>
+</div>
+
+<!-- TDS -->
+<div class="tab-content" id="tab-tds">
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">TDS Deducted (Sales)</div><div class="kpi-val dr" id="tdsSales">₹0</div><div class="kpi-sub">Section 194C / others</div></div>
+    <div class="kpi"><div class="kpi-lbl">Invoices with TDS</div><div class="kpi-val" id="tdsCount">0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Avg TDS Rate</div><div class="kpi-val" id="tdsAvgRate">0%</div></div>
+    <div class="kpi"><div class="kpi-lbl">Subcontractor TDS (194C)</div><div class="kpi-val dr" id="tdsSub">₹0</div></div>
+  </div>
+  <div class="toolbar">
+    <div style="font-size:13px;color:var(--muted);">TDS Deductions from Invoices</div>
+    <button class="btn btn-outline btn-sm" onclick="exportTDSCSV()"><i data-lucide="download" style="width:13px;height:13px;"></i> Export CSV</button>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Invoice No</th><th>Invoice Date</th><th>Client Name</th><th>Client GSTIN</th><th>Invoice Amount</th><th>TDS Rate %</th><th>TDS Amount</th>
+    </tr></thead>
+    <tbody id="tdsBody"></tbody></table>
+    <div class="empty" id="tdsEmpty" style="display:none;">No TDS deductions in selected period.</div>
+  </div>
+</div>
+
+<!-- TDS Challans -->
+<div class="tab-content" id="tab-challans">
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">TDS Liability (FY)</div><div class="kpi-val dr" id="chLiability">₹0</div><div class="kpi-sub">From invoices + RA bills</div></div>
+    <div class="kpi"><div class="kpi-lbl">Deposited via Challans</div><div class="kpi-val cr" id="chDeposited">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Balance Payable</div><div class="kpi-val" style="color:var(--accent);" id="chBalance">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Challans Recorded</div><div class="kpi-val" id="chCount">0</div></div>
+  </div>
+  <div class="toolbar">
+    <div style="font-size:13px;color:var(--muted);">TDS Challan Deposit Register (Form 281)</div>
+    <div style="display:flex;gap:8px;">
+      <select id="chFY" onchange="loadChallans()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text);">
+        <option value="2026-27" selected>FY 2026-27</option>
+        <option value="2025-26">FY 2025-26</option>
+        <option value="2024-25">FY 2024-25</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="openChallanModal()"><i data-lucide="plus" style="width:13px;height:13px;"></i> Record Challan</button>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Quarter</th><th>Section</th><th>Challan No (CIN)</th><th>BSR Code</th><th>Deposit Date</th><th>Amount</th><th>Interest</th><th>Status</th><th></th>
+    </tr></thead>
+    <tbody id="challanBody"></tbody></table>
+    <div class="empty" id="challanEmpty" style="display:none;">No challans recorded for this financial year. Click "Record Challan" after depositing TDS via Form 281 on the income tax portal.</div>
+  </div>
+</div>
+
+<!-- Challan Modal -->
+<div id="challanModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:480px;max-width:92vw;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px;" id="challanModalTitle">Record TDS Challan</div>
+    <input type="hidden" id="chId">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div><label style="font-size:11px;color:var(--muted);font-weight:600;">QUARTER *</label>
+        <select id="chQuarter" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;">
+          <option value="Q1">Q1 (Apr–Jun)</option><option value="Q2">Q2 (Jul–Sep)</option>
+          <option value="Q3">Q3 (Oct–Dec)</option><option value="Q4">Q4 (Jan–Mar)</option>
+        </select></div>
+      <div><label style="font-size:11px;color:var(--muted);font-weight:600;">SECTION</label>
+        <select id="chSection" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;">
+          <option value="194C">194C — Contractors</option><option value="194J">194J — Professional</option>
+          <option value="194I">194I — Rent</option><option value="192">192 — Salary</option><option value="194Q">194Q — Purchase of goods</option>
+        </select></div>
+      <div><label style="font-size:11px;color:var(--muted);font-weight:600;">CHALLAN NO (CIN)</label>
+        <input id="chNo" placeholder="e.g. 0510001234567890" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);font-weight:600;">BSR CODE</label>
+        <input id="chBsr" placeholder="7-digit bank BSR" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);font-weight:600;">DEPOSIT DATE *</label>
+        <input type="date" id="chDate" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);font-weight:600;">AMOUNT (₹) *</label>
+        <input type="number" id="chAmount" min="0" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);font-weight:600;">INTEREST (₹)</label>
+        <input type="number" id="chInterest" min="0" value="0" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;"></div>
+      <div><label style="font-size:11px;color:var(--muted);font-weight:600;">NOTES</label>
+        <input id="chNotes" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);margin-top:4px;"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+      <button class="btn btn-outline" onclick="closeChallanModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveChallan()">Save Challan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ITC Tracker -->
+<div class="tab-content" id="tab-itc">
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-lbl">Total Bills (ITC Eligible)</div><div class="kpi-val" id="itcCount">0</div></div>
+    <div class="kpi"><div class="kpi-lbl">Total ITC Available</div><div class="kpi-val cr" id="itcTotal">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">CGST + SGST</div><div class="kpi-val" id="itcCgstSgst">₹0</div></div>
+    <div class="kpi"><div class="kpi-lbl">IGST</div><div class="kpi-val" id="itcIgst">₹0</div></div>
+  </div>
+  <div class="toolbar">
+    <div style="font-size:13px;color:var(--muted);">Vendor Bills with ITC</div>
+    <button class="btn btn-outline btn-sm" onclick="exportITCCSV()"><i data-lucide="download" style="width:13px;height:13px;"></i> Export CSV</button>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Bill No</th><th>Bill Date</th><th>Vendor Name</th><th>GSTIN</th><th>Taxable</th><th>CGST</th><th>SGST</th><th>IGST</th><th>Total ITC</th><th>Status</th>
+    </tr></thead>
+    <tbody id="itcBody"></tbody></table>
+    <div class="empty" id="itcEmpty" style="display:none;">No ITC eligible bills in period.</div>
+  </div>
+</div>
+
+<!-- GSTR-2B Reconciliation -->
+<div class="tab-content" id="tab-gstr2b">
+  <div class="toolbar" style="flex-wrap:wrap;gap:10px;align-items:flex-end;">
+    <div>
+      <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:3px;">Return Period</label>
+      <input type="month" id="g2bPeriod" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:13px;">
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="loadGstr2b()"><i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> Reconcile</button>
+    <input type="file" id="g2bFile" accept=".json,application/json" style="display:none;" onchange="importGstr2bFile(this)">
+    <button class="btn btn-outline btn-sm" onclick="document.getElementById('g2bFile').click()"><i data-lucide="upload" style="width:13px;height:13px;"></i> Import GSTR-2B (JSON)</button>
+    <div id="g2bPeriodsNote" style="font-size:11px;color:var(--muted);margin-left:auto;"></div>
+  </div>
+
+  <div id="g2bEmpty" class="empty" style="display:block;">
+    Download your <strong>GSTR-2B JSON</strong> from the GST portal (Returns → GSTR-2B → Download JSON),
+    pick the return period above, and click <strong>Import GSTR-2B</strong>. The bills already entered in
+    Vendor Bills for that month are then matched against it so you can see exactly which ITC is safe to claim.
+  </div>
+
+  <div id="g2bResult" style="display:none;">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-lbl">Matched (ITC safe)</div><div class="kpi-val cr" id="g2bMatched">0</div><div style="font-size:11px;color:var(--muted);" id="g2bMatchedAmt">₹0</div></div>
+      <div class="kpi"><div class="kpi-lbl">Tax Mismatch</div><div class="kpi-val" id="g2bMismatch" style="color:var(--warn,#d97706);">0</div></div>
+      <div class="kpi"><div class="kpi-lbl">In Books, not in 2B</div><div class="kpi-val" id="g2bBooksOnly" style="color:var(--danger);">0</div><div style="font-size:11px;color:var(--muted);" id="g2bBooksOnlyAmt">ITC at risk ₹0</div></div>
+      <div class="kpi"><div class="kpi-lbl">In 2B, not in Books</div><div class="kpi-val" id="g2b2bOnly" style="color:var(--info);">0</div><div style="font-size:11px;color:var(--muted);" id="g2b2bOnlyAmt">₹0</div></div>
+    </div>
+
+    <div class="toolbar"><div style="font-size:13px;color:var(--danger);font-weight:600;">⚠ In your books but NOT in GSTR-2B — supplier has not filed; claiming this ITC is risky</div></div>
+    <div class="tc"><table><thead><tr><th>Bill No</th><th>Date</th><th>Vendor</th><th>GSTIN</th><th>Taxable</th><th>Tax (ITC)</th></tr></thead><tbody id="g2bBooksOnlyBody"></tbody></table><div class="empty" id="g2bBooksOnlyEmpty" style="display:none;">Nothing — every booked bill is reflected in GSTR-2B. 👍</div></div>
+
+    <div class="toolbar"><div style="font-size:13px;color:var(--warn,#d97706);font-weight:600;">⚠ Tax amount differs between your books and GSTR-2B</div></div>
+    <div class="tc"><table><thead><tr><th>Bill / Inv No</th><th>Vendor</th><th>GSTIN</th><th>Tax in Books</th><th>Tax in 2B</th><th>Difference</th></tr></thead><tbody id="g2bMismatchBody"></tbody></table><div class="empty" id="g2bMismatchEmpty" style="display:none;">No mismatches.</div></div>
+
+    <div class="toolbar"><div style="font-size:13px;color:var(--info);font-weight:600;">In GSTR-2B but NOT in your books — you may be missing a purchase bill (and its ITC)</div></div>
+    <div class="tc"><table><thead><tr><th>Invoice No</th><th>Date</th><th>Supplier</th><th>GSTIN</th><th>Taxable</th><th>Tax (ITC)</th></tr></thead><tbody id="g2b2bOnlyBody"></tbody></table><div class="empty" id="g2b2bOnlyEmpty" style="display:none;">Nothing — every 2B invoice is recorded in your books. 👍</div></div>
+
+    <div class="toolbar"><div style="font-size:13px;color:var(--success,#16a34a);font-weight:600;">✅ Matched — safe to claim</div></div>
+    <div class="tc"><table><thead><tr><th>Bill / Inv No</th><th>Vendor</th><th>GSTIN</th><th>Taxable</th><th>Tax (ITC)</th></tr></thead><tbody id="g2bMatchedBody"></tbody></table><div class="empty" id="g2bMatchedEmpty" style="display:none;">No matched invoices yet.</div></div>
+  </div>
+</div>
+
+<!-- Filing Calendar -->
+<div class="tab-content" id="tab-calendar">
+  <div style="padding:16px 24px 8px;font-size:13px;color:var(--muted);">GST & TDS filing deadlines for <strong style="color:var(--text);" id="calMonth"></strong></div>
+  <div class="cal-grid" id="calGrid"></div>
+</div>
+
+<script>
+lucide.createIcons();
+const fmt = n => '₹' + Math.round(n||0).toLocaleString('en-IN');
+const pct = n => (n||0).toFixed(1) + '%';
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+let gstr1Data=[], tdsData=[], itcData=[], gstr3bData={};
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='calendar') renderCalendar();
+  if(name==='challans') loadChallans();
+  if(name==='gstr2b') initGstr2b();
+}
+
+// ─── Tally XML export ──────────────────────────────────────────────────────
+async function exportTally(type){
+  const from=document.getElementById('fromDate').value;
+  const to=document.getElementById('toDate').value;
+  if(!from||!to){ alert('Pick a From and To date first.'); return; }
+  const r=await window.erp.exportTally({type, from_date:from, to_date:to});
+  if(!r.success){ alert(r.error||'Export failed.'); return; }
+  if(!r.data.count){ alert('No '+type+' vouchers in this period to export.'); return; }
+  const blob=new Blob([r.data.xml],{type:'application/xml'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='Tally_'+type+'_'+from+'_to_'+to+'.xml';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+// ─── GSTR-2B reconciliation ────────────────────────────────────────────────
+let g2bInited=false;
+async function initGstr2b(){
+  const pEl=document.getElementById('g2bPeriod');
+  if(!pEl.value){
+    const from=document.getElementById('fromDate').value;
+    pEl.value=(from||new Date().toISOString().slice(0,10)).slice(0,7);
+  }
+  await refreshGstr2bPeriods();
+  if(!g2bInited){ g2bInited=true; loadGstr2b(); }
+}
+async function refreshGstr2bPeriods(){
+  const r=await window.erp.getGstr2bPeriods();
+  const note=document.getElementById('g2bPeriodsNote');
+  if(r.success && r.data.length){
+    note.textContent='Imported: '+r.data.map(p=>p.period+' ('+p.entries+')').join(', ');
+  } else { note.textContent='No GSTR-2B imported yet.'; }
+}
+async function importGstr2bFile(input){
+  const file=input.files&&input.files[0];
+  input.value='';
+  if(!file) return;
+  const period=document.getElementById('g2bPeriod').value;
+  if(!period){ alert('Pick the return period first.'); return; }
+  let text;
+  try{ text=await file.text(); }catch(e){ alert('Could not read the file.'); return; }
+  const r=await window.erp.importGstr2b({period, json:text, filename:file.name});
+  if(r.success){
+    alert('Imported '+r.data.count+' invoices from GSTR-2B for '+r.data.period+'.');
+    await refreshGstr2bPeriods();
+    loadGstr2b();
+  } else {
+    alert(r.error||'Import failed.');
+  }
+}
+async function loadGstr2b(){
+  const period=document.getElementById('g2bPeriod').value;
+  if(!period) return;
+  const r=await window.erp.getGstr2bReconciliation({period});
+  if(!r.success){ alert(r.error||'Could not reconcile.'); return; }
+  const d=r.data, s=d.summary;
+  const hasData=s.entries_2b>0 || s.bills_in_books>0;
+  document.getElementById('g2bEmpty').style.display=hasData?'none':'block';
+  document.getElementById('g2bResult').style.display=hasData?'block':'none';
+  if(!hasData) return;
+
+  document.getElementById('g2bMatched').textContent=s.matched;
+  document.getElementById('g2bMatchedAmt').textContent=fmt(s.itc_matched)+' ITC';
+  document.getElementById('g2bMismatch').textContent=s.mismatch;
+  document.getElementById('g2bBooksOnly').textContent=s.in_books_only;
+  document.getElementById('g2bBooksOnlyAmt').textContent='ITC at risk '+fmt(s.itc_at_risk);
+  document.getElementById('g2b2bOnly').textContent=s.in_2b_only;
+  document.getElementById('g2b2bOnlyAmt').textContent=fmt(s.itc_in_2b_only)+' ITC';
+
+  const fill=(bodyId,emptyId,rows,render)=>{
+    const tb=document.getElementById(bodyId), em=document.getElementById(emptyId);
+    if(!rows.length){ tb.innerHTML=''; em.style.display='block'; return; }
+    em.style.display='none'; tb.innerHTML=rows.map(render).join('');
+  };
+  fill('g2bBooksOnlyBody','g2bBooksOnlyEmpty',d.inBooksOnly,b=>`<tr>
+    <td style="font-weight:600;color:var(--text);">${esc(b.bill_no||'—')}</td><td>${b.bill_date||'—'}</td>
+    <td>${esc(b.vendor_name||'—')}</td><td style="font-size:11px;">${esc(b.vendor_gstin||'—')}</td>
+    <td class="amount">${fmt(b.subtotal)}</td><td class="amount">${fmt(b.total_gst)}</td></tr>`);
+  fill('g2bMismatchBody','g2bMismatchEmpty',d.mismatch,r=>`<tr>
+    <td style="font-weight:600;color:var(--text);">${esc(r.bill.bill_no||r.entry.invoice_no)}</td>
+    <td>${esc(r.bill.vendor_name||r.entry.supplier_name||'—')}</td><td style="font-size:11px;">${esc(r.entry.supplier_gstin||'—')}</td>
+    <td class="amount">${fmt(r.book_tax)}</td><td class="amount">${fmt(r.gstr2b_tax)}</td>
+    <td class="amount" style="color:var(--danger);">${r.tax_diff>0?'+':''}${fmt(r.tax_diff)}</td></tr>`);
+  fill('g2b2bOnlyBody','g2b2bOnlyEmpty',d.in2bOnly,e=>`<tr>
+    <td style="font-weight:600;color:var(--text);">${esc(e.invoice_no)}</td><td>${e.invoice_date||'—'}</td>
+    <td>${esc(e.supplier_name||'—')}</td><td style="font-size:11px;">${esc(e.supplier_gstin||'—')}</td>
+    <td class="amount">${fmt(e.taxable_value)}</td><td class="amount">${fmt(e.total_tax)}</td></tr>`);
+  fill('g2bMatchedBody','g2bMatchedEmpty',d.matched,r=>`<tr>
+    <td style="font-weight:600;color:var(--text);">${esc(r.bill.bill_no||r.entry.invoice_no)}</td>
+    <td>${esc(r.bill.vendor_name||r.entry.supplier_name||'—')}</td><td style="font-size:11px;">${esc(r.entry.supplier_gstin||'—')}</td>
+    <td class="amount">${fmt(r.bill.subtotal)}</td><td class="amount cr">${fmt(r.gstr2b_tax)}</td></tr>`);
+}
+
+function setThisMonth() {
+  const now = new Date();
+  document.getElementById('fromDate').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  document.getElementById('toDate').value   = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];
+  loadAll();
+}
+function setThisQuarter() {
+  const now = new Date(); const m = now.getMonth();
+  const qStart = Math.floor(m/3)*3;
+  document.getElementById('fromDate').value = new Date(now.getFullYear(), qStart, 1).toISOString().split('T')[0];
+  document.getElementById('toDate').value   = new Date(now.getFullYear(), qStart+3, 0).toISOString().split('T')[0];
+  loadAll();
+}
+function setThisYear() {
+  const now = new Date(); const y = now.getFullYear();
+  const fyStart = now.getMonth() >= 3 ? y : y-1;
+  document.getElementById('fromDate').value = fyStart + '-04-01';
+  document.getElementById('toDate').value   = (fyStart+1) + '-03-31';
+  loadAll();
+}
+
+async function loadAll() {
+  const from = document.getElementById('fromDate').value;
+  const to   = document.getElementById('toDate').value;
+  if(!from || !to) return;
+  const filters = { from_date: from, to_date: to };
+
+  const [r1, r3b, rtds] = await Promise.all([
+    window.erp.getGSTR1(filters),
+    window.erp.getGSTR3B(filters),
+    window.erp.getTDSReport(filters)
+  ]);
+
+  if(r1.success) { gstr1Data = r1.data || []; renderGSTR1(); }
+  if(r3b.success){ gstr3bData = r3b.data || {}; renderGSTR3B(); }
+  if(rtds.success){ tdsData = rtds.data || []; renderTDS(); }
+
+  // Load ITC (bills in period)
+  const re = await window.erp.getExpenses({ from_date: from, to_date: to });
+  if(re.success) { itcData = (re.data||[]).filter(b => b.itc_eligible && b.status !== 'cancelled'); renderITC(); }
+}
+
+function renderGSTR1() {
+  const tbody = document.getElementById('gstr1Body');
+  const empty = document.getElementById('gstr1Empty');
+  if(!gstr1Data.length){ tbody.innerHTML=''; empty.style.display='block'; document.getElementById('g1Count').textContent='0'; return; }
+  empty.style.display='none';
+  let totTax=0,totCgst=0,totSgst=0,totIgst=0,totGst=0,totAmt=0;
+  tbody.innerHTML = gstr1Data.map(inv => {
+    totTax+=inv.subtotal||0; totCgst+=inv.cgst_amount||0; totSgst+=inv.sgst_amount||0;
+    totIgst+=inv.igst_amount||0; totGst+=inv.total_gst||0; totAmt+=inv.total_amount||0;
+    return `<tr>
+      <td style="color:var(--text);font-weight:600;">${esc(inv.invoice_no)}</td>
+      <td>${inv.invoice_date}</td>
+      <td>${esc(inv.client_name)}</td>
+      <td style="font-size:11px;">${esc(inv.client_gstin||'—')}</td>
+      <td><span style="font-size:11px;background:${inv.supply_type==='intra'?'rgba(59,130,246,0.12)':'rgba(168,85,247,0.12)'};color:${inv.supply_type==='intra'?'var(--info)':'var(--purple)'};padding:2px 7px;border-radius:10px;">${esc(inv.supply_type||'intra')}</span></td>
+      <td class="amount">${fmt(inv.subtotal)}</td>
+      <td class="amount cr">${fmt(inv.cgst_amount)}</td>
+      <td class="amount cr">${fmt(inv.sgst_amount)}</td>
+      <td class="amount cr">${fmt(inv.igst_amount)}</td>
+      <td class="amount" style="color:var(--accent);">${fmt(inv.total_gst)}</td>
+      <td class="amount cr">${fmt(inv.total_amount)}</td>
+    </tr>`;
+  }).join('');
+  // Totals row
+  tbody.innerHTML += `<tr style="background:rgba(16,185,129,0.04);font-weight:700;">
+    <td colspan="5" style="color:var(--accent);">TOTAL</td>
+    <td class="amount">${fmt(totTax)}</td>
+    <td class="amount cr">${fmt(totCgst)}</td>
+    <td class="amount cr">${fmt(totSgst)}</td>
+    <td class="amount cr">${fmt(totIgst)}</td>
+    <td class="amount" style="color:var(--accent);">${fmt(totGst)}</td>
+    <td class="amount cr">${fmt(totAmt)}</td>
+  </tr>`;
+  document.getElementById('g1Count').textContent = gstr1Data.length;
+  document.getElementById('g1Tax').textContent   = fmt(totTax);
+  document.getElementById('g1Gst').textContent   = fmt(totGst);
+  document.getElementById('g1Total').textContent = fmt(totAmt);
+}
+
+function renderGSTR3B() {
+  const d = gstr3bData;
+  const out = d.outward || {};
+  const rcm = d.rcm || {};
+  const itc = d.itc || {};
+  document.getElementById('g3bOutTax').textContent  = fmt(out.taxable);
+  document.getElementById('g3bOutCgst').textContent = fmt(out.cgst);
+  document.getElementById('g3bOutSgst').textContent = fmt(out.sgst);
+  document.getElementById('g3bOutIgst').textContent = fmt(out.igst);
+  const outTotal = (out.cgst||0)+(out.sgst||0)+(out.igst||0);
+  document.getElementById('g3bOutTotal').textContent = fmt(outTotal);
+  document.getElementById('g3bRcmTax').textContent  = fmt(rcm.taxable);
+  document.getElementById('g3bRcmCgst').textContent = fmt(rcm.cgst);
+  document.getElementById('g3bRcmSgst').textContent = fmt(rcm.sgst);
+  document.getElementById('g3bRcmIgst').textContent = fmt(rcm.igst);
+  const rcmTotal = (rcm.cgst||0)+(rcm.sgst||0)+(rcm.igst||0);
+  document.getElementById('g3bRcmTotal').textContent = fmt(rcmTotal);
+  document.getElementById('g3bItcTax').textContent  = fmt(itc.taxable);
+  document.getElementById('g3bItcCgst').textContent = fmt(itc.cgst);
+  document.getElementById('g3bItcSgst').textContent = fmt(itc.sgst);
+  document.getElementById('g3bItcIgst').textContent = fmt(itc.igst);
+  const itcTotal = (itc.cgst||0)+(itc.sgst||0)+(itc.igst||0);
+  document.getElementById('g3bItcTotal').textContent = fmt(itcTotal);
+  // Net cash GST = (forward output + RCM self-liability) − ITC. Prefer the
+  // backend's authoritative figure; fall back to a local compute if absent.
+  const net = d.tax_payable ? Math.max(0, d.tax_payable.total || 0)
+                            : Math.max(0, outTotal + rcmTotal - itcTotal);
+  document.getElementById('g3bNet').textContent = fmt(net);
+  document.getElementById('g3bTds').textContent = fmt(d.tds_deducted);
+}
+
+function renderTDS() {
+  const tbody = document.getElementById('tdsBody');
+  const empty = document.getElementById('tdsEmpty');
+  if(!tdsData.length){ tbody.innerHTML=''; empty.style.display='block'; document.getElementById('tdsSales').textContent='₹0'; document.getElementById('tdsCount').textContent='0'; return; }
+  empty.style.display='none';
+  let total=0, rates=[];
+  tbody.innerHTML = tdsData.map(t => {
+    total += t.tds_amount||0;
+    rates.push(t.tds_rate||0);
+    return `<tr>
+      <td style="color:var(--text);font-weight:600;">${esc(t.invoice_no)}</td>
+      <td>${t.invoice_date}</td>
+      <td>${esc(t.client_name)}</td>
+      <td style="font-size:11px;">${esc(t.client_gstin||'—')}</td>
+      <td class="amount">${fmt(t.total_amount||t.subtotal)}</td>
+      <td>${t.tds_rate}%</td>
+      <td class="amount dr">${fmt(t.tds_amount)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tdsSales').textContent  = fmt(total);
+  document.getElementById('tdsCount').textContent  = tdsData.length;
+  document.getElementById('tdsAvgRate').textContent= rates.length ? pct(rates.reduce((a,b)=>a+b,0)/rates.length) : '0%';
+}
+
+function renderITC() {
+  const tbody = document.getElementById('itcBody');
+  const empty = document.getElementById('itcEmpty');
+  if(!itcData.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  let totCgst=0,totSgst=0,totIgst=0;
+  tbody.innerHTML = itcData.map(b => {
+    totCgst+=b.cgst_amount||0; totSgst+=b.sgst_amount||0; totIgst+=b.igst_amount||0;
+    const itc = (b.cgst_amount||0)+(b.sgst_amount||0)+(b.igst_amount||0);
+    return `<tr>
+      <td style="color:var(--text);font-weight:600;">${esc(b.bill_no||'—')}</td>
+      <td>${b.bill_date}</td>
+      <td>${esc(b.vendor_name)}</td>
+      <td style="font-size:11px;">${esc(b.vendor_gstin||'—')}</td>
+      <td class="amount">${fmt(b.subtotal)}</td>
+      <td class="amount cr">${fmt(b.cgst_amount)}</td>
+      <td class="amount cr">${fmt(b.sgst_amount)}</td>
+      <td class="amount cr">${fmt(b.igst_amount)}</td>
+      <td class="amount" style="color:var(--accent);">${fmt(itc)}</td>
+      <td><span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${b.status==='paid'?'rgba(34,197,94,0.12)':'rgba(16,185,129,0.12)'};color:${b.status==='paid'?'var(--success)':'var(--accent)'};">${esc(b.status)}</span></td>
+    </tr>`;
+  }).join('');
+  const totItc = totCgst+totSgst+totIgst;
+  document.getElementById('itcCount').textContent    = itcData.length;
+  document.getElementById('itcTotal').textContent    = fmt(totItc);
+  document.getElementById('itcCgstSgst').textContent = fmt(totCgst+totSgst);
+  document.getElementById('itcIgst').textContent     = fmt(totIgst);
+}
+
+function renderCalendar() {
+  const now = new Date();
+  const monthName = now.toLocaleString('default',{month:'long',year:'numeric'});
+  document.getElementById('calMonth').textContent = monthName;
+  const deadlines = [
+    { title:'GSTR-1', desc:'Outward supplies', due:`11th of next month`, freq:'Monthly', section:'GST' },
+    { title:'GSTR-3B', desc:'Summary return + payment', due:`20th of next month`, freq:'Monthly', section:'GST' },
+    { title:'GSTR-9', desc:'Annual return', due:`Dec 31 every year`, freq:'Annual', section:'GST' },
+    { title:'TDS Deposit (194C)', desc:'Subcontractor TDS', due:`7th of next month`, freq:'Monthly', section:'TDS' },
+    { title:'TDS Return (26Q)', desc:'Quarterly TDS return', due:`15th after quarter end`, freq:'Quarterly', section:'TDS' },
+    { title:'Form 16A', desc:'TDS certificate to vendor', due:`15th of month after quarter`, freq:'Quarterly', section:'TDS' },
+    { title:'PF / ESIC', desc:'Monthly PF & ESIC payment', due:`15th of next month`, freq:'Monthly', section:'Labour' },
+    { title:'Advance Tax', desc:'Quarterly advance tax', due:`15 Jun / 15 Sep / 15 Dec / 15 Mar`, freq:'Quarterly', section:'Tax' },
+    { title:'Income Tax Return', desc:'Company / proprietorship', due:`31 Oct (audit) / 31 Jul (no audit)`, freq:'Annual', section:'Tax' },
+  ];
+  document.getElementById('calGrid').innerHTML = deadlines.map(d => {
+    const colors = { GST:'var(--info)', TDS:'var(--accent)', Labour:'var(--success)', Tax:'var(--purple)' };
+    const c = colors[d.section] || 'var(--muted)';
+    return `<div class="cal-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div class="cal-title">${d.title}</div>
+        <span style="font-size:10px;background:rgba(255,255,255,0.05);color:${c};padding:2px 7px;border-radius:10px;font-weight:700;">${d.section}</span>
+      </div>
+      <div class="cal-due" style="color:var(--text);font-size:12px;">${d.desc}</div>
+      <div style="font-size:11px;color:var(--accent);margin-top:6px;">📅 Due: ${d.due}</div>
+      <div style="font-size:11px;color:var(--faint);margin-top:2px;">${d.freq}</div>
+    </div>`;
+  }).join('');
+}
+
+function exportGSTR1CSV() {
+  let csv = 'Invoice No,Invoice Date,Client Name,GSTIN,Supply Type,Taxable Value,CGST,SGST,IGST,Total GST,Invoice Value\n';
+  gstr1Data.forEach(i => { csv += `"${i.invoice_no}","${i.invoice_date}","${i.client_name}","${i.client_gstin||''}","${i.supply_type||'intra'}",${i.subtotal||0},${i.cgst_amount||0},${i.sgst_amount||0},${i.igst_amount||0},${i.total_gst||0},${i.total_amount||0}\n`; });
+  dl(csv,'GSTR1.csv');
+}
+function exportTDSCSV() {
+  let csv = 'Invoice No,Date,Client Name,GSTIN,Invoice Amount,TDS Rate,TDS Amount\n';
+  tdsData.forEach(t => { csv += `"${t.invoice_no}","${t.invoice_date}","${t.client_name}","${t.client_gstin||''}",${t.total_amount||0},${t.tds_rate||0},${t.tds_amount||0}\n`; });
+  dl(csv,'TDS_Report.csv');
+}
+function exportITCCSV() {
+  let csv = 'Bill No,Date,Vendor Name,GSTIN,Taxable,CGST,SGST,IGST,Total ITC\n';
+  itcData.forEach(b => { const itc=(b.cgst_amount||0)+(b.sgst_amount||0)+(b.igst_amount||0); csv += `"${b.bill_no||''}","${b.bill_date}","${b.vendor_name}","${b.vendor_gstin||''}",${b.subtotal||0},${b.cgst_amount||0},${b.sgst_amount||0},${b.igst_amount||0},${itc}\n`; });
+  dl(csv,'ITC_Tracker.csv');
+}
+function dl(csv, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = name; a.click();
+}
+
+// ─── GSTR-1 JSON (GSTN offline-tool schema — upload at gst.gov.in → Returns → GSTR-1 → Prepare Offline)
+async function exportGSTR1JSON() {
+  if (!gstr1Data.length) { alert('No invoices in the selected period. Set the period and click Apply first.'); return; }
+  const cr = await window.erp.getCompany();
+  const company = (cr && cr.data) || {};
+  if (!company.gstin) { alert('Set your company GSTIN in Settings first — the GSTN portal requires it in the file.'); return; }
+
+  const from = document.getElementById('fromDate').value;
+  const fp = from.slice(5,7) + from.slice(0,4); // MMYYYY return period
+
+  // Group B2B invoices (with client GSTIN) by counterparty GSTIN
+  const b2bMap = {};
+  const b2cl = []; // inter-state, no GSTIN, invoice > 2.5L
+  const b2csMap = {}; // small consumer supplies aggregated by rate+pos
+
+  const stateCode = (company.gstin || '').slice(0,2) || '18';
+
+  gstr1Data.forEach(inv => {
+    const rate = inv.subtotal > 0 ? Math.round(((inv.total_gst||0) / inv.subtotal) * 100 * 100) / 100 : 0;
+    const pos = (inv.client_gstin || '').slice(0,2) || stateCode;
+    const item = {
+      num: 1,
+      itm_det: {
+        txval: +(inv.subtotal||0).toFixed(2),
+        rt: rate,
+        camt: +(inv.cgst_amount||0).toFixed(2),
+        samt: +(inv.sgst_amount||0).toFixed(2),
+        iamt: +(inv.igst_amount||0).toFixed(2),
+        csamt: 0
+      }
+    };
+    if (inv.client_gstin) {
+      if (!b2bMap[inv.client_gstin]) b2bMap[inv.client_gstin] = { ctin: inv.client_gstin, inv: [] };
+      b2bMap[inv.client_gstin].inv.push({
+        inum: inv.invoice_no,
+        idt: toGstDate(inv.invoice_date),
+        val: +(inv.total_amount||0).toFixed(2),
+        pos: pos,
+        rchrg: 'N',
+        inv_typ: 'R',
+        itms: [item]
+      });
+    } else if (inv.supply_type === 'inter' && (inv.total_amount||0) > 250000) {
+      b2cl.push({
+        pos: pos,
+        inv: [{ inum: inv.invoice_no, idt: toGstDate(inv.invoice_date), val: +(inv.total_amount||0).toFixed(2), itms: [item] }]
+      });
+    } else {
+      const key = rate + '|' + pos + '|' + (inv.supply_type==='inter'?'INTER':'INTRA');
+      if (!b2csMap[key]) b2csMap[key] = { sply_ty: inv.supply_type==='inter'?'INTER':'INTRA', pos: pos, typ: 'OE', rt: rate, txval: 0, camt: 0, samt: 0, iamt: 0, csamt: 0 };
+      b2csMap[key].txval += inv.subtotal||0;
+      b2csMap[key].camt  += inv.cgst_amount||0;
+      b2csMap[key].samt  += inv.sgst_amount||0;
+      b2csMap[key].iamt  += inv.igst_amount||0;
+    }
+  });
+
+  const out = {
+    gstin: company.gstin,
+    fp: fp,
+    version: 'GST3.2.1',
+    hash: 'hash'
+  };
+  if (Object.keys(b2bMap).length) out.b2b = Object.values(b2bMap);
+  if (b2cl.length) out.b2cl = b2cl;
+  const b2cs = Object.values(b2csMap).map(x => ({ ...x, txval:+x.txval.toFixed(2), camt:+x.camt.toFixed(2), samt:+x.samt.toFixed(2), iamt:+x.iamt.toFixed(2) }));
+  if (b2cs.length) out.b2cs = b2cs;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
+  a.download = `GSTR1_${company.gstin}_${fp}.json`;
+  a.click();
+  alert('GSTR-1 JSON downloaded.\n\nTo file: log in at gst.gov.in → Returns Dashboard → GSTR-1 → Prepare Offline → Upload this JSON file.\n\nAlways verify the summary on the portal before submitting.');
+}
+
+function toGstDate(d) {
+  // YYYY-MM-DD → DD-MM-YYYY (GSTN format)
+  if (!d) return '';
+  const p = d.split('-');
+  return p.length === 3 ? p[2] + '-' + p[1] + '-' + p[0] : d;
+}
+
+// ─── TDS CHALLANS
+let challanData = [];
+
+async function loadChallans() {
+  const fy = document.getElementById('chFY').value;
+  const r = await window.erp.getTdsChallans({ financial_year: fy });
+  challanData = (r && r.data) || [];
+
+  // Liability: TDS on invoices (clients deduct from us — that is OUR receivable, not liability)
+  // Our DEPOSIT liability = TDS we deduct from subcontractor RA bills + expense TDS
+  const [startY] = fy.split('-').map(Number);
+  const fyFrom = startY + '-04-01', fyTo = (startY+1) + '-03-31';
+  let liability = 0;
+  try {
+    const ra = await window.erp.getRaBills({});
+    ((ra && ra.data) || []).forEach(b => {
+      if (b.bill_date >= fyFrom && b.bill_date <= fyTo) liability += b.tds_amount || 0;
+    });
+    const ex = await window.erp.getExpenses({ from_date: fyFrom, to_date: fyTo });
+    ((ex && ex.data) || []).forEach(b => { liability += b.tds_amount || 0; });
+  } catch(e) {}
+
+  const deposited = challanData.reduce((s,c)=>s+(c.amount||0),0);
+  document.getElementById('chLiability').textContent = fmt(liability);
+  document.getElementById('chDeposited').textContent = fmt(deposited);
+  document.getElementById('chBalance').textContent   = fmt(Math.max(0, liability - deposited));
+  document.getElementById('chCount').textContent     = challanData.length;
+
+  const tbody = document.getElementById('challanBody');
+  const empty = document.getElementById('challanEmpty');
+  empty.style.display = challanData.length ? 'none' : 'block';
+  tbody.innerHTML = challanData.map(c => `<tr>
+    <td style="color:var(--text);font-weight:600;">${c.quarter}</td>
+    <td>${c.section||'—'}</td>
+    <td style="font-size:11px;">${c.challan_no||'—'}</td>
+    <td style="font-size:11px;">${c.bsr_code||'—'}</td>
+    <td>${c.deposit_date||'—'}</td>
+    <td class="amount cr">${fmt(c.amount)}</td>
+    <td class="amount">${fmt(c.interest)}</td>
+    <td><span style="font-size:11px;padding:2px 7px;border-radius:10px;background:rgba(34,197,94,0.12);color:var(--success);">${c.status||'deposited'}</span></td>
+    <td style="white-space:nowrap;">
+      <button class="btn btn-outline btn-sm" onclick="editChallan(${c.id})" style="padding:3px 8px;">Edit</button>
+      <button class="btn btn-outline btn-sm" onclick="deleteChallan(${c.id})" style="padding:3px 8px;color:var(--danger);">Del</button>
+    </td>
+  </tr>`).join('');
+}
+
+function openChallanModal() {
+  document.getElementById('chId').value = '';
+  document.getElementById('challanModalTitle').textContent = 'Record TDS Challan';
+  document.getElementById('chQuarter').value = 'Q1';
+  document.getElementById('chSection').value = '194C';
+  document.getElementById('chNo').value = '';
+  document.getElementById('chBsr').value = '';
+  document.getElementById('chDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('chAmount').value = '';
+  document.getElementById('chInterest').value = '0';
+  document.getElementById('chNotes').value = '';
+  document.getElementById('challanModal').style.display = 'flex';
+}
+
+function editChallan(id) {
+  const c = challanData.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('chId').value = c.id;
+  document.getElementById('challanModalTitle').textContent = 'Edit TDS Challan';
+  document.getElementById('chQuarter').value = c.quarter;
+  document.getElementById('chSection').value = c.section || '194C';
+  document.getElementById('chNo').value = c.challan_no || '';
+  document.getElementById('chBsr').value = c.bsr_code || '';
+  document.getElementById('chDate').value = c.deposit_date || '';
+  document.getElementById('chAmount').value = c.amount || '';
+  document.getElementById('chInterest').value = c.interest || 0;
+  document.getElementById('chNotes').value = c.notes || '';
+  document.getElementById('challanModal').style.display = 'flex';
+}
+
+function closeChallanModal() { document.getElementById('challanModal').style.display = 'none'; }
+
+async function saveChallan() {
+  const amount = parseFloat(document.getElementById('chAmount').value);
+  const depositDate = document.getElementById('chDate').value;
+  if (!(amount > 0)) { alert('Enter the challan amount.'); return; }
+  if (!depositDate) { alert('Enter the deposit date.'); return; }
+  const data = {
+    id: document.getElementById('chId').value ? parseInt(document.getElementById('chId').value) : undefined,
+    financial_year: document.getElementById('chFY').value,
+    quarter: document.getElementById('chQuarter').value,
+    section: document.getElementById('chSection').value,
+    challan_no: document.getElementById('chNo').value.trim(),
+    bsr_code: document.getElementById('chBsr').value.trim(),
+    deposit_date: depositDate,
+    amount: amount,
+    interest: parseFloat(document.getElementById('chInterest').value) || 0,
+    notes: document.getElementById('chNotes').value.trim(),
+  };
+  const r = await window.erp.saveTdsChallan(data);
+  if (r && r.success) { closeChallanModal(); loadChallans(); }
+  else alert('Save failed: ' + ((r && r.error) || 'unknown error'));
+}
+
+async function deleteChallan(id) {
+  if (!confirm('Delete this challan record?')) return;
+  await window.erp.deleteTdsChallan(id);
+  loadChallans();
+}
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+(function boot(tries) {
+  if (window.erp) { setThisMonth(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

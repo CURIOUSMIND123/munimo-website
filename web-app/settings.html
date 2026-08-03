@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Settings</title>
+<script src="import-mapper.js"></script>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#6366f1;--accent2:#4f46e5;--success:#22c55e;--danger:#ef4444;
+  --warn:#10b981;--info:#3b82f6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px;display:flex;min-height:100vh;}
+/* SIDEBAR NAV */
+.side-nav{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:16px 0;flex-shrink:0;}
+.side-nav-title{font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;padding:0 16px 10px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);transition:all .15s;border-left:2px solid transparent;}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03);}
+.nav-item.active{color:var(--accent);background:rgba(99,102,241,.06);border-left-color:var(--accent);}
+.nav-item i{width:15px;height:15px;flex-shrink:0;}
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:22px;}
+.section{display:none;}
+.section.active{display:block;}
+.section-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.section-sub{font-size:11px;color:var(--muted);margin-bottom:20px;}
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+.card-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text);outline:none;width:100%;transition:border-color .2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:70px;}
+.btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+.btn-primary:hover{opacity:.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,.2);}
+.btn-success{background:rgba(34,197,94,.1);color:var(--success);border:1px solid rgba(34,197,94,.2);}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);}
+.btn-warn{background:rgba(16,185,129,.1);color:var(--warn);border:1px solid rgba(16,185,129,.2);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+/* LOGO UPLOAD */
+.logo-area{display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+.logo-preview{width:80px;height:80px;border-radius:12px;background:var(--surface2);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:border-color .2s;}
+.logo-preview:hover{border-color:var(--accent);}
+.logo-preview img{width:100%;height:100%;object-fit:contain;}
+.logo-preview span{font-size:10px;color:var(--faint);text-align:center;padding:4px;}
+.logo-info{font-size:11px;color:var(--muted);}
+/* USER TABLE */
+.user-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--surface2);margin-bottom:8px;border:1px solid var(--border);}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;}
+.user-info{flex:1;}
+.user-name{font-size:13px;font-weight:700;color:var(--text);}
+.user-role{font-size:11px;color:var(--muted);}
+.badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.b-admin{background:rgba(99,102,241,.15);color:var(--accent);}
+.b-manager{background:rgba(34,197,94,.1);color:var(--success);}
+.b-accountant{background:rgba(16,185,129,.1);color:var(--warn);}
+.b-viewer{background:rgba(148,163,184,.1);color:var(--muted);}
+.b-active{background:rgba(34,197,94,.1);color:var(--success);}
+.b-inactive{background:rgba(239,68,68,.1);color:var(--danger);}
+/* BACKUP */
+.backup-card{background:var(--surface2);border-radius:10px;padding:14px;border:1px solid var(--border);margin-bottom:10px;display:flex;align-items:center;gap:14px;}
+.backup-icon{font-size:28px;flex-shrink:0;}
+.backup-info{flex:1;}
+.backup-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.backup-desc{font-size:11px;color:var(--muted);}
+.backup-time{font-size:10px;color:var(--faint);margin-top:3px;}
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:12px;font-weight:600;color:var(--text);}
+.toggle-desc{font-size:11px;color:var(--muted);margin-top:2px;}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--surface3);border-radius:22px;cursor:pointer;transition:.3s;}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;}
+.toggle input:checked+.toggle-slider{background:var(--accent);}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px);}
+/* LICENSE */
+.license-box{background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:18px;margin-bottom:14px;}
+.license-status{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.license-dot{width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);}
+.license-key-display{font-family:monospace;font-size:12px;background:var(--surface3);border-radius:8px;padding:10px 14px;color:var(--accent);letter-spacing:2px;word-break:break-all;margin-bottom:10px;}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.4);transform:translateY(80px);opacity:0;transition:all .3s;z-index:999;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:rgba(34,197,94,.3);color:var(--success);}
+.toast.warn{border-color:rgba(16,185,129,.3);color:var(--warn);}
+.toast.error{border-color:rgba(239,68,68,.3);color:var(--danger);}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;display:none;align-items:center;justify-content:center;padding:14px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);}
+.modal-title{font-size:14px;font-weight:700;}
+.modal-body{padding:18px 20px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;border-radius:6px;}
+/* PIN INPUT */
+.pin-input{font-family:monospace;letter-spacing:6px;font-size:18px;text-align:center;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="side-nav">
+  <div class="side-nav-title">Settings</div>
+  <div class="nav-item active" data-sec="company" onclick="showSec('company',this)"><i data-lucide="building-2"></i> Company</div>
+  <div class="nav-item" data-sec="users" onclick="showSec('users',this)"><i data-lucide="users"></i> Users & Roles</div>
+  <div class="nav-item" data-sec="invoice" onclick="showSec('invoice',this)"><i data-lucide="file-text"></i> Invoice Setup</div>
+  <div class="nav-item" data-sec="coa" onclick="showSec('coa',this)"><i data-lucide="book-open"></i> Chart of Accounts</div>
+  <div class="nav-item" data-sec="periodlock" onclick="showSec('periodlock',this)"><i data-lucide="calendar-check"></i> Year-End / Lock</div>
+  <div class="nav-item" data-sec="security" onclick="showSec('security',this)" id="nav-security"><i data-lucide="lock"></i> Security / PIN</div>
+  <div class="nav-item" data-sec="import" onclick="showSec('import',this)"><i data-lucide="database"></i> Data Import</div>
+  <div class="nav-item" data-sec="backup" onclick="showSec('backup',this)"><i data-lucide="hard-drive"></i> Backup & Restore</div>
+  <div class="nav-item" data-sec="license" onclick="showSec('license',this)"><i data-lucide="shield-check"></i> License & Info</div>
+  <div class="nav-item" data-sec="appearance" onclick="showSec('appearance',this)"><i data-lucide="monitor"></i> Appearance</div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- ═══ COMPANY ═══ -->
+  <div class="section active" id="sec-company">
+    <div class="section-title">🏢 Company Profile</div>
+    <div class="section-sub">This information appears on all invoices, payslips and reports.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="image" style="width:14px;height:14px;"></i> Company Logo</div>
+      <div class="logo-area">
+        <div class="logo-preview" onclick="document.getElementById('logoInput').click()">
+          <img id="logoImg" src="" alt="" style="display:none;">
+          <span id="logoPlaceholder">Click to upload logo</span>
+        </div>
+        <input type="file" id="logoInput" accept="image/*" style="display:none;" onchange="uploadLogo(this)">
+        <div class="logo-info">
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Company Logo</div>
+          <div>Recommended: 200×200px PNG or JPG</div>
+          <div>Appears on invoices and payslips</div>
+          <div style="margin-top:8px;display:flex;gap:6px;">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('logoInput').click()">Upload</button>
+            <button class="btn btn-danger btn-sm" onclick="removeLogo()">Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="building-2" style="width:14px;height:14px;"></i> Basic Information</div>
+      <div class="form-grid">
+        <div class="form-group full"><label>Company / Firm Name *</label><input type="text" id="cName" placeholder="e.g. Northeast Construction Pvt Ltd"></div>
+        <div class="form-group full"><label>Trade Name</label><input type="text" id="cTradeName" placeholder="Trade or brand name (if different)"></div>
+        <div class="form-group full"><label>Registered Address</label><textarea id="cAddr" placeholder="Full registered address"></textarea></div>
+        <div class="form-group"><label>City</label><input type="text" id="cCity" placeholder="Guwahati / Shillong..."></div>
+        <div class="form-group"><label>State</label>
+          <select id="cState">
+            <option>Assam</option><option>Meghalaya</option><option>Manipur</option><option>Mizoram</option>
+            <option>Nagaland</option><option>Arunachal Pradesh</option><option>Tripura</option><option>Sikkim</option>
+            <option>West Bengal</option><option>Delhi</option><option>Maharashtra</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>PIN Code</label><input type="text" id="cPin" placeholder="793001"></div>
+        <div class="form-group"><label>Phone</label><input type="text" id="cPhone" placeholder="+91 XXXXX XXXXX"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="cEmail" placeholder="info@yourcompany.com"></div>
+        <div class="form-group"><label>Website</label><input type="text" id="cWeb" placeholder="www.yourcompany.com"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="receipt" style="width:14px;height:14px;"></i> Tax Registration</div>
+      <div class="form-grid three">
+        <div class="form-group"><label>GSTIN *</label><input type="text" id="cGST" placeholder="22AAAAA0000A1Z5" style="font-family:monospace;letter-spacing:1px;"></div>
+        <div class="form-group"><label>PAN *</label><input type="text" id="cPAN" placeholder="AAAAA0000A" style="font-family:monospace;letter-spacing:1px;"></div>
+        <div class="form-group"><label>Financial Year</label>
+          <select id="cFY">
+            <option value="2024-25">2024–25</option>
+            <option value="2025-26">2025–26</option>
+            <option value="2026-27">2026–27</option>
+          </select>
+        </div>
+        <div class="form-group"><label>FY Start Date</label><input type="date" id="cFYStart"></div>
+        <div class="form-group"><label>FY End Date</label><input type="date" id="cFYEnd"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="landmark" style="width:14px;height:14px;"></i> Bank Details (for Invoices)</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Bank Name</label><input type="text" id="bkName" placeholder="State Bank of India"></div>
+        <div class="form-group"><label>Branch</label><input type="text" id="bkBranch" placeholder="Guwahati Main Branch"></div>
+        <div class="form-group full"><label>Account Number</label><input type="text" id="bkAccNo" placeholder="00000000000"></div>
+        <div class="form-group"><label>IFSC Code</label><input type="text" id="bkIFSC" placeholder="SBIN0000001" style="font-family:monospace;letter-spacing:1px;"></div>
+        <div class="form-group"><label>Account Type</label>
+          <select id="bkType"><option>Current</option><option>Savings</option></select>
+        </div>
+        <div class="form-group full"><label>UPI ID / VPA <span style="color:var(--muted);font-weight:400;">(for "Scan to Pay" on invoices)</span></label><input type="text" id="bkUPI" placeholder="yourbusiness@okhdfcbank" style="font-family:monospace;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="pen-tool" style="width:14px;height:14px;"></i> Authorised Signature</div>
+      <div class="logo-area">
+        <div class="logo-preview" onclick="document.getElementById('signInput').click()">
+          <img id="signImg" src="" alt="" style="display:none;">
+          <span id="signPlaceholder">Click to upload signature</span>
+        </div>
+        <input type="file" id="signInput" accept="image/*" style="display:none;" onchange="uploadSignature(this)">
+        <div class="logo-info">
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Signature Image</div>
+          <div>Recommended: transparent PNG, ~300×120px</div>
+          <div>Prints above "Authorised Signatory" on invoices</div>
+          <div style="margin-top:8px;display:flex;gap:6px;">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('signInput').click()">Upload</button>
+            <button class="btn btn-danger btn-sm" onclick="removeSignature()">Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="hash" style="width:14px;height:14px;"></i> Invoice Numbering</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Invoice Prefix</label><input type="text" id="invPrefix" placeholder="INV" maxlength="10"></div>
+        <div class="form-group"><label>Preview</label>
+          <div style="background:var(--surface3);border-radius:8px;padding:9px 12px;font-family:monospace;font-size:13px;font-weight:700;color:var(--accent);" id="invPreview">INV-001</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toggle-row" style="margin-top:8px;">
+      <div>
+        <div class="toggle-label">Start in Simple Cashbook mode</div>
+        <div class="toggle-desc">For non-expert users: after login, open the simple daily cash / budget-head / commission screen instead of the full ERP. They can still reach the full ERP anytime via the “Full ERP →” link.</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="cLiteMode"><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveCompany()"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Company Profile</button>
+    </div>
+  </div>
+
+  <!-- ═══ USERS ═══ -->
+  <div class="section" id="sec-users">
+    <div class="section-title">👥 Users & Role Management</div>
+    <div class="section-sub">Control who can access which modules. Protect sensitive data.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="shield" style="width:14px;height:14px;"></i> Role Permissions Matrix</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:700;text-transform:uppercase;">Module</th>
+              <th style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--accent);">Admin</th>
+              <th style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--success);">Site Manager</th>
+              <th style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--warn);">Accountant</th>
+              <th style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--info);">HR</th>
+              <th style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--muted);">Staff</th>
+            </tr>
+          </thead>
+          <tbody id="permMatrix"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="users" style="width:14px;height:14px;"></i> System Users
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="openAddUserModal()">+ Add User</button>
+      </div>
+      <div id="userList"><div style="text-align:center;padding:20px;color:var(--muted);">Loading users...</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ INVOICE SETUP ═══ -->
+  <div class="section" id="sec-invoice">
+    <div class="section-title">🧾 Invoice & Document Setup</div>
+    <div class="section-sub">Customize how your invoices look and are numbered.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="hash" style="width:14px;height:14px;"></i> Numbering Series</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Invoice Prefix</label><input type="text" id="invPrefixFull" placeholder="INV" maxlength="6"></div>
+        <div class="form-group"><label>Starting Number</label><input type="number" id="invStart" value="1" min="1"></div>
+        <div class="form-group"><label>Bill Prefix</label><input type="text" id="billPrefix" placeholder="BILL" maxlength="6"></div>
+        <div class="form-group"><label>Include Year in Number</label>
+          <select id="invYearFmt"><option value="1">Yes (INV-2026-001)</option><option value="0">No (INV-001)</option></select>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--muted);">Preview: <span id="invPreviewFull" style="color:var(--accent);font-family:monospace;font-weight:700;font-size:13px;"></span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="file-text" style="width:14px;height:14px;"></i> Invoice Footer & Terms</div>
+      <div class="form-group" style="margin-bottom:12px;"><label>Payment Terms</label>
+        <select id="payTerms"><option>Due on Receipt</option><option>Net 15</option><option>Net 30</option><option>Net 45</option><option>Net 60</option></select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>Invoice Footer Note</label>
+        <textarea id="invFooter" placeholder="e.g. Thank you for your business. All disputes subject to Guwahati jurisdiction."></textarea>
+      </div>
+      <div class="form-group"><label>Bank Details on Invoice</label>
+        <select id="showBank"><option value="1">Yes — show bank details</option><option value="0">No</option></select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="percent" style="width:14px;height:14px;"></i> Default Tax Settings</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Default GST Rate</label>
+          <select id="defGST"><option>0%</option><option>5%</option><option>12%</option><option selected>18%</option><option>28%</option></select>
+        </div>
+        <div class="form-group"><label>GST Type (Default)</label>
+          <select id="defGSTType"><option>Intra-state (CGST+SGST)</option><option>Inter-state (IGST)</option></select>
+        </div>
+        <div class="form-group"><label>Default TDS Rate (Contractors)</label>
+          <select id="defTDS"><option>0%</option><option>1%</option><option selected>2%</option><option>5%</option></select>
+        </div>
+        <div class="form-group"><label>Reverse Charge (RCM)</label>
+          <select id="defRCM"><option>No</option><option>Yes — applicable</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="file-check-2" style="width:14px;height:14px;"></i> E-Invoicing (IRN)</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+        E-invoicing registers each B2B sales invoice with the government portal and returns an IRN + signed QR code.
+        It is mandatory above ₹5 crore turnover. The <b>Test (offline)</b> mode works immediately with no signup, so you
+        can try the whole flow now. When you sign up with a GST Suvidha Provider (GSP), switch to <b>GSP / Sandbox</b> and
+        paste their API URL and key below — no software change needed.
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Provider</label>
+          <select id="einvProvider" onchange="toggleEinvGsp()">
+            <option value="mock">Test / Offline (no government connection)</option>
+            <option value="http">GSP / Government sandbox (live)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>E-Invoicing</label>
+          <select id="einvEnabled"><option value="0">Off</option><option value="1">On</option></select>
+        </div>
+      </div>
+      <div id="einvGspFields" style="display:none;margin-top:12px;">
+        <div class="form-group" style="margin-bottom:12px;"><label>GSP API URL (generate)</label>
+          <input type="text" id="einvApiUrl" placeholder="https://your-gsp.example/eivital/v1.04/invoice"></div>
+        <div class="form-group" style="margin-bottom:12px;"><label>GSP Cancel URL (optional)</label>
+          <input type="text" id="einvCancelUrl" placeholder="Leave blank to derive from the generate URL"></div>
+        <div class="form-group"><label>GSP API Key / Token</label>
+          <input type="password" id="einvApiKey" placeholder="Your GSP authentication token"></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveInvoiceSettings()"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Invoice Settings</button>
+    </div>
+  </div>
+
+  <!-- ═══ CHART OF ACCOUNTS ═══ -->
+  <div class="section" id="sec-coa">
+    <div class="section-title">📒 Chart of Accounts</div>
+    <div class="section-sub">The editable ledger registry behind the General Ledger. System accounts are fixed; add your own custom ledgers as needed.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="book-open" style="width:14px;height:14px;"></i> Ledger Accounts
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="openAddAccountModal()">+ Add Account</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:700;text-transform:uppercase;">Code</th>
+              <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:700;text-transform:uppercase;">Name</th>
+              <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:700;text-transform:uppercase;">Group</th>
+              <th style="text-align:right;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:700;text-transform:uppercase;">Opening Balance</th>
+              <th style="text-align:center;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:700;text-transform:uppercase;">Type</th>
+              <th style="text-align:center;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:700;text-transform:uppercase;">Status</th>
+              <th style="text-align:right;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:700;text-transform:uppercase;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="coaList"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted);">Loading accounts…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PERIOD LOCK / YEAR-END CLOSE ═══ -->
+  <div class="section" id="sec-periodlock">
+    <div class="section-title">📅 Year-End Close / Period Lock</div>
+    <div class="section-sub">Freeze a closed accounting period. Once locked, no invoice, bill, payment, journal voucher or cash entry dated on or before the lock date can be created, edited or deleted — so signed-off books stay exactly as filed. Admin only.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="calendar-check" style="width:14px;height:14px;"></i> Lock Status</div>
+      <div id="periodLockStatus" style="font-size:13px;margin:8px 0 16px;">Loading…</div>
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;">LOCK ENTRIES ON OR BEFORE</label>
+          <input type="date" id="periodLockDate" class="filter-input" style="min-width:180px;">
+        </div>
+        <button class="btn btn-primary" onclick="savePeriodLock()"><i data-lucide="lock" style="width:14px;height:14px;"></i> Lock Period</button>
+        <button class="btn btn-outline" onclick="clearPeriodLock()"><i data-lucide="unlock" style="width:14px;height:14px;"></i> Clear Lock</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5;">Tip: at year-end, set this to the last day of the closed financial year (e.g. 31 Mar). Retained earnings carry forward automatically on the Balance Sheet.</div>
+    </div>
+  </div>
+
+  <!-- ═══ SECURITY / MANAGEMENT PIN ═══ -->
+  <div class="section" id="sec-security">
+    <div class="section-title">🔒 Security &amp; Management PIN</div>
+    <div class="section-sub">Set a PIN to protect access to Management Entries module. Admin only.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="key-round" style="width:14px;height:14px;"></i> Management Entry PIN</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+        The Management PIN is required to view or add entries in the Management Entries module.
+        This prevents unauthorized access to sensitive off-book entries.
+        If a PIN is already set, enter the current PIN before setting a new one.
+      </div>
+
+      <div id="pinFormWrap">
+        <div class="form-grid" style="max-width:380px;">
+          <div class="form-group full" id="oldPinGroup" style="display:none;">
+            <label>Current PIN</label>
+            <input type="password" id="oldPin" class="pin-input" placeholder="● ● ● ●" maxlength="8" autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label>New PIN</label>
+            <input type="password" id="newPin" class="pin-input" placeholder="● ● ● ●" maxlength="8" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label>Confirm New PIN</label>
+            <input type="password" id="confirmPin" class="pin-input" placeholder="● ● ● ●" maxlength="8" autocomplete="new-password">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveManagementPin()"><i data-lucide="shield-check" style="width:14px;height:14px;"></i> Set Management PIN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="log-out" style="width:14px;height:14px;"></i> Session</div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Logged in as: <span id="sessionUserName" style="color:var(--accent);">—</span></div>
+          <div style="font-size:11px;color:var(--muted);">Role: <span id="sessionUserRole">—</span></div>
+        </div>
+        <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="doLogout()"><i data-lucide="log-out" style="width:12px;height:12px;"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BACKUP ═══ -->
+  <!-- ═══ DATA IMPORT (LEGACY ERP MIGRATION) ═══ -->
+  <div class="section" id="sec-import">
+    <div class="section-title">📥 Data Import — Migrate from any accounting software</div>
+    <div class="section-sub">Coming from Tally, Zoho Books, QuickBooks, Vyapar, Busy, Marg, Khatabook or plain Excel? Export your data as CSV there and import it here — whatever the columns are named. The importer auto-detects which of your columns is which and lets you fix any it gets wrong, so you do <b>not</b> have to reformat the file first. Dates and amounts in any common format are understood. Duplicates are skipped automatically — running an import twice is safe.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="file-spreadsheet" style="width:14px;height:14px;"></i> Step 1 — What are you importing?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <select id="impEntity" onchange="updateImportTemplate()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:13px;color:var(--text);">
+          <option value="clients">Clients / Customers</option>
+          <option value="vendors">Vendors / Suppliers</option>
+          <option value="employees">Employees</option>
+          <option value="sites">Sites / Projects</option>
+          <option value="opening_invoices">Opening Receivables (what clients owe you)</option>
+          <option value="opening_bills">Opening Payables (what you owe vendors)</option>
+        </select>
+        <button class="btn btn-outline" onclick="downloadImportTemplate()"><i data-lucide="download" style="width:14px;height:14px;"></i> Download CSV Template</button>
+      </div>
+      <div id="impColumns" style="font-size:11px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:10px 14px;"></div>
+      <div style="font-size:11px;color:var(--faint);margin-top:8px;">The template is optional — your file can use any column names. Downloading it just shows you which details this ERP can store.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="upload" style="width:14px;height:14px;"></i> Step 2 — Choose your CSV file (any format)</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <input type="file" id="impFile" accept=".csv,text/csv" onchange="previewImport()" style="font-size:12px;color:var(--muted);">
+        <span id="impFileStatus" style="font-size:11px;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <div class="card" id="impMapCard" style="display:none;">
+      <div class="card-title"><i data-lucide="git-merge" style="width:14px;height:14px;"></i> Step 3 — Match your columns</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">We matched your file's columns to this ERP's fields automatically. Check the matches below and correct any that are wrong. Leave a field on <b>“— Don't import —”</b> if your file doesn't have it.</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;" id="impMapTable"></table>
+      </div>
+      <div id="impUnmapped" style="font-size:11px;color:var(--faint);margin-top:10px;"></div>
+    </div>
+
+    <div class="card" id="impPreviewCard" style="display:none;">
+      <div class="card-title"><i data-lucide="eye" style="width:14px;height:14px;"></i> Step 4 — Preview</div>
+      <div id="impPreviewWrap">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">First 5 rows, as they will be imported</div>
+        <div style="overflow-x:auto;max-height:200px;overflow-y:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:11px;" id="impPreviewTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> Step 5 — Import</div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <button class="btn btn-success" id="impRunBtn" onclick="runImport()" disabled><i data-lucide="play" style="width:14px;height:14px;"></i> Run Import</button>
+        <span id="impResult" style="font-size:12px;color:var(--muted);"></span>
+      </div>
+      <div id="impErrors" style="display:none;margin-top:10px;font-size:11px;color:var(--danger);background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 14px;max-height:160px;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <div class="section" id="sec-backup">
+    <div class="section-title">💾 Backup &amp; Restore</div>
+    <div class="section-sub">Protect your data. Export backup regularly — store on USB or cloud folder.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="upload-cloud" style="width:14px;height:14px;"></i> Export Backup</div>
+      <div class="backup-card">
+        <div class="backup-icon">💾</div>
+        <div class="backup-info">
+          <div class="backup-title">Full Database Backup</div>
+          <div class="backup-desc">Exports the complete SQLite database file. Can be restored on any device running this application.</div>
+          <div class="backup-time" id="lastBackupTime">Last backup: —</div>
+        </div>
+        <button class="btn btn-success" onclick="exportBackup()"><i data-lucide="download" style="width:14px;height:14px;"></i> Download Backup</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="download-cloud" style="width:14px;height:14px;"></i> Restore from Backup</div>
+      <div style="font-size:12px;color:var(--warn);background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;">
+        ⚠️ Restoring will replace ALL current data. Make sure to export a backup first.
+      </div>
+      <div class="backup-card">
+        <div class="backup-icon">📂</div>
+        <div class="backup-info">
+          <div class="backup-title">Restore from Backup File</div>
+          <div class="backup-desc">Select a previously exported backup file to restore all your data. The app will restart after restore.</div>
+        </div>
+        <button class="btn btn-warn" onclick="confirmImportBackup()"><i data-lucide="upload" style="width:14px;height:14px;"></i> Choose File &amp; Restore</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LICENSE & INFO ═══ -->
+  <div class="section" id="sec-license">
+    <div class="section-title">🔐 License &amp; Software Info</div>
+    <div class="section-sub">Software license status, version details, and database path.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="shield-check" style="width:14px;height:14px;"></i> License Status</div>
+      <div class="license-box">
+        <div class="license-status">
+          <div class="license-dot"></div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">Licensed ✅</div>
+            <div style="font-size:11px;color:var(--muted);">Full access · All modules enabled</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Status</div>
+        <div class="license-key-display">ACTIVE — PERPETUAL LICENSE</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+          <div style="background:var(--surface3);border-radius:8px;padding:8px 10px;"><div style="font-size:10px;color:var(--faint);font-weight:600;margin-bottom:2px;">PRODUCT</div><div style="font-size:12px;font-weight:700;color:var(--text);">Munimo ConstructPro</div></div>
+          <div style="background:var(--surface3);border-radius:8px;padding:8px 10px;"><div style="font-size:10px;color:var(--faint);font-weight:600;margin-bottom:2px;">VERSION</div><div style="font-size:12px;font-weight:700;color:var(--success);" id="appVersion">—</div></div>
+          <div style="background:var(--surface3);border-radius:8px;padding:8px 10px;"><div style="font-size:10px;color:var(--faint);font-weight:600;margin-bottom:2px;">PLATFORM</div><div style="font-size:12px;font-weight:700;color:var(--text);" data-platform>Windows / Electron</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="database" style="width:14px;height:14px;"></i> Database Information</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div style="font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Database Path</div>
+          <div style="font-size:11px;font-family:monospace;color:var(--accent);word-break:break-all;background:var(--surface2);border-radius:8px;padding:10px;" id="dbPathDisplay">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Engine</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text);">SQLite (better-sqlite3)</div>
+          <div style="font-size:10px;color:var(--faint);margin-top:4px;" id="engineNote">Local, offline, no cloud dependency</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="info" style="width:14px;height:14px;"></i> About This Software</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><div style="font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Product</div><div style="font-size:12px;font-weight:700;color:var(--text);">Munimo ConstructPro</div></div>
+        <div><div style="font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Version</div><div style="font-size:12px;font-weight:700;color:var(--text);" id="appVersion2">—</div></div>
+        <div><div style="font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Built For</div><div style="font-size:12px;font-weight:700;color:var(--text);">Indian Construction Companies</div></div>
+        <div><div style="font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Platform</div><div style="font-size:12px;font-weight:700;color:var(--text);" data-platform>Windows Desktop (Electron)</div></div>
+        <div><div style="font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Developer</div><div style="font-size:12px;font-weight:700;color:var(--text);">Munimo<br><span style="font-weight:500;color:var(--muted);font-size:11px;">munimo.online</span></div></div>
+        <div><div style="font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;margin-bottom:2px;">Support</div><div style="font-size:12px;font-weight:700;color:var(--accent);">📞 9599942248<br>✉️ support@munimo.online</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ APPEARANCE ═══ -->
+  <div class="section" id="sec-appearance">
+    <div class="section-title">🎨 Appearance</div>
+    <div class="section-sub">Visual settings for the application.</div>
+
+    <div class="card">
+      <div class="card-title"><i data-lucide="moon" style="width:14px;height:14px;"></i> Theme</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Dark Mode</div>
+          <div class="toggle-desc">Dark mode is currently the only available theme. Light mode coming in a future update.</div>
+        </div>
+        <label class="toggle"><input type="checkbox" checked disabled><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Accent Color</div>
+          <div class="toggle-desc">Indigo accent — customizable themes coming soon.</div>
+        </div>
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--accent);border:2px solid rgba(255,255,255,.2);"></div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Compact Layout</div>
+          <div class="toggle-desc">Reduce padding and font size for denser information display. (Coming soon)</div>
+        </div>
+        <label class="toggle"><input type="checkbox" disabled><span class="toggle-slider"></span></label>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--faint);padding:10px;background:var(--surface2);border-radius:8px;">
+        Currently the application uses a fixed dark theme optimized for construction site use. Additional theme options will be available in future versions.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ADD USER MODAL -->
+<div class="modal-overlay" id="addUserModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="addUserModalTitle">👤 Add User</div>
+      <button class="close-btn" onclick="closeModal('addUserModal')"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editUserId">
+      <div class="form-grid">
+        <div class="form-group full"><label>Full Name *</label><input type="text" id="uName" placeholder="User's full name"></div>
+        <div class="form-group full"><label>Username (login) *</label><input type="text" id="uLogin" placeholder="e.g. rajan.kumar"></div>
+        <div class="form-group" id="uPassGroup"><label>Password *</label><input type="password" id="uPass" placeholder="Set password" autocomplete="new-password"></div>
+        <div class="form-group"><label>Role *</label>
+          <select id="uRole">
+            <option value="admin">Admin</option>
+            <option value="accountant">Accountant</option>
+            <option value="hr">HR</option>
+            <option value="site_manager">Site Manager</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Phone</label><input type="text" id="uPhone" placeholder="+91 XXXXX XXXXX"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="uEmail" placeholder="user@example.com"></div>
+        <div class="form-group" id="uActiveGroup"><label>Active</label>
+          <select id="uActive"><option value="1">Active</option><option value="0">Inactive</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addUserModal')">Cancel</button>
+      <button class="btn btn-primary" id="saveUserBtn" onclick="saveUser()">Add User</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay" id="changePwModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔑 Change Password</div>
+      <button class="close-btn" onclick="closeModal('changePwModal')"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cpUserId">
+      <div class="form-grid">
+        <div class="form-group full"><label>Current Password</label><input type="password" id="cpCurrent" placeholder="Current password" autocomplete="current-password"></div>
+        <div class="form-group full"><label>New Password *</label><input type="password" id="cpNew" placeholder="New password" autocomplete="new-password"></div>
+        <div class="form-group full"><label>Confirm New Password *</label><input type="password" id="cpConfirm" placeholder="Confirm new password" autocomplete="new-password"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('changePwModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doChangePassword()">Change Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT BACKUP CONFIRM MODAL -->
+<div class="modal-overlay" id="importConfirmModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⚠️ Confirm Restore</div>
+      <button class="close-btn" onclick="closeModal('importConfirmModal')"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--warn);background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:14px;margin-bottom:12px;line-height:1.6;">
+        <strong>⚠️ This will overwrite ALL current data.</strong><br>
+        All existing records — invoices, employees, transactions, settings — will be replaced with data from the selected backup file.<br><br>
+        <strong>This action cannot be undone.</strong> Make sure you have exported a fresh backup before proceeding.
+      </div>
+      <div style="font-size:12px;color:var(--muted);">Are you sure you want to restore from backup?</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('importConfirmModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="doImportBackup()"><i data-lucide="upload" style="width:14px;height:14px;"></i> Yes, Restore Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT ACCOUNT MODAL -->
+<div class="modal-overlay" id="accountModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="accountModalTitle">📒 Add Account</div>
+      <button class="close-btn" onclick="closeModal('accountModal')"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="acId">
+      <input type="hidden" id="acIsSystem" value="0">
+      <div id="acSystemNote" style="display:none;font-size:11px;color:var(--warn);background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;line-height:1.5;">
+        🔒 This is a system account. Its name and group are fixed — you can only change the opening balance and active status.
+      </div>
+      <div class="form-grid">
+        <div class="form-group full"><label>Account Name *</label><input type="text" id="acName" placeholder="e.g. Office Rent"></div>
+        <div class="form-group"><label>Group *</label>
+          <select id="acGroup">
+            <option value="Asset">Asset</option>
+            <option value="Liability">Liability</option>
+            <option value="Income">Income</option>
+            <option value="Expense">Expense</option>
+            <option value="Equity">Equity</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Code <span style="color:var(--muted);font-weight:400;">(optional)</span></label><input type="text" id="acCode" placeholder="Auto if blank"></div>
+        <div class="form-group"><label>Opening Balance</label><input type="number" id="acOpenAmt" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="form-group"><label>Dr / Cr</label>
+          <select id="acOpenSide"><option value="Dr">Dr (Debit)</option><option value="Cr">Cr (Credit)</option></select>
+        </div>
+        <div class="form-group full" id="acActiveGroup"><label>Active</label>
+          <select id="acActive"><option value="1">Active</option><option value="0">Inactive</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('accountModal')">Cancel</button>
+      <button class="btn btn-primary" id="saveAccountBtn" onclick="saveAccount()">Add Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let _toastTimer = null;
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  const icon = type === 'success' ? '✅' : type === 'warn' ? '⚠️' : '❌';
+  t.textContent = icon + ' ' + msg;
+  t.className = 'toast ' + type + ' show';
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function showSec(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'users') renderUsers();
+  if (id === 'license') loadLicenseInfo();
+  if (id === 'coa') renderAccounts();
+  if (id === 'periodlock') loadPeriodLock();
+  updateInvPreviewFull();
+}
+
+// ─── PERIOD LOCK / YEAR-END CLOSE ─────────────────────────────────────────────
+async function loadPeriodLock() {
+  let lock = null;
+  try { const r = await window.erp.getPeriodLock(); lock = r && r.data ? r.data.period_lock_date : null; } catch (e) {}
+  const st = document.getElementById('periodLockStatus');
+  if (lock) {
+    st.innerHTML = `<span style="color:var(--danger);font-weight:700;">🔒 Locked</span> — entries on or before <strong>${escHtml(lock)}</strong> are frozen.`;
+    document.getElementById('periodLockDate').value = lock;
+  } else {
+    st.innerHTML = '<span style="color:var(--accent);font-weight:700;">🔓 Open</span> — no period is currently locked.';
+  }
+}
+async function savePeriodLock() {
+  const d = document.getElementById('periodLockDate').value;
+  if (!d) { toast('Pick a lock date first.', 'error'); return; }
+  if (!confirm(`Lock all entries dated on or before ${d}? They can no longer be created, edited or deleted until you clear the lock.`)) return;
+  try {
+    const r = await window.erp.setPeriodLock({ period_lock_date: d });
+    if (r && r.success === false) { toast('Failed: ' + (r.error || 'admin role required'), 'error'); return; }
+    toast('Period locked up to ' + d);
+    loadPeriodLock();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+}
+async function clearPeriodLock() {
+  if (!confirm('Clear the period lock and re-open the books for editing?')) return;
+  try {
+    const r = await window.erp.setPeriodLock({ period_lock_date: null });
+    if (r && r.success === false) { toast('Failed: ' + (r.error || 'admin role required'), 'error'); return; }
+    document.getElementById('periodLockDate').value = '';
+    toast('Period lock cleared');
+    loadPeriodLock();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+// ─── PERMISSIONS MATRIX ───────────────────────────────────────────────────────
+const PERMS = [
+  ['Dashboard',            '✅','✅','✅','✅','✅'],
+  ['Employees & Payroll',  '✅','❌','✅','✅','👁️'],
+  ['Sales Invoices',       '✅','✅','✅','❌','👁️'],
+  ['Vendor Bills',         '✅','✅','✅','❌','👁️'],
+  ['Cash Flow',            '✅','✅','✅','❌','👁️'],
+  ['Reports & GST',        '✅','✅','✅','❌','❌'],
+  ['Sites & Labour',       '✅','✅','❌','✅','👁️'],
+  ['Management Entries',   '✅','❌','❌','❌','❌'],
+  ['Settings',             '✅','❌','❌','❌','❌'],
+  ['Backup & Restore',     '✅','❌','❌','❌','❌'],
+  ['Delete Records',       '✅','❌','❌','❌','❌'],
+];
+
+(function buildPermMatrix() {
+  const mat = document.getElementById('permMatrix');
+  if (!mat) return;
+  mat.innerHTML = PERMS.map(([mod, ...vals]) => `<tr>
+    <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);font-weight:600;color:var(--muted);">${mod}</td>
+    ${vals.map(v => `<td style="text-align:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;">${v}</td>`).join('')}
+  </tr>`).join('');
+})();
+
+// ─── COMPANY ──────────────────────────────────────────────────────────────────
+// GST state codes (for place of supply on tax invoices).
+const GST_STATE_CODES = {
+  'Jammu and Kashmir':'01','Himachal Pradesh':'02','Punjab':'03','Chandigarh':'04','Uttarakhand':'05',
+  'Haryana':'06','Delhi':'07','Rajasthan':'08','Uttar Pradesh':'09','Bihar':'10','Sikkim':'11',
+  'Arunachal Pradesh':'12','Nagaland':'13','Manipur':'14','Mizoram':'15','Tripura':'16','Meghalaya':'17',
+  'Assam':'18','West Bengal':'19','Jharkhand':'20','Odisha':'21','Chhattisgarh':'22','Madhya Pradesh':'23',
+  'Gujarat':'24','Daman and Diu':'25','Dadra and Nagar Haveli':'26','Maharashtra':'27','Karnataka':'29',
+  'Goa':'30','Lakshadweep':'31','Kerala':'32','Tamil Nadu':'33','Puducherry':'34','Andaman and Nicobar Islands':'35',
+  'Telangana':'36','Andhra Pradesh':'37','Ladakh':'38','Other Territory':'97'
+};
+
+async function loadCompanySettings() {
+  try {
+    const r = await window.erp.getCompany();
+    const c = r && r.data ? r.data : (r || {});
+
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== null) el.value = val;
+    };
+
+    setVal('cName',      c.name);
+    setVal('cTradeName', c.trade_name);
+    setVal('cAddr',      c.address);
+    setVal('cCity',      c.city);
+    setVal('cPin',       c.pincode);
+    setVal('cPhone',     c.phone);
+    setVal('cEmail',     c.email);
+    setVal('cWeb',       c.website);
+    setVal('cGST',       c.gstin);
+    setVal('cPAN',       c.pan);
+    setVal('bkName',     c.bank_name);
+    setVal('bkBranch',   c.bank_branch);
+    setVal('bkAccNo',    c.bank_account);
+    setVal('bkIFSC',     c.bank_ifsc);
+    setVal('invPrefix',  c.invoice_prefix);
+    const liteEl = document.getElementById('cLiteMode'); if (liteEl) liteEl.checked = !!c.lite_mode;
+    // Invoice Settings tab
+    setVal('invPrefixFull', c.invoice_prefix);
+    setVal('invStart',      c.invoice_seq);
+    setVal('billPrefix',    c.bill_prefix);
+    setVal('invYearFmt',    c.invoice_year_fmt != null ? String(c.invoice_year_fmt) : undefined);
+    setVal('payTerms',      c.payment_terms);
+    setVal('invFooter',     c.invoice_footer);
+    setVal('showBank',      c.show_bank != null ? String(c.show_bank) : undefined);
+    setVal('defGST',        c.default_gst);
+    setVal('defGSTType',    c.default_gst_type);
+    setVal('defTDS',        c.default_tds);
+    setVal('defRCM',        c.default_rcm);
+    // E-Invoicing config
+    setVal('einvProvider',  c.einvoice_provider || 'mock');
+    setVal('einvEnabled',   c.einvoice_enabled != null ? String(c.einvoice_enabled) : '0');
+    setVal('einvApiUrl',    c.einvoice_api_url);
+    setVal('einvCancelUrl', c.einvoice_cancel_url);
+    setVal('einvApiKey',    c.einvoice_api_key);
+    if (typeof toggleEinvGsp === 'function') toggleEinvGsp();
+
+    if (c.state) {
+      const sel = document.getElementById('cState');
+      if (sel) {
+        for (let i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === c.state || sel.options[i].text === c.state) {
+            sel.selectedIndex = i; break;
+          }
+        }
+      }
+    }
+
+    if (c.financial_year) setVal('cFY', c.financial_year);
+    if (c.fy_start_date)  setVal('cFYStart', c.fy_start_date ? c.fy_start_date.split('T')[0] : '');
+    if (c.fy_end_date)    setVal('cFYEnd',   c.fy_end_date   ? c.fy_end_date.split('T')[0]   : '');
+
+    // Restore saved logo (stored as a data URL in logo_path).
+    if (c.logo_path && /^data:image\//.test(c.logo_path)) {
+      const img = document.getElementById('logoImg');
+      const ph  = document.getElementById('logoPlaceholder');
+      if (img) { img.src = c.logo_path; img.style.display = 'block'; }
+      if (ph)  ph.style.display = 'none';
+    }
+
+    // Restore saved signature image (data URL in signature_path).
+    if (c.signature_path && /^data:image\//.test(c.signature_path)) {
+      const img = document.getElementById('signImg');
+      const ph  = document.getElementById('signPlaceholder');
+      if (img) { img.src = c.signature_path; img.style.display = 'block'; }
+      if (ph)  ph.style.display = 'none';
+    }
+    setVal('bkUPI', c.upi_id);
+
+    updateInvPreview();
+  } catch (err) {
+    console.error('loadCompanySettings:', err);
+  }
+}
+
+async function saveCompany() {
+  const g = id => (document.getElementById(id) || {}).value || '';
+  const data = {
+    name:            g('cName'),
+    trade_name:      g('cTradeName'),
+    address:         g('cAddr'),
+    city:            g('cCity'),
+    state:           g('cState'),
+    pincode:         g('cPin'),
+    phone:           g('cPhone'),
+    email:           g('cEmail'),
+    website:         g('cWeb'),
+    gstin:           g('cGST'),
+    pan:             g('cPAN'),
+    bank_name:       g('bkName'),
+    bank_branch:     g('bkBranch'),
+    bank_account:    g('bkAccNo'),
+    bank_ifsc:       g('bkIFSC'),
+    invoice_prefix:  g('invPrefix'),
+    financial_year:  g('cFY'),
+    fy_start_date:   g('cFYStart'),
+    fy_end_date:     g('cFYEnd'),
+    lite_mode:       (document.getElementById('cLiteMode') && document.getElementById('cLiteMode').checked) ? 1 : 0,
+  };
+
+  // Persist the uploaded logo (data URL) and the GST state code for the state.
+  const logoEl = document.getElementById('logoImg');
+  data.logo_path = (logoEl && /^data:image\//.test(logoEl.src)) ? logoEl.src : '';
+  const signEl = document.getElementById('signImg');
+  data.signature_path = (signEl && /^data:image\//.test(signEl.src)) ? signEl.src : '';
+  data.upi_id = g('bkUPI').trim();
+  data.state_code = GST_STATE_CODES[(data.state || '').trim()] || '';
+
+  if (!data.name) { toast('Company name is required.', 'error'); return; }
+
+  try {
+    const r = await window.erp.saveCompany(data);
+    if (r && r.error) { toast('Save failed: ' + r.error, 'error'); return; }
+    toast('Company profile saved successfully!');
+  } catch (err) {
+    toast('Failed to save: ' + err.message, 'error');
+  }
+}
+
+function updateInvPreview() {
+  const prefix = (document.getElementById('invPrefix') || {}).value || 'INV';
+  const el = document.getElementById('invPreview');
+  if (el) el.textContent = prefix + '-001';
+}
+
+function uploadLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('logoImg').src = e.target.result;
+    document.getElementById('logoImg').style.display = 'block';
+    document.getElementById('logoPlaceholder').style.display = 'none';
+    toast('Logo updated — save company profile to persist.');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+  document.getElementById('logoImg').src = '';
+  document.getElementById('logoImg').style.display = 'none';
+  document.getElementById('logoPlaceholder').style.display = 'block';
+  toast('Logo removed — save company profile to persist.', 'warn');
+}
+
+function uploadSignature(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('signImg').src = e.target.result;
+    document.getElementById('signImg').style.display = 'block';
+    document.getElementById('signPlaceholder').style.display = 'none';
+    toast('Signature updated — save company profile to persist.');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeSignature() {
+  document.getElementById('signImg').src = '';
+  document.getElementById('signImg').style.display = 'none';
+  document.getElementById('signPlaceholder').style.display = 'block';
+  toast('Signature removed — save company profile to persist.', 'warn');
+}
+
+// ─── USERS ────────────────────────────────────────────────────────────────────
+let _users = [];
+
+const ROLE_BADGE = {
+  admin:        'b-admin',
+  site_manager: 'b-manager',
+  accountant:   'b-accountant',
+  hr:           'b-viewer',
+  staff:        'b-viewer',
+};
+const ROLE_LABEL = {
+  admin:        'Admin',
+  site_manager: 'Site Manager',
+  accountant:   'Accountant',
+  hr:           'HR',
+  staff:        'Staff',
+};
+
+async function loadUsers() {
+  try {
+    const r = await window.erp.getUsers();
+    _users = Array.isArray(r) ? r : (r && r.data ? r.data : []);
+  } catch (err) {
+    console.error('loadUsers:', err);
+    _users = [];
+  }
+}
+
+async function renderUsers() {
+  await loadUsers();
+  const list = document.getElementById('userList');
+  if (!_users.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">No users found.</div>';
+    return;
+  }
+
+  list.innerHTML = _users.map(u => {
+    const initial = (u.name || u.username || '?').charAt(0).toUpperCase();
+    const roleKey = (u.role || 'staff').toLowerCase();
+    const roleLabel = ROLE_LABEL[roleKey] || u.role;
+    const roleBadge = ROLE_BADGE[roleKey] || 'b-viewer';
+    const isActive = u.active === 1 || u.active === true;
+    const lastLogin = u.last_login ? new Date(u.last_login).toLocaleString('en-IN', {dateStyle:'medium',timeStyle:'short'}) : 'Never';
+
+    return `<div class="user-row">
+      <div class="user-avatar">${initial}</div>
+      <div class="user-info">
+        <div class="user-name">${escHtml(u.name || u.username)}</div>
+        <div class="user-role">${escHtml(u.username)} · Last login: ${lastLogin}</div>
+      </div>
+      <span class="badge ${roleBadge}">${roleLabel}</span>
+      <span class="badge ${isActive ? 'b-active' : 'b-inactive'}">${isActive ? 'Active' : 'Inactive'}</span>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm" onclick="openEditUserModal(${u.id})" title="Edit"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
+        <button class="btn btn-outline btn-sm" onclick="openChangePwModal(${u.id})" title="Change Password"><i data-lucide="key" style="width:12px;height:12px;"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})" title="Deactivate"><i data-lucide="user-x" style="width:12px;height:12px;"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function openAddUserModal() {
+  document.getElementById('addUserModalTitle').textContent = '👤 Add User';
+  document.getElementById('saveUserBtn').textContent = 'Add User';
+  document.getElementById('editUserId').value = '';
+  document.getElementById('uName').value = '';
+  document.getElementById('uLogin').value = '';
+  document.getElementById('uPass').value = '';
+  document.getElementById('uRole').value = 'staff';
+  document.getElementById('uPhone').value = '';
+  document.getElementById('uEmail').value = '';
+  document.getElementById('uActive').value = '1';
+  document.getElementById('uPassGroup').style.display = '';
+  document.getElementById('uActiveGroup').style.display = '';
+  document.getElementById('uLogin').readOnly = false;
+  document.getElementById('addUserModal').classList.add('open');
+}
+
+function openEditUserModal(userId) {
+  const u = _users.find(x => x.id === userId);
+  if (!u) return;
+  document.getElementById('addUserModalTitle').textContent = '✏️ Edit User';
+  document.getElementById('saveUserBtn').textContent = 'Save Changes';
+  document.getElementById('editUserId').value = u.id;
+  document.getElementById('uName').value = u.name || '';
+  document.getElementById('uLogin').value = u.username || '';
+  document.getElementById('uLogin').readOnly = true;
+  document.getElementById('uPass').value = '';
+  document.getElementById('uRole').value = (u.role || 'staff').toLowerCase();
+  document.getElementById('uPhone').value = u.phone || '';
+  document.getElementById('uEmail').value = u.email || '';
+  document.getElementById('uActive').value = (u.active === 1 || u.active === true) ? '1' : '0';
+  document.getElementById('uPassGroup').style.display = 'none';
+  document.getElementById('uActiveGroup').style.display = '';
+  document.getElementById('addUserModal').classList.add('open');
+}
+
+function openChangePwModal(userId) {
+  document.getElementById('cpUserId').value = userId;
+  document.getElementById('cpCurrent').value = '';
+  document.getElementById('cpNew').value = '';
+  document.getElementById('cpConfirm').value = '';
+  document.getElementById('changePwModal').classList.add('open');
+}
+
+async function saveUser() {
+  const editId = document.getElementById('editUserId').value;
+  const isEdit = !!editId;
+
+  const name     = document.getElementById('uName').value.trim();
+  const username = document.getElementById('uLogin').value.trim();
+  const password = document.getElementById('uPass').value;
+  const role     = document.getElementById('uRole').value;
+  const phone    = document.getElementById('uPhone').value.trim();
+  const email    = document.getElementById('uEmail').value.trim();
+  const active   = parseInt(document.getElementById('uActive').value, 10);
+
+  if (!name)     { toast('Full name is required.', 'error'); return; }
+  if (!username) { toast('Username is required.', 'error'); return; }
+  if (!isEdit && !password) { toast('Password is required for new users.', 'error'); return; }
+
+  const data = { name, username, role, phone, email, active };
+  if (isEdit) {
+    data.id = parseInt(editId, 10);
+  } else {
+    data.password = password;
+  }
+
+  try {
+    const r = await window.erp.saveUser(data);
+    if (r && r.error) { toast('Save failed: ' + r.error, 'error'); return; }
+    closeModal('addUserModal');
+    toast(isEdit ? 'User updated!' : 'User added!');
+    await renderUsers();
+  } catch (err) {
+    toast('Failed: ' + err.message, 'error');
+  }
+}
+
+async function deleteUser(userId) {
+  const u = _users.find(x => x.id === userId);
+  if (!u) return;
+  if (!confirm(`Deactivate user "${u.name || u.username}"? They will no longer be able to log in.`)) return;
+  try {
+    const r = await window.erp.deleteUser(userId);
+    if (r && r.error) { toast('Failed: ' + r.error, 'error'); return; }
+    toast('User deactivated.', 'warn');
+    await renderUsers();
+  } catch (err) {
+    toast('Failed: ' + err.message, 'error');
+  }
+}
+
+async function doChangePassword() {
+  const userId      = parseInt(document.getElementById('cpUserId').value, 10);
+  const currentPw   = document.getElementById('cpCurrent').value;
+  const newPw       = document.getElementById('cpNew').value;
+  const confirmPw   = document.getElementById('cpConfirm').value;
+
+  if (!newPw)             { toast('New password is required.', 'error'); return; }
+  if (newPw !== confirmPw){ toast('Passwords do not match.', 'error'); return; }
+  if (newPw.length < 4)   { toast('Password must be at least 4 characters.', 'error'); return; }
+
+  try {
+    const r = await window.erp.changePassword({ id: userId, currentPassword: currentPw, newPassword: newPw });
+    if (r && r.error) { toast('Failed: ' + r.error, 'error'); return; }
+    closeModal('changePwModal');
+    toast('Password changed successfully!');
+  } catch (err) {
+    toast('Failed: ' + err.message, 'error');
+  }
+}
+
+// ─── INVOICE SETTINGS (local UI only — prefix stored via saveCompany) ─────────
+function updateInvPreviewFull() {
+  const prefix  = (document.getElementById('invPrefixFull') || {}).value || 'INV';
+  const start   = +((document.getElementById('invStart') || {}).value || 1);
+  const yearFmt = +((document.getElementById('invYearFmt') || {}).value || 1);
+  const yr      = new Date().getFullYear();
+  const num     = String(start).padStart(3, '0');
+  const el      = document.getElementById('invPreviewFull');
+  if (el) el.textContent = yearFmt ? `${prefix}-${yr}-${num}` : `${prefix}-${num}`;
+}
+document.addEventListener('input', e => {
+  const id = e.target && e.target.id;
+  if (['invPrefixFull','invStart','invYearFmt','invPrefix'].includes(id)) {
+    updateInvPreviewFull();
+    updateInvPreview();
+  }
+});
+
+// Show the GSP credential fields only when a live provider is selected.
+function toggleEinvGsp() {
+  const prov = (document.getElementById('einvProvider') || {}).value;
+  const box  = document.getElementById('einvGspFields');
+  if (box) box.style.display = prov === 'http' ? 'block' : 'none';
+}
+
+async function saveInvoiceSettings() {
+  const val = (id) => { const el = document.getElementById(id); return el ? el.value : undefined; };
+  const num = (id) => { const v = parseInt(val(id), 10); return isNaN(v) ? undefined : v; };
+  const data = {
+    invoice_prefix:   (val('invPrefixFull') || 'INV').trim(),
+    invoice_seq:      num('invStart'),
+    bill_prefix:      (val('billPrefix') || 'BILL').trim(),
+    invoice_year_fmt: num('invYearFmt'),
+    payment_terms:    val('payTerms'),
+    invoice_footer:   val('invFooter'),
+    show_bank:        num('showBank'),
+    default_gst:      val('defGST'),
+    default_gst_type: val('defGSTType'),
+    default_tds:      val('defTDS'),
+    default_rcm:      val('defRCM'),
+    einvoice_provider: val('einvProvider'),
+    einvoice_enabled:  num('einvEnabled'),
+    einvoice_api_url:  val('einvApiUrl'),
+    einvoice_cancel_url: val('einvCancelUrl'),
+    einvoice_api_key:  val('einvApiKey'),
+  };
+  // Drop any undefined keys so the dynamic UPDATE only touches real values.
+  Object.keys(data).forEach(k => data[k] === undefined && delete data[k]);
+  const ev = window.event;
+  const btn = ev && ev.target ? ev.target.closest('button') : null;
+  if (btn) { btn.disabled = true; }
+  try {
+    const res = await window.erp.saveCompany(data);
+    if (res && res.success === false) throw new Error(res.error || 'Save failed');
+    // Keep the Company-tab prefix field in sync too.
+    const cp = document.getElementById('invPrefix'); if (cp) cp.value = data.invoice_prefix;
+    toast('✓ Invoice settings saved.');
+  } catch (e) {
+    toast('Could not save invoice settings: ' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; }
+  }
+}
+
+// ─── SECURITY / MANAGEMENT PIN ────────────────────────────────────────────────
+async function saveManagementPin() {
+  const oldPin     = document.getElementById('oldPin').value.trim();
+  const newPin     = document.getElementById('newPin').value.trim();
+  const confirmPin = document.getElementById('confirmPin').value.trim();
+
+  if (!newPin)              { toast('New PIN is required.', 'error'); return; }
+  if (newPin.length < 4)    { toast('PIN must be at least 4 digits.', 'error'); return; }
+  if (newPin !== confirmPin) { toast('PINs do not match.', 'error'); return; }
+  if (!/^\d+$/.test(newPin)) { toast('PIN must contain digits only.', 'error'); return; }
+
+  try {
+    const payload = { newPin };
+    if (oldPin) payload.oldPin = oldPin;
+
+    const r = await window.erp.setManagementPin(payload);
+    if (r && r.error) { toast('Failed: ' + r.error, 'error'); return; }
+    document.getElementById('oldPin').value = '';
+    document.getElementById('newPin').value = '';
+    document.getElementById('confirmPin').value = '';
+    // After setting once, always require old PIN
+    document.getElementById('oldPinGroup').style.display = '';
+    toast('Management PIN set successfully!');
+  } catch (err) {
+    toast('Failed: ' + err.message, 'error');
+  }
+}
+
+// ─── BACKUP ───────────────────────────────────────────────────────────────────
+async function exportBackup() {
+  try {
+    const r = await window.erp.exportBackup();
+    if (r && r.error) { toast('Export failed: ' + r.error, 'error'); return; }
+    const path = r && r.data ? r.data : '';
+    const now = new Date().toLocaleString('en-IN');
+    document.getElementById('lastBackupTime').textContent = 'Last backup: ' + now;
+    toast('Backup saved' + (path ? ': ' + path.split(/[\\/]/).pop() : '') + '!');
+  } catch (err) {
+    toast('Export failed: ' + err.message, 'error');
+  }
+}
+
+function confirmImportBackup() {
+  document.getElementById('importConfirmModal').classList.add('open');
+}
+
+async function doImportBackup() {
+  closeModal('importConfirmModal');
+  try {
+    const r = await window.erp.importBackup();
+    if (r && r.error) { toast('Restore failed: ' + r.error, 'error'); return; }
+    toast('Data restored successfully! The app will restart.', 'success');
+    setTimeout(() => { try { window.erp.quitApp(); } catch(e) {} }, 2000);
+  } catch (err) {
+    toast('Restore failed: ' + err.message, 'error');
+  }
+}
+
+// ─── LICENSE / VERSION INFO ───────────────────────────────────────────────────
+async function loadLicenseInfo() {
+  try {
+    const [ver, dbPath] = await Promise.all([
+      window.erp.getAppVersion(),
+      window.erp.getDbPath(),
+    ]);
+    const versionStr = typeof ver === 'string' ? ver : (ver && ver.data ? ver.data : '—');
+    const pathStr    = typeof dbPath === 'string' ? dbPath : (dbPath && dbPath.data ? dbPath.data : '—');
+    const el1 = document.getElementById('appVersion');
+    const el2 = document.getElementById('appVersion2');
+    const el3 = document.getElementById('dbPathDisplay');
+    if (el1) el1.textContent = versionStr;
+    if (el2) el2.textContent = versionStr;
+    if (el3) el3.textContent = pathStr;
+  } catch (err) {
+    console.error('loadLicenseInfo:', err);
+  }
+}
+
+// ─── SESSION ──────────────────────────────────────────────────────────────────
+async function loadSession() {
+  try {
+    const r = await window.erp.getSession();
+    const user = r && r.data ? r.data : (r || null);
+    if (user) {
+      const nameEl = document.getElementById('sessionUserName');
+      const roleEl = document.getElementById('sessionUserRole');
+      if (nameEl) nameEl.textContent = user.name || user.username || '—';
+      if (roleEl) roleEl.textContent = ROLE_LABEL[(user.role || '').toLowerCase()] || user.role || '—';
+
+      // Hide Security tab for non-admins
+      if ((user.role || '').toLowerCase() !== 'admin') {
+        const navSec = document.getElementById('nav-security');
+        if (navSec) navSec.style.display = 'none';
+      } else {
+        // Show old-PIN field since admin may have already set one
+        document.getElementById('oldPinGroup').style.display = '';
+      }
+    }
+  } catch (err) {
+    console.error('loadSession:', err);
+  }
+}
+
+async function doLogout() {
+  try {
+    await window.erp.logout();
+  } catch (e) {}
+  try { window.location.reload(); } catch (e) {}
+}
+
+// ─── CHART OF ACCOUNTS ────────────────────────────────────────────────────────
+let _accounts = [];
+
+// Display order for account groups. Backend uses singular Asset/Liability/etc.
+const COA_GROUP_ORDER = ['Asset','Liability','Equity','Income','Expense'];
+const COA_GROUP_HEADING = {
+  Asset:'Assets', Liability:'Liabilities', Equity:'Equity', Income:'Income', Expense:'Expenses',
+};
+
+function fmtMoney(n) {
+  const v = Number(n) || 0;
+  return v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function loadAccounts() {
+  try {
+    const r = await window.erp.getChartOfAccounts({});
+    _accounts = Array.isArray(r) ? r : (r && r.data ? r.data : []);
+  } catch (err) {
+    console.error('loadAccounts:', err);
+    _accounts = [];
+  }
+}
+
+async function renderAccounts() {
+  await loadAccounts();
+  const body = document.getElementById('coaList');
+  if (!body) return;
+  if (!_accounts.length) {
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted);">No accounts found.</td></tr>';
+    return;
+  }
+
+  // Group accounts, then order groups by COA_GROUP_ORDER (unknown groups last).
+  const groups = {};
+  _accounts.forEach(a => {
+    const g = a.account_group || 'Other';
+    (groups[g] = groups[g] || []).push(a);
+  });
+  const orderedKeys = COA_GROUP_ORDER.filter(g => groups[g])
+    .concat(Object.keys(groups).filter(g => COA_GROUP_ORDER.indexOf(g) === -1));
+
+  let html = '';
+  orderedKeys.forEach(g => {
+    const rows = groups[g].slice().sort((a, b) =>
+      String(a.code || '').localeCompare(String(b.code || '')) ||
+      String(a.name || '').localeCompare(String(b.name || '')));
+    html += `<tr><td colspan="7" style="padding:10px 10px 4px;font-weight:700;color:var(--accent);text-transform:uppercase;font-size:10px;letter-spacing:.5px;">${escHtml(COA_GROUP_HEADING[g] || g)}</td></tr>`;
+    rows.forEach(a => {
+      const isSystem = a.is_system === 1 || a.is_system === true;
+      const isActive = a.active === 1 || a.active === true;
+      const dr = Number(a.opening_debit) || 0;
+      const cr = Number(a.opening_credit) || 0;
+      let openCell = '<span style="color:var(--faint);">—</span>';
+      if (dr > 0)      openCell = `${fmtMoney(dr)} <span style="color:var(--muted);font-size:10px;">Dr</span>`;
+      else if (cr > 0) openCell = `${fmtMoney(cr)} <span style="color:var(--muted);font-size:10px;">Cr</span>`;
+      html += `<tr>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);font-family:monospace;color:var(--muted);">${escHtml(a.code || '—')}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text);font-weight:600;">${escHtml(a.name || '')}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--muted);">${escHtml(a.account_group || '')}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);text-align:right;color:var(--text);">${openCell}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);text-align:center;"><span class="badge ${isSystem ? 'b-admin' : 'b-viewer'}">${isSystem ? 'System' : 'Custom'}</span></td>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);text-align:center;"><span class="badge ${isActive ? 'b-active' : 'b-inactive'}">${isActive ? 'Active' : 'Inactive'}</span></td>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);text-align:right;white-space:nowrap;">
+          <button class="btn btn-outline btn-sm" onclick="openEditAccountModal(${a.id})" title="Edit"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteAccount(${a.id})" title="Delete"${isSystem ? ' disabled style="opacity:.4;cursor:not-allowed;"' : ''}><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+        </td>
+      </tr>`;
+    });
+  });
+  body.innerHTML = html;
+  if (window.lucide) lucide.createIcons();
+}
+
+function _resetAccountForm() {
+  document.getElementById('acId').value = '';
+  document.getElementById('acIsSystem').value = '0';
+  document.getElementById('acName').value = '';
+  document.getElementById('acGroup').value = 'Asset';
+  document.getElementById('acCode').value = '';
+  document.getElementById('acOpenAmt').value = '';
+  document.getElementById('acOpenSide').value = 'Dr';
+  document.getElementById('acActive').value = '1';
+  document.getElementById('acName').disabled = false;
+  document.getElementById('acGroup').disabled = false;
+  document.getElementById('acCode').disabled = false;
+  document.getElementById('acSystemNote').style.display = 'none';
+}
+
+function openAddAccountModal() {
+  _resetAccountForm();
+  document.getElementById('accountModalTitle').textContent = '📒 Add Account';
+  document.getElementById('saveAccountBtn').textContent = 'Add Account';
+  document.getElementById('accountModal').classList.add('open');
+}
+
+function openEditAccountModal(id) {
+  const a = _accounts.find(x => x.id === id);
+  if (!a) return;
+  _resetAccountForm();
+  const isSystem = a.is_system === 1 || a.is_system === true;
+  document.getElementById('accountModalTitle').textContent = '✏️ Edit Account';
+  document.getElementById('saveAccountBtn').textContent = 'Save Changes';
+  document.getElementById('acId').value = a.id;
+  document.getElementById('acIsSystem').value = isSystem ? '1' : '0';
+  document.getElementById('acName').value = a.name || '';
+  document.getElementById('acGroup').value = a.account_group || 'Asset';
+  document.getElementById('acCode').value = a.code || '';
+  const dr = Number(a.opening_debit) || 0;
+  const cr = Number(a.opening_credit) || 0;
+  if (cr > 0) {
+    document.getElementById('acOpenAmt').value = cr;
+    document.getElementById('acOpenSide').value = 'Cr';
+  } else {
+    document.getElementById('acOpenAmt').value = dr > 0 ? dr : '';
+    document.getElementById('acOpenSide').value = 'Dr';
+  }
+  document.getElementById('acActive').value = (a.active === 1 || a.active === true) ? '1' : '0';
+
+  if (isSystem) {
+    // System accounts: name, group and code are locked by the backend.
+    document.getElementById('acName').disabled = true;
+    document.getElementById('acGroup').disabled = true;
+    document.getElementById('acCode').disabled = true;
+    document.getElementById('acSystemNote').style.display = 'block';
+  }
+  document.getElementById('accountModal').classList.add('open');
+}
+
+async function saveAccount() {
+  const editId   = document.getElementById('acId').value;
+  const isEdit   = !!editId;
+  const isSystem = document.getElementById('acIsSystem').value === '1';
+  const name     = document.getElementById('acName').value.trim();
+  const group    = document.getElementById('acGroup').value;
+  const code     = document.getElementById('acCode').value.trim();
+  const amt      = parseFloat(document.getElementById('acOpenAmt').value) || 0;
+  const side     = document.getElementById('acOpenSide').value;
+  const active   = parseInt(document.getElementById('acActive').value, 10);
+
+  if (!isSystem && !name) { toast('Account name is required.', 'error'); return; }
+
+  const data = {
+    opening_debit:  side === 'Dr' ? amt : 0,
+    opening_credit: side === 'Cr' ? amt : 0,
+    active,
+  };
+  if (isEdit) data.id = parseInt(editId, 10);
+  // For system accounts the backend ignores name/group/code; send only the editable fields.
+  if (!isSystem) {
+    data.name = name;
+    data.account_group = group;
+    if (code) data.code = code;
+  }
+
+  const btn = document.getElementById('saveAccountBtn');
+  if (btn) btn.disabled = true;
+  try {
+    const r = await window.erp.saveLedgerAccount(data);
+    if (r && r.success === false) { toast('Save failed: ' + (r.error || 'unknown'), 'error'); return; }
+    closeModal('accountModal');
+    toast(isEdit ? 'Account updated!' : 'Account added!');
+    await renderAccounts();
+  } catch (err) {
+    toast('Failed: ' + err.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function deleteAccount(id) {
+  const a = _accounts.find(x => x.id === id);
+  if (!a) return;
+  if (a.is_system === 1 || a.is_system === true) {
+    toast('System accounts cannot be deleted.', 'error');
+    return;
+  }
+  if (!confirm(`Delete account "${a.name}"? If it is used by journal entries it will be deactivated instead.`)) return;
+  try {
+    const r = await window.erp.deleteLedgerAccount(id);
+    if (r && r.success === false) { toast('Failed: ' + (r.error || 'Cannot delete this account.'), 'error'); return; }
+    const d = r && r.data ? r.data : {};
+    if (d.deactivated) toast('Account is referenced by entries — deactivated instead.', 'warn');
+    else toast('Account deleted.', 'success');
+    await renderAccounts();
+  } catch (err) {
+    toast('Failed: ' + err.message, 'error');
+  }
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ─── DATA IMPORT (legacy ERP migration) ───────────────────────────────────────
+const IMPORT_SPECS = {
+  clients: {
+    label: 'Clients',
+    required: ['name'],
+    columns: ['name','contact_person','phone','email','address','city','state','pincode','gstin','pan','credit_days'],
+    dates: [], amounts: [],
+    sample: 'ABC Constructions Ltd,Ramesh Kumar,9876543210,abc@example.com,"MG Road, Guwahati",Guwahati,Assam,781001,18AABCA1234A1Z5,AABCA1234A,30',
+  },
+  vendors: {
+    label: 'Vendors',
+    required: ['name'],
+    columns: ['name','contact_person','phone','email','address','city','state','pincode','gstin','pan','category','credit_days'],
+    dates: [], amounts: [],
+    sample: 'XYZ Cement Suppliers,Suresh Das,9123456780,xyz@example.com,"NH 37, Silchar",Silchar,Assam,788005,18AABCX9999B1Z3,AABCX9999B,material,15',
+  },
+  employees: {
+    label: 'Employees',
+    required: ['name'],
+    columns: ['emp_code','name','phone','email','designation','department','join_date','basic_salary','hra','da'],
+    dates: ['join_date'], amounts: ['basic_salary','hra','da'],
+    sample: 'EMP-001,Rajib Sharma,9988776655,rajib@example.com,Site Engineer,site,2024-06-01,25000,5000,2000',
+  },
+  sites: {
+    label: 'Sites / Projects',
+    required: ['name'],
+    columns: ['site_code','name','location','city','state','contract_value','start_date','status'],
+    dates: ['start_date'], amounts: ['contract_value'],
+    sample: 'SITE-001,Highway Bridge Package 2,"NH-37 Km 45",Silchar,Assam,15000000,2025-01-15,active',
+  },
+  opening_invoices: {
+    label: 'Opening Receivables',
+    required: ['client_name','balance_amount'],
+    columns: ['client_name','invoice_no','invoice_date','due_date','balance_amount','description'],
+    dates: ['invoice_date','due_date'], amounts: ['balance_amount'],
+    sample: 'ABC Constructions Ltd,OLD-INV-101,2025-12-01,2026-01-01,250000,Pending from old system',
+  },
+  opening_bills: {
+    label: 'Opening Payables',
+    required: ['vendor_name','balance_amount'],
+    columns: ['vendor_name','bill_no','bill_date','due_date','balance_amount','description'],
+    dates: ['bill_date','due_date'], amounts: ['balance_amount'],
+    sample: 'XYZ Cement Suppliers,OLD-BILL-55,2025-11-20,2025-12-20,85000,Pending from old system',
+  },
+};
+
+// Human-friendly labels for the canonical field names, shown in the mapping UI.
+const FIELD_LABELS = {
+  name: 'Name', client_name: 'Client name', vendor_name: 'Vendor name',
+  contact_person: 'Contact person', phone: 'Phone', email: 'Email', address: 'Address',
+  city: 'City', state: 'State', pincode: 'Pincode', gstin: 'GSTIN', pan: 'PAN',
+  credit_days: 'Credit days', category: 'Category',
+  client_code: 'Client code', vendor_code: 'Vendor code', emp_code: 'Employee code', site_code: 'Site code',
+  designation: 'Designation', department: 'Department', join_date: 'Joining date',
+  basic_salary: 'Basic salary', hra: 'HRA', da: 'DA',
+  location: 'Location', contract_value: 'Contract value', start_date: 'Start date', status: 'Status',
+  balance_amount: 'Outstanding amount', invoice_no: 'Invoice no', bill_no: 'Bill no',
+  invoice_date: 'Invoice date', bill_date: 'Bill date', due_date: 'Due date', description: 'Description',
+};
+function fieldLabel(f) { return FIELD_LABELS[f] || f; }
+
+let _impRows = null;       // canonical rows ready for bulk-import
+let _impHeader = null;     // raw source header names, in file order
+let _impDataRows = null;   // raw source data rows (arrays)
+let _impMapping = null;    // { canonicalField: sourceHeaderName }
+
+function updateImportTemplate() {
+  const spec = IMPORT_SPECS[document.getElementById('impEntity').value];
+  document.getElementById('impColumns').innerHTML =
+    '<b style="color:var(--text);">Required columns:</b> ' + spec.required.join(', ') +
+    ' &nbsp;·&nbsp; <b style="color:var(--text);">All recognised columns:</b> ' + spec.columns.join(', ') +
+    '<br><span style="color:var(--faint);">Column names must be in the first row. Extra columns are ignored. Dates as YYYY-MM-DD.</span>';
+  // Reset file state when entity changes
+  resetImportState();
+  document.getElementById('impFile').value = '';
+  document.getElementById('impFileStatus').textContent = '';
+}
+
+function resetImportState() {
+  _impRows = null; _impHeader = null; _impDataRows = null; _impMapping = null;
+  document.getElementById('impMapCard').style.display = 'none';
+  document.getElementById('impPreviewCard').style.display = 'none';
+  document.getElementById('impRunBtn').disabled = true;
+  document.getElementById('impResult').textContent = '';
+  document.getElementById('impErrors').style.display = 'none';
+}
+
+function downloadImportTemplate() {
+  const entity = document.getElementById('impEntity').value;
+  const spec = IMPORT_SPECS[entity];
+  const csv = spec.columns.join(',') + '\n' + spec.sample + '\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'Import_Template_' + entity + '.csv';
+  a.click();
+}
+
+function parseImportCSV(text) {
+  const rows = [];
+  let cur = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"' && text[i+1] === '"') { field += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else field += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === ',') { cur.push(field); field = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (field !== '' || cur.length) { cur.push(field); rows.push(cur); cur = []; field = ''; }
+      if (ch === '\r' && text[i+1] === '\n') i++;
+    } else field += ch;
+  }
+  if (field !== '' || cur.length) { cur.push(field); rows.push(cur); }
+  return rows;
+}
+
+async function previewImport() {
+  const fileEl = document.getElementById('impFile');
+  const status = document.getElementById('impFileStatus');
+  resetImportState();
+  if (!fileEl.files || !fileEl.files.length) return;
+
+  const text = await fileEl.files[0].text();
+  const raw = parseImportCSV(text);
+  if (raw.length < 2) { status.textContent = '⚠️ File looks empty — it needs a header row plus at least one data row.'; return; }
+
+  // Keep the source headers exactly as written so we can show them and map by them.
+  _impHeader = raw[0].map(h => String(h || '').trim());
+  _impDataRows = raw.slice(1);
+
+  const spec = IMPORT_SPECS[document.getElementById('impEntity').value];
+  // Auto-detect which source column feeds each ERP field.
+  _impMapping = ImportMapper.guessMapping(_impHeader, spec.columns);
+
+  status.textContent = '✓ Read ' + _impHeader.length + ' columns. Check the matches below.';
+  renderMappingUI(spec);
+  rebuildMappedRows(spec);
+}
+
+function renderMappingUI(spec) {
+  const tbl = document.getElementById('impMapTable');
+  const opts = (selected) => '<option value="">— Don\'t import —</option>' +
+    _impHeader.map(h => `<option value="${escHtml(h)}"${h === selected ? ' selected' : ''}>${escHtml(h)}</option>`).join('');
+
+  tbl.innerHTML =
+    '<tr><th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--faint);text-transform:uppercase;font-size:10px;">ERP field</th>' +
+    '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--faint);text-transform:uppercase;font-size:10px;">Your column</th></tr>' +
+    spec.columns.map(f => {
+      const req = spec.required.includes(f);
+      return `<tr>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text);">${fieldLabel(f)}${req ? ' <span style="color:var(--danger);">*</span>' : ''}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);">
+          <select data-field="${f}" onchange="onMappingChange()" style="width:100%;max-width:280px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--text);">${opts(_impMapping[f] || '')}</select>
+        </td></tr>`;
+    }).join('');
+
+  document.getElementById('impMapCard').style.display = 'block';
+  if (window.lucide) lucide.createIcons();
+}
+
+function onMappingChange() {
+  const spec = IMPORT_SPECS[document.getElementById('impEntity').value];
+  _impMapping = {};
+  document.querySelectorAll('#impMapTable select[data-field]').forEach(sel => {
+    _impMapping[sel.getAttribute('data-field')] = sel.value;
+  });
+  rebuildMappedRows(spec);
+}
+
+function rebuildMappedRows(spec) {
+  const status = document.getElementById('impFileStatus');
+  _impRows = ImportMapper.applyMapping(_impHeader, _impDataRows, _impMapping, {
+    dateFields: spec.dates, amountFields: spec.amounts,
+  });
+
+  // Which source columns are not being imported (informational only).
+  const mapped = Object.values(_impMapping).filter(Boolean);
+  const unmapped = _impHeader.filter(h => mapped.indexOf(h) === -1);
+  document.getElementById('impUnmapped').innerHTML = unmapped.length
+    ? 'Columns in your file that will be ignored: ' + unmapped.map(escHtml).join(', ')
+    : 'Every column in your file is being used.';
+
+  const missing = spec.required.filter(rc => !_impMapping[rc]);
+  const previewCard = document.getElementById('impPreviewCard');
+  const runBtn = document.getElementById('impRunBtn');
+
+  if (missing.length) {
+    status.textContent = '⚠️ Please pick a column for the required field(s): ' + missing.map(fieldLabel).join(', ') + '.';
+    previewCard.style.display = 'none';
+    runBtn.disabled = true;
+    return;
+  }
+  if (!_impRows.length) {
+    status.textContent = '⚠️ No data rows found in the file.';
+    previewCard.style.display = 'none';
+    runBtn.disabled = true;
+    return;
+  }
+
+  status.textContent = '✓ ' + _impRows.length + ' rows ready to import.';
+  runBtn.disabled = false;
+
+  // Preview using the mapped canonical fields (only those actually mapped).
+  const previewCols = spec.columns.filter(c => _impMapping[c]);
+  previewCard.style.display = 'block';
+  const tbl = document.getElementById('impPreviewTable');
+  tbl.innerHTML = '<tr>' + previewCols.map(c => `<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--faint);text-transform:uppercase;font-size:10px;">${fieldLabel(c)}</th>`).join('') + '</tr>' +
+    _impRows.slice(0,5).map(r => '<tr>' + previewCols.map(c => `<td style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted);">${escHtml(r[c] == null || r[c] === '' ? '—' : String(r[c]))}</td>`).join('') + '</tr>').join('');
+}
+
+async function runImport() {
+  if (!_impRows || !_impRows.length) { alert('Choose a CSV file first.'); return; }
+  const entity = document.getElementById('impEntity').value;
+  const spec = IMPORT_SPECS[entity];
+  if (!confirm(`Import ${_impRows.length} rows as ${spec.label}?\n\nDuplicates will be skipped automatically.`)) return;
+
+  document.getElementById('impRunBtn').disabled = true;
+  document.getElementById('impResult').textContent = 'Importing…';
+
+  const r = await window.erp.bulkImport({ entity, rows: _impRows });
+  if (r && r.success) {
+    const d = r.data;
+    document.getElementById('impResult').innerHTML =
+      `<span style="color:var(--success);font-weight:700;">✓ Imported ${d.inserted}</span>` +
+      (d.skipped ? ` · <span style="color:var(--warn,#10b981);">${d.skipped} skipped (duplicates/invalid)</span>` : '');
+    const errBox = document.getElementById('impErrors');
+    if (d.errors && d.errors.length) {
+      errBox.style.display = 'block';
+      errBox.innerHTML = d.errors.map(e => '• ' + e).join('<br>');
+    } else errBox.style.display = 'none';
+  } else {
+    document.getElementById('impResult').innerHTML = '<span style="color:var(--danger);">Import failed: ' + ((r && r.error) || 'unknown') + '</span>';
+  }
+  document.getElementById('impRunBtn').disabled = false;
+}
+
+// ─── CLOUD vs DESKTOP ─────────────────────────────────────────────────────────
+// The same screens run in the Electron desktop build and the cloud web build.
+// A few panels (License/Info, Backup) describe the desktop reality and read as
+// "broken" in the browser — so detect the cloud and rewrite that copy to match.
+let IS_CLOUD = false;
+async function detectCloud() {
+  try {
+    const p = await window.erp.getDbPath();
+    const s = typeof p === 'string' ? p : (p && p.data) || '';
+    IS_CLOUD = s === '(cloud)';
+  } catch (_) { IS_CLOUD = false; }
+}
+
+function adaptForCloud() {
+  if (!IS_CLOUD) return;
+
+  // License / Info — the desktop text ("Windows / Electron", "Local, offline")
+  // is wrong for the hosted web app. Show the cloud reality instead.
+  const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  document.querySelectorAll('#sec-license [data-platform]').forEach(el => { el.textContent = 'Web · Cloud-hosted'; });
+  setText('dbPathDisplay', 'Managed cloud database (hosted by Munimo)');
+  const engineNote = document.getElementById('engineNote');
+  if (engineNote) engineNote.textContent = 'Managed cloud — backed up automatically every night';
+
+  // Backup & Restore — manual file export/restore is a desktop concept. On the
+  // cloud, backups run server-side nightly. Replace the section with the truth.
+  const bk = document.getElementById('sec-backup');
+  if (bk) {
+    const sub = bk.querySelector('.section-sub');
+    if (sub) sub.textContent = 'Your data is backed up automatically on the server every night. There is nothing you need to do.';
+    bk.innerHTML = `
+      <div class="section-title">💾 Backup &amp; Restore</div>
+      <div class="section-sub">Your data is backed up automatically on the server every night — nothing for you to do.</div>
+      <div class="card">
+        <div class="card-title"><i data-lucide="shield-check" style="width:14px;height:14px;"></i> Automatic Cloud Backup</div>
+        <div class="backup-card">
+          <div class="backup-icon">☁️</div>
+          <div class="backup-info">
+            <div class="backup-title">Nightly Backup — Active</div>
+            <div class="backup-desc">A complete copy of your data is saved securely on the server every night at 2:30 AM. Backups are kept safe by Munimo, so you never lose anything even if your device is lost or replaced.</div>
+            <div class="backup-time">No action needed · Runs automatically</div>
+          </div>
+          <span class="badge b-active">Protected</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i data-lucide="download-cloud" style="width:14px;height:14px;"></i> Need a copy or a restore?</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+          To download a copy of your data, or to restore from a previous backup,
+          contact Munimo support and we'll handle it for you safely.<br>
+          <span style="color:var(--accent);font-weight:600;">📞 9599942248 · ✉️ support@munimo.online</span>
+        </div>
+      </div>`;
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  lucide.createIcons();
+  await detectCloud();
+  await loadSession();
+  await loadCompanySettings();
+  await loadUsers();
+  updateInvPreviewFull();
+  updateImportTemplate();
+  adaptForCloud();
+}
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+// Shows a visible error instead of a dead page if the bridge never appears.
+(function boot(tries) {
+  if (window.erp) { init(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

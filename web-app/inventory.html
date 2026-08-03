@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Inventory & Stock</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;
+  --info:#3b82f6;--warn:#f59e0b;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+.tabs{display:flex;gap:4px;padding:18px 24px 0;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;}
+.tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px 24px;border-bottom:1px solid var(--border);}
+.kpi{background:var(--surface2);border-radius:10px;padding:14px 16px;border:1px solid var(--border);}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+.kpi-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;gap:10px;flex-wrap:wrap;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 14px;flex:1;max-width:320px;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%;}
+.search-box input::placeholder{color:var(--faint);}
+.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filter-sel{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--muted);outline:none;}
+.filter-sel option{background:var(--surface2);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-info{background:rgba(59,130,246,0.12);color:var(--info);border:1px solid rgba(59,130,246,0.2);}
+.btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2);}
+.btn-sm{padding:5px 9px;font-size:12px;}
+.tc{padding:0 24px 24px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:13px;color:var(--muted);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+.name-bold{font-weight:600;color:var(--text);}
+.sub-text{font-size:11px;color:var(--faint);}
+.code-badge{font-size:11px;font-weight:700;font-family:monospace;background:var(--surface3);color:var(--accent);padding:2px 7px;border-radius:5px;}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);}
+.q-in{color:var(--success);font-weight:700;}
+.q-out{color:var(--danger);font-weight:700;}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.b-active{background:rgba(34,197,94,0.12);color:var(--success);}
+.b-inactive{background:rgba(148,163,184,0.12);color:var(--muted);}
+.b-reorder{background:rgba(245,158,11,0.14);color:var(--warn);}
+.b-in{background:rgba(34,197,94,0.12);color:var(--success);}
+.b-out{background:rgba(239,68,68,0.12);color:var(--danger);}
+.b-opening{background:rgba(59,130,246,0.12);color:var(--info);}
+.b-adjust{background:rgba(245,158,11,0.14);color:var(--warn);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:680px;max-height:93vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;font-size:13px;color:var(--text);outline:none;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:60px;}
+.section-hdr{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:0.5px;text-transform:uppercase;padding:6px 0 2px;border-bottom:1px solid rgba(16,185,129,0.15);margin:4px 0 2px;grid-column:1/-1;}
+.empty{text-align:center;padding:54px 24px;color:var(--faint);}
+.empty .ei{font-size:34px;margin-bottom:10px;}
+.empty p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface3);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 10px 40px rgba(0,0,0,0.5);opacity:0;transition:opacity .2s;pointer-events:none;z-index:500;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" data-tab="items" onclick="switchTab('items')">Items &amp; Stock</div>
+  <div class="tab" data-tab="ledger" onclick="switchTab('ledger')">Stock Ledger</div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="kpi-lbl">Active Items</div><div class="kpi-val" id="kItems">0</div></div>
+  <div class="kpi"><div class="kpi-lbl">Total Stock Value</div><div class="kpi-val" id="kValue" style="color:var(--accent);">₹0</div></div>
+  <div class="kpi"><div class="kpi-lbl">Below Reorder Level</div><div class="kpi-val" id="kReorder" style="color:var(--warn);">0</div></div>
+</div>
+
+<!-- ITEMS TAB -->
+<div id="tab-items">
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);"></i>
+      <input type="text" id="itemSearch" placeholder="Search items by name or code..." oninput="renderItems()">
+    </div>
+    <div class="toolbar-right">
+      <select class="filter-sel" id="itemStatusFilter" onchange="renderItems()">
+        <option value="active">Active</option>
+        <option value="">All</option>
+        <option value="inactive">Inactive</option>
+      </select>
+      <button class="btn btn-outline" onclick="exportStockCSV()"><i data-lucide="download" style="width:14px;height:14px;"></i> Stock Statement</button>
+      <button class="btn btn-info" onclick="openMoveModal()"><i data-lucide="arrow-down-up" style="width:14px;height:14px;"></i> Stock Movement</button>
+      <button class="btn btn-primary" onclick="openItemModal()"><i data-lucide="plus" style="width:14px;height:14px;"></i> New Item</button>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Code</th><th>Item</th><th>Category</th><th>Unit</th>
+      <th style="text-align:right;">On Hand</th><th style="text-align:right;">Avg Rate</th>
+      <th style="text-align:right;">Stock Value</th><th style="text-align:right;">Reorder</th><th>Status</th><th>Actions</th>
+    </tr></thead>
+    <tbody id="itemsBody"></tbody></table>
+    <div class="empty" id="itemsEmpty" style="display:none;">
+      <div class="ei">📦</div>
+      <p>No inventory items yet. Add materials to track stock on hand, valuation and reorder levels.</p>
+      <button class="btn btn-primary" onclick="openItemModal()">+ New Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEDGER TAB -->
+<div id="tab-ledger" style="display:none;">
+  <div class="toolbar">
+    <div class="toolbar-right" style="margin-left:0;">
+      <select class="filter-sel" id="ledgerItemFilter" onchange="loadLedger()"><option value="">All items</option></select>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Date</th><th>Item</th><th>Type</th><th style="text-align:right;">Qty</th>
+      <th style="text-align:right;">Rate</th><th style="text-align:right;">Value</th>
+      <th style="text-align:right;">Closing Qty</th><th>Site</th><th>Notes</th>
+    </tr></thead>
+    <tbody id="ledgerBody"></tbody></table>
+    <div class="empty" id="ledgerEmpty" style="display:none;">
+      <div class="ei">🧾</div>
+      <p>No stock movements recorded yet. Receipts, issues and adjustments will appear here.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ITEM MODAL -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="itemModalTitle">📦 New Item</div>
+      <button class="close-btn" onclick="closeModal('itemModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="itemId">
+      <div class="form-grid">
+        <div class="form-group"><label>Item Code</label><input type="text" id="itemCode" placeholder="Auto (ITM-0001)"></div>
+        <div class="form-group"><label>Name *</label><input type="text" id="itemName" placeholder="e.g. OPC Cement 53 Grade"></div>
+        <div class="form-group"><label>Category</label><input type="text" id="itemCategory" placeholder="e.g. Cement"></div>
+        <div class="form-group"><label>Unit</label><input type="text" id="itemUnit" placeholder="bags / Nos / Cum" value="Nos"></div>
+        <div class="form-group"><label>HSN / SAC</label><input type="text" id="itemHsn" placeholder="2523"></div>
+        <div class="form-group"><label>GST Rate (%)</label><input type="number" id="itemGst" placeholder="18"></div>
+        <div class="form-group"><label>Reorder Level</label><input type="number" id="itemReorder" placeholder="0"></div>
+        <div class="form-group"><label>Status</label>
+          <select id="itemStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+        </div>
+        <div class="form-group full"><label>Description</label><textarea id="itemDesc" placeholder="Optional notes"></textarea></div>
+        <div class="section-hdr" id="openingHdr">Opening Stock (optional)</div>
+        <div class="form-group" id="openingQtyGrp"><label>Opening Qty</label><input type="number" id="itemOpenQty" placeholder="0"></div>
+        <div class="form-group" id="openingRateGrp"><label>Opening Rate (₹/unit)</label><input type="number" id="itemOpenRate" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('itemModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVEMENT MODAL -->
+<div class="modal-overlay" id="moveModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-title">🔄 Stock Movement</div>
+      <button class="close-btn" onclick="closeModal('moveModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Item *</label><select id="moveItem" onchange="onMoveItemChange()"></select></div>
+        <div class="form-group"><label>Movement Type *</label>
+          <select id="moveType" onchange="onMoveTypeChange()">
+            <option value="in">Receipt / Purchase In</option>
+            <option value="out">Issue to Site (Out)</option>
+            <option value="adjust-in">Adjustment +</option>
+            <option value="adjust-out">Adjustment −</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Date</label><input type="date" id="moveDate"></div>
+        <div class="form-group"><label>Quantity *</label><input type="number" id="moveQty" placeholder="0" oninput="calcMoveValue()"></div>
+        <div class="form-group" id="moveRateGrp"><label>Rate (₹/unit)</label><input type="number" id="moveRate" placeholder="0" oninput="calcMoveValue()"></div>
+        <div class="form-group full"><label>Site (optional)</label><select id="moveSite"><option value="">— No site —</option></select></div>
+        <div class="form-group full"><label id="moveValueLbl">Movement Value</label><input type="text" id="moveValue" disabled></div>
+        <div class="form-group full"><label>Notes</label><input type="text" id="moveNotes" placeholder="e.g. GRN-2026-0001 / consumed at site"></div>
+      </div>
+      <div class="sub-text" id="moveOnHand" style="margin-top:10px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('moveModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMovement()"><i data-lucide="save" style="width:14px;height:14px;"></i> Post Movement</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const erpc = new Proxy({}, { get(_,k){ const t=window.erp||{}; const v=t[k]; if(typeof v!=='function') return v;
+    return async (...a)=>{ const r = await v.apply(t,a);
+      if (r && typeof r==='object' && !Array.isArray(r) && 'success' in r){ if(!r.success) throw new Error(r.error||'Operation failed'); return r.data; }
+      return r; }; } });
+
+  let allItems = [];
+  let allSites = [];
+
+  const fmt = n => isNaN(n) ? '0' : Math.round(n||0).toLocaleString('en-IN');
+  const fmt2 = n => isNaN(n) ? '0' : (Math.round((n||0)*100)/100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+  function switchTab(t){
+    document.getElementById('tab-items').style.display  = t==='items'  ? 'block' : 'none';
+    document.getElementById('tab-ledger').style.display = t==='ledger' ? 'block' : 'none';
+    document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active', el.dataset.tab===t));
+    if(t==='ledger') loadLedger();
+  }
+  window.switchTab = switchTab;
+  window.refreshPage = function(){ init(); var a=document.querySelector('.tab.active'); if(a&&a.dataset.tab==='ledger') loadLedger(); };
+
+  async function init(){
+    try { allSites = await erpc.getSites() || []; } catch(e){ allSites = []; }
+    await loadSummary();
+    await loadItems();
+    lucide.createIcons();
+  }
+
+  async function loadSummary(){
+    try {
+      const s = await erpc.getInventorySummary();
+      document.getElementById('kItems').textContent   = fmt(s.total_items);
+      document.getElementById('kValue').textContent   = '₹' + fmt(s.total_stock_value);
+      document.getElementById('kReorder').textContent = fmt(s.below_reorder);
+    } catch(e){ /* leave zeros */ }
+  }
+
+  async function loadItems(){
+    try { allItems = await erpc.getInventoryItems({}) || []; } catch(e){ allItems = []; }
+    // Populate the ledger + movement item pickers from the same source.
+    const lf = document.getElementById('ledgerItemFilter');
+    lf.innerHTML = '<option value="">All items</option>' + allItems.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join('');
+    renderItems();
+  }
+
+  function renderItems(){
+    const q = (document.getElementById('itemSearch').value||'').toLowerCase();
+    const statusF = document.getElementById('itemStatusFilter').value;
+    const list = allItems.filter(i =>
+      (!statusF || i.status===statusF) &&
+      (!q || (i.name||'').toLowerCase().includes(q) || (i.item_code||'').toLowerCase().includes(q)));
+    document.getElementById('itemsEmpty').style.display = list.length ? 'none' : 'block';
+    document.getElementById('itemsBody').innerHTML = list.map(i=>{
+      const reorderBadge = i.below_reorder ? `<span class="badge b-reorder">${fmt2(i.reorder_level)} ⚠</span>` : (i.reorder_level>0 ? fmt2(i.reorder_level) : '—');
+      return `<tr>
+        <td><span class="code-badge">${esc(i.item_code)}</span></td>
+        <td><div class="name-bold">${esc(i.name)}</div>${i.hsn_sac?`<div class="sub-text">HSN ${esc(i.hsn_sac)} · GST ${fmt2(i.gst_rate)}%</div>`:''}</td>
+        <td>${esc(i.category)||'—'}</td>
+        <td>${esc(i.unit)}</td>
+        <td style="text-align:right;" class="amount">${fmt2(i.current_stock)}</td>
+        <td style="text-align:right;">₹${fmt2(i.avg_rate)}</td>
+        <td style="text-align:right;" class="amount">₹${fmt(i.stock_value)}</td>
+        <td style="text-align:right;">${reorderBadge}</td>
+        <td><span class="badge ${i.status==='active'?'b-active':'b-inactive'}">${esc(i.status)}</span></td>
+        <td><div style="display:flex;gap:5px;">
+          <button class="btn btn-outline btn-sm" title="Edit" onclick="openItemModal(${i.id})"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
+          <button class="btn btn-info btn-sm" title="Stock movement" onclick="openMoveModal(${i.id})"><i data-lucide="arrow-down-up" style="width:12px;height:12px;"></i></button>
+          <button class="btn btn-danger btn-sm" title="Delete" onclick="deleteItem(${i.id},'${jsArg(i.name)}')"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  // Stock statement export. Indian working-capital (CC/OD) limits require a
+  // monthly stock-and-receivables statement to the bank, and auditors want the
+  // closing-stock valuation that ties to the balance sheet — neither was
+  // possible before. Respects the current search/status filter and ends with
+  // the total stock value (the figure the bank/auditor actually reads).
+  function exportStockCSV(){
+    const q = (document.getElementById('itemSearch').value||'').toLowerCase();
+    const statusF = document.getElementById('itemStatusFilter').value;
+    const list = allItems.filter(i =>
+      (!statusF || i.status===statusF) &&
+      (!q || (i.name||'').toLowerCase().includes(q) || (i.item_code||'').toLowerCase().includes(q)));
+    if (!list.length) { toast('No items to export'); return; }
+    const headers = ['Item Code','Item Name','Category','HSN/SAC','Unit','On Hand Qty','Avg Rate','Stock Value','Reorder Level','Below Reorder','Status'];
+    const rows = list.map(i => [
+      i.item_code||'', i.name||'', i.category||'', i.hsn_sac||'', i.unit||'',
+      i.current_stock!=null ? i.current_stock : 0, i.avg_rate!=null ? i.avg_rate : 0,
+      i.stock_value!=null ? i.stock_value : 0, i.reorder_level||0,
+      i.below_reorder ? 'Yes' : 'No', i.status||''
+    ].map(f => `"${String(f).replace(/"/g,'""')}"`));
+    const totalValue = list.reduce((s,i)=> s + (i.stock_value||0), 0);
+    const totalRow = ['','','','','','','TOTAL STOCK VALUE', Math.round(totalValue*100)/100, '','',''].map(f => `"${String(f).replace(/"/g,'""')}"`);
+    const asOf = ['Stock Statement as of', new Date().toISOString().slice(0,10)].map(f => `"${f}"`).join(',');
+    const csv = [asOf, '', headers.join(','), ...rows.map(r => r.join(',')), totalRow.join(',')].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `stock_statement_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    toast('Stock statement exported to CSV');
+  }
+
+  async function loadLedger(){
+    const itemId = document.getElementById('ledgerItemFilter').value;
+    let rows = [];
+    try { rows = await erpc.getStockLedger(itemId ? { item_id: +itemId } : {}) || []; } catch(e){ rows = []; }
+    document.getElementById('ledgerEmpty').style.display = rows.length ? 'none' : 'block';
+    document.getElementById('ledgerBody').innerHTML = rows.map(r=>{
+      const inb = r.qty >= 0;
+      const typeCls = r.txn_type==='opening' ? 'b-opening' : (r.txn_type.startsWith('adjust') ? 'b-adjust' : (inb ? 'b-in' : 'b-out'));
+      return `<tr>
+        <td>${esc(r.txn_date)}</td>
+        <td><div class="name-bold">${esc(r.item_name)}</div><div class="sub-text">${esc(r.item_code)}</div></td>
+        <td><span class="badge ${typeCls}">${esc(r.txn_type)}</span></td>
+        <td style="text-align:right;" class="${inb?'q-in':'q-out'}">${inb?'+':''}${fmt2(r.qty)} ${esc(r.unit)}</td>
+        <td style="text-align:right;">₹${fmt2(r.rate)}</td>
+        <td style="text-align:right;" class="amount">₹${fmt(r.amount)}</td>
+        <td style="text-align:right;">${fmt2(r.closing_qty)}</td>
+        <td>${esc(r.site_name)||'—'}</td>
+        <td>${esc(r.notes)||'—'}</td>
+      </tr>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  function openItemModal(id=null){
+    document.getElementById('itemId').value = id || '';
+    const editing = !!id;
+    document.getElementById('itemModalTitle').textContent = editing ? '📦 Edit Item' : '📦 New Item';
+    // Opening-stock fields only make sense when creating a brand-new item.
+    ['openingHdr','openingQtyGrp','openingRateGrp'].forEach(g => document.getElementById(g).style.display = editing ? 'none' : '');
+    if(editing){
+      const it = allItems.find(x=>x.id===id) || {};
+      document.getElementById('itemCode').value = it.item_code||''; document.getElementById('itemCode').disabled = true;
+      document.getElementById('itemName').value = it.name||'';
+      document.getElementById('itemCategory').value = it.category||'';
+      document.getElementById('itemUnit').value = it.unit||'Nos';
+      document.getElementById('itemHsn').value = it.hsn_sac||'';
+      document.getElementById('itemGst').value = it.gst_rate||'';
+      document.getElementById('itemReorder').value = it.reorder_level||'';
+      document.getElementById('itemStatus').value = it.status||'active';
+      document.getElementById('itemDesc').value = it.description||'';
+    } else {
+      document.getElementById('itemCode').value=''; document.getElementById('itemCode').disabled=false;
+      document.getElementById('itemName').value=''; document.getElementById('itemCategory').value='';
+      document.getElementById('itemUnit').value='Nos'; document.getElementById('itemHsn').value='';
+      document.getElementById('itemGst').value=''; document.getElementById('itemReorder').value='';
+      document.getElementById('itemStatus').value='active'; document.getElementById('itemDesc').value='';
+      document.getElementById('itemOpenQty').value=''; document.getElementById('itemOpenRate').value='';
+    }
+    document.getElementById('itemModal').classList.add('open');
+    lucide.createIcons();
+  }
+
+  async function saveItem(){
+    const name = document.getElementById('itemName').value.trim();
+    if(!name){ alert('Item name is required.'); return; }
+    const idVal = document.getElementById('itemId').value;
+    const data = {
+      name,
+      item_code: document.getElementById('itemCode').value.trim() || undefined,
+      category: document.getElementById('itemCategory').value.trim() || null,
+      unit: document.getElementById('itemUnit').value.trim() || 'Nos',
+      hsn_sac: document.getElementById('itemHsn').value.trim() || null,
+      gst_rate: +document.getElementById('itemGst').value || 0,
+      reorder_level: +document.getElementById('itemReorder').value || 0,
+      status: document.getElementById('itemStatus').value,
+      description: document.getElementById('itemDesc').value.trim() || null,
+    };
+    if(idVal){ data.id = +idVal; }
+    else {
+      data.opening_stock = +document.getElementById('itemOpenQty').value || 0;
+      data.opening_rate = +document.getElementById('itemOpenRate').value || 0;
+    }
+    try {
+      await erpc.saveInventoryItem(data);
+      closeModal('itemModal');
+      await loadItems(); await loadSummary();
+      toast('Item saved');
+    } catch(e){ alert('Error: ' + e.message); }
+  }
+
+  async function deleteItem(id, name){
+    if(!confirm(`Delete "${name}"? Items that already have stock movements are deactivated (history is preserved).`)) return;
+    try {
+      const r = await erpc.deleteInventoryItem(id);
+      await loadItems(); await loadSummary();
+      toast(r && r.deactivated ? 'Item deactivated (had stock history)' : 'Item deleted');
+    } catch(e){ alert('Error: ' + e.message); }
+  }
+
+  function openMoveModal(itemId=null){
+    const sel = document.getElementById('moveItem');
+    const active = allItems.filter(i=>i.status==='active');
+    sel.innerHTML = active.map(i=>`<option value="${i.id}">${esc(i.name)} (${esc(i.item_code)})</option>`).join('');
+    if(!active.length){ alert('Add an inventory item first.'); return; }
+    if(itemId) sel.value = String(itemId);
+    document.getElementById('moveSite').innerHTML = '<option value="">— No site —</option>' +
+      allSites.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    document.getElementById('moveType').value = 'in';
+    document.getElementById('moveDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('moveQty').value = '';
+    document.getElementById('moveRate').value = '';
+    document.getElementById('moveNotes').value = '';
+    onMoveTypeChange();
+    onMoveItemChange();
+    document.getElementById('moveModal').classList.add('open');
+    lucide.createIcons();
+  }
+
+  function onMoveItemChange(){
+    const it = allItems.find(x=>x.id === +document.getElementById('moveItem').value);
+    document.getElementById('moveOnHand').textContent = it ? `On hand: ${fmt2(it.current_stock)} ${it.unit} · Avg rate ₹${fmt2(it.avg_rate)}` : '';
+    calcMoveValue();
+  }
+
+  function onMoveTypeChange(){
+    const type = document.getElementById('moveType').value;
+    const isOut = (type==='out' || type==='adjust-out');
+    // Issues/out movements are valued at the current moving average — no rate input.
+    document.getElementById('moveRateGrp').style.display = isOut ? 'none' : '';
+    document.getElementById('moveValueLbl').textContent = isOut ? 'Issue Value (at avg rate)' : 'Movement Value';
+    calcMoveValue();
+  }
+
+  function calcMoveValue(){
+    const it = allItems.find(x=>x.id === +document.getElementById('moveItem').value);
+    const type = document.getElementById('moveType').value;
+    const isOut = (type==='out' || type==='adjust-out');
+    const qty = +document.getElementById('moveQty').value || 0;
+    const rate = isOut ? (it ? it.avg_rate : 0) : (+document.getElementById('moveRate').value || 0);
+    document.getElementById('moveValue').value = '₹' + fmt2(qty * rate);
+  }
+
+  async function saveMovement(){
+    const item_id = +document.getElementById('moveItem').value;
+    if(!item_id){ alert('Select an item.'); return; }
+    const qty = +document.getElementById('moveQty').value || 0;
+    if(qty <= 0){ alert('Quantity must be greater than zero.'); return; }
+    const data = {
+      item_id,
+      txn_type: document.getElementById('moveType').value,
+      txn_date: document.getElementById('moveDate').value || new Date().toISOString().slice(0,10),
+      qty,
+      rate: +document.getElementById('moveRate').value || 0,
+      site_id: document.getElementById('moveSite').value || null,
+      notes: document.getElementById('moveNotes').value.trim() || null,
+    };
+    try {
+      await erpc.saveStockMovement(data);
+      closeModal('moveModal');
+      await loadItems(); await loadSummary();
+      if(document.getElementById('tab-ledger').style.display !== 'none') loadLedger();
+      toast('Stock movement posted');
+    } catch(e){ alert('Error: ' + e.message); }
+  }
+
+  // Expose for inline onclick handlers.
+  window.openItemModal = openItemModal; window.saveItem = saveItem; window.deleteItem = deleteItem;
+  window.openMoveModal = openMoveModal; window.saveMovement = saveMovement; window.onMoveTypeChange = onMoveTypeChange;
+  window.onMoveItemChange = onMoveItemChange; window.calcMoveValue = calcMoveValue;
+  window.renderItems = renderItems; window.loadLedger = loadLedger; window.closeModal = closeModal;
+  window.exportStockCSV = exportStockCSV;
+
+  (function boot(tries){
+    if(window.erp){ init(); return; }
+    if(tries < 50){ setTimeout(()=>boot(tries+1), 100); return; }
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+    d.textContent='⚠️ Could not connect to the data engine. Please reopen the application.';
+    document.body.appendChild(d);
+  })(0);
+</script>
+</body>
+</html>

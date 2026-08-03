@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Statutory Returns</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;
+  --info:#3b82f6;--warn:#f59e0b;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+.tabs{display:flex;gap:4px;padding:18px 24px 0;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;}
+.tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.toolbar{display:flex;align-items:flex-end;justify-content:space-between;padding:18px 24px;gap:10px;flex-wrap:wrap;}
+.ctrl-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;}
+.ctrl{display:flex;flex-direction:column;gap:6px;}
+.ctrl label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+input,select{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text);outline:none;}
+input:focus,select:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-info{background:rgba(59,130,246,0.12);color:var(--info);border:1px solid rgba(59,130,246,0.2);}
+.btn-sm{padding:6px 10px;font-size:12px;}
+.tc{padding:0 24px 24px;overflow-x:auto;}
+.summary{display:flex;gap:12px;flex-wrap:wrap;padding:0 24px 16px;}
+.sum-card{background:var(--surface2);border-radius:10px;padding:14px 18px;border:1px solid var(--border);min-width:150px;}
+.sum-lbl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+.sum-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:13px;color:var(--muted);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+tfoot td{font-size:13px;font-weight:700;color:var(--text);padding:11px 12px;border-top:1px solid var(--border);}
+.name-bold{font-weight:600;color:var(--text);}
+.sub-text{font-size:11px;color:var(--faint);}
+.code-badge{font-size:11px;font-weight:700;font-family:monospace;background:var(--surface3);color:var(--accent);padding:2px 7px;border-radius:5px;}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);}
+.empty{text-align:center;padding:54px 24px;color:var(--faint);}
+.empty .ei{font-size:34px;margin-bottom:10px;}
+.empty p{font-size:13px;color:var(--muted);}
+.cert{background:var(--surface);border:1px solid var(--border);border-radius:14px;max-width:620px;margin:0 24px 24px;padding:26px 30px;}
+.cert-hdr{font-size:16px;font-weight:800;margin-bottom:4px;}
+.cert-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
+.cert-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;}
+.cert-row .ck{color:var(--muted);font-weight:600;}
+.cert-row .cv{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;}
+.cert-row.total{border-bottom:none;margin-top:8px;}
+.cert-row.total .ck{color:var(--accent);font-size:14px;}
+.cert-row.total .cv{color:var(--accent);font-size:16px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface3);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 10px 40px rgba(0,0,0,0.5);opacity:0;transition:opacity .2s;pointer-events:none;z-index:500;}
+.toast.show{opacity:1;}
+.cess-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;padding:0 24px 16px;}
+.cess-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+.cess-card.hero{background:linear-gradient(135deg,rgba(16,185,129,0.16),rgba(5,150,105,0.08));border-color:rgba(16,185,129,0.3);}
+.cess-lbl{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;}
+.cess-val{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;}
+.cess-card.hero .cess-val{color:var(--accent);font-size:32px;}
+@media print{
+  body{background:#fff;color:#000;}
+  .tabs,.toolbar,.toast,.no-print{display:none !important;}
+  .cert{border:1px solid #000;color:#000;max-width:100%;margin:0;}
+  .cert-row .ck,.cert-row .cv,.cert-hdr,.cert-sub{color:#000 !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" data-tab="pf"    onclick="switchTab('pf')">PF ECR</div>
+  <div class="tab"        data-tab="esic"  onclick="switchTab('esic')">ESIC</div>
+  <div class="tab"        data-tab="q24"   onclick="switchTab('q24')">TDS 24Q</div>
+  <div class="tab"        data-tab="q26"   onclick="switchTab('q26')">TDS 26Q</div>
+  <div class="tab"        data-tab="f16"   onclick="switchTab('f16')">Form 16</div>
+  <div class="tab"        data-tab="gstr9" onclick="switchTab('gstr9')">GSTR-9</div>
+  <div class="tab"        data-tab="bocw"  onclick="switchTab('bocw')">BOCW Cess</div>
+</div>
+
+<!-- PF ECR -->
+<div id="tab-pf">
+  <div class="toolbar">
+    <div class="ctrl-row">
+      <div class="ctrl"><label>Month</label>
+        <select id="pfMonth"></select>
+      </div>
+      <div class="ctrl"><label>Year</label><input type="number" id="pfYear" style="width:110px;"></div>
+      <button class="btn btn-primary" onclick="genPf()"><i data-lucide="play" style="width:14px;height:14px;"></i> Generate</button>
+    </div>
+    <div class="toolbar-right" id="pfDownloads" style="display:none;">
+      <button class="btn btn-info btn-sm" onclick="downloadPfEcr()"><i data-lucide="file-down" style="width:13px;height:13px;"></i> Download ECR (.txt)</button>
+      <button class="btn btn-outline btn-sm" onclick="downloadPfCsv()"><i data-lucide="download" style="width:13px;height:13px;"></i> CSV</button>
+    </div>
+  </div>
+  <div class="summary" id="pfSummary"></div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>UAN</th><th>Name</th>
+      <th style="text-align:right;">Gross Wages</th><th style="text-align:right;">EPF Wages</th><th style="text-align:right;">EPS Wages</th><th style="text-align:right;">EDLI Wages</th>
+      <th style="text-align:right;">EPF Contr.</th><th style="text-align:right;">EPS Contr.</th><th style="text-align:right;">Diff</th>
+      <th style="text-align:right;">NCP Days</th><th style="text-align:right;">Refund</th>
+    </tr></thead>
+    <tbody id="pfBody"></tbody></table>
+    <div class="empty" id="pfEmpty"><div class="ei">📄</div><p>Select a month and year, then click Generate to build the EPFO ECR return.</p></div>
+  </div>
+</div>
+
+<!-- ESIC -->
+<div id="tab-esic" style="display:none;">
+  <div class="toolbar">
+    <div class="ctrl-row">
+      <div class="ctrl"><label>Month</label><select id="esicMonth"></select></div>
+      <div class="ctrl"><label>Year</label><input type="number" id="esicYear" style="width:110px;"></div>
+      <button class="btn btn-primary" onclick="genEsic()"><i data-lucide="play" style="width:14px;height:14px;"></i> Generate</button>
+    </div>
+    <div class="toolbar-right" id="esicDownloads" style="display:none;">
+      <button class="btn btn-outline btn-sm" onclick="downloadEsicCsv()"><i data-lucide="download" style="width:13px;height:13px;"></i> CSV</button>
+    </div>
+  </div>
+  <div class="summary" id="esicSummary"></div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>IP Number</th><th>Name</th><th style="text-align:right;">Days</th>
+      <th style="text-align:right;">Wages</th><th style="text-align:right;">Employee Contr.</th><th style="text-align:right;">Employer Contr.</th>
+    </tr></thead>
+    <tbody id="esicBody"></tbody></table>
+    <div class="empty" id="esicEmpty"><div class="ei">📄</div><p>Select a month and year, then click Generate to build the ESIC return.</p></div>
+  </div>
+</div>
+
+<!-- TDS 24Q -->
+<div id="tab-q24" style="display:none;">
+  <div class="toolbar">
+    <div class="ctrl-row">
+      <div class="ctrl"><label>Financial Year</label><input type="text" id="q24Fy" placeholder="2026-27" style="width:120px;"></div>
+      <div class="ctrl"><label>Quarter</label><select id="q24Q"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option></select></div>
+      <button class="btn btn-primary" onclick="genQ24()"><i data-lucide="play" style="width:14px;height:14px;"></i> Generate</button>
+    </div>
+    <div class="toolbar-right" id="q24Downloads" style="display:none;">
+      <button class="btn btn-outline btn-sm" onclick="downloadQ24Csv()"><i data-lucide="download" style="width:13px;height:13px;"></i> CSV</button>
+    </div>
+  </div>
+  <div class="summary" id="q24Summary"></div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>PAN</th><th>Name</th><th style="text-align:right;">Salary Paid</th><th style="text-align:right;">TDS</th>
+    </tr></thead>
+    <tbody id="q24Body"></tbody></table>
+    <div class="empty" id="q24Empty"><div class="ei">📄</div><p>Select an FY and quarter, then click Generate to build the salary TDS (Form 24Q) return.</p></div>
+  </div>
+</div>
+
+<!-- TDS 26Q -->
+<div id="tab-q26" style="display:none;">
+  <div class="toolbar">
+    <div class="ctrl-row">
+      <div class="ctrl"><label>Financial Year</label><input type="text" id="q26Fy" placeholder="2026-27" style="width:120px;"></div>
+      <div class="ctrl"><label>Quarter</label><select id="q26Q"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option></select></div>
+      <button class="btn btn-primary" onclick="genQ26()"><i data-lucide="play" style="width:14px;height:14px;"></i> Generate</button>
+    </div>
+    <div class="toolbar-right" id="q26Downloads" style="display:none;">
+      <button class="btn btn-outline btn-sm" onclick="downloadQ26Csv()"><i data-lucide="download" style="width:13px;height:13px;"></i> CSV</button>
+    </div>
+  </div>
+  <div class="summary" id="q26Summary"></div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>PAN</th><th>Name</th><th>GSTIN</th><th style="text-align:right;">Amount Paid</th><th style="text-align:right;">TDS</th>
+    </tr></thead>
+    <tbody id="q26Body"></tbody></table>
+    <div class="empty" id="q26Empty"><div class="ei">📄</div><p>Select an FY and quarter, then click Generate to build the non-salary TDS (Form 26Q) return.</p></div>
+  </div>
+</div>
+
+<!-- Form 16 -->
+<div id="tab-f16" style="display:none;">
+  <div class="toolbar">
+    <div class="ctrl-row">
+      <div class="ctrl"><label>Employee</label><select id="f16Emp" style="min-width:220px;"></select></div>
+      <div class="ctrl"><label>Financial Year</label><input type="text" id="f16Fy" placeholder="2026-27" style="width:120px;"></div>
+      <button class="btn btn-primary" onclick="genForm16()"><i data-lucide="play" style="width:14px;height:14px;"></i> Generate</button>
+    </div>
+    <div class="toolbar-right" id="f16Downloads" style="display:none;">
+      <button class="btn btn-outline btn-sm" onclick="window.print()"><i data-lucide="printer" style="width:13px;height:13px;"></i> Print</button>
+    </div>
+  </div>
+  <div id="f16Card"></div>
+  <div class="empty" id="f16Empty"><div class="ei">📄</div><p>Select an employee and financial year, then click Generate to view the Form 16 salary certificate.</p></div>
+</div>
+
+<!-- GSTR-9 -->
+<div id="tab-gstr9" style="display:none;">
+  <div class="toolbar">
+    <div class="ctrl-row">
+      <div class="ctrl"><label>Financial Year</label><input type="text" id="gstr9Fy" placeholder="2026-27" style="width:120px;"></div>
+      <button class="btn btn-primary" onclick="genGstr9()"><i data-lucide="play" style="width:14px;height:14px;"></i> Generate</button>
+    </div>
+  </div>
+  <div class="tc" id="gstr9Wrap">
+    <div class="empty" id="gstr9Empty"><div class="ei">📄</div><p>Select a financial year, then click Generate to build the annual GST return (GSTR-9).</p></div>
+  </div>
+</div>
+
+<!-- BOCW Cess -->
+<div id="tab-bocw" style="display:none;">
+  <div class="toolbar">
+    <div class="ctrl-row">
+      <div class="ctrl"><label>Financial Year</label><input type="text" id="bocwFy" placeholder="2026-27" style="width:120px;"></div>
+      <div class="ctrl"><label>Site (optional)</label><select id="bocwSite" style="min-width:200px;"><option value="">— All sites —</option></select></div>
+      <button class="btn btn-primary" onclick="genBocw()"><i data-lucide="play" style="width:14px;height:14px;"></i> Generate</button>
+    </div>
+  </div>
+  <div class="cess-grid" id="bocwGrid"></div>
+  <div class="empty" id="bocwEmpty"><div class="ei">🏗️</div><p>Select a financial year (and optionally a site), then click Generate to compute the 1% BOCW welfare cess.</p></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const erpc = new Proxy({}, { get(_,k){ const t=window.erp||{}; const v=t[k]; if(typeof v!=='function') return v;
+    return async (...a)=>{ const r = await v.apply(t,a);
+      if (r && typeof r==='object' && !Array.isArray(r) && 'success' in r){ if(!r.success) throw new Error(r.error||'Operation failed'); return r.data; }
+      return r; }; } });
+
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  const fmt = n => isNaN(n) ? '0' : Math.round(n||0).toLocaleString('en-IN');
+  const fmt2 = n => isNaN(n) ? '0' : (Math.round((n||0)*100)/100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+
+  // Current Indian financial year (Apr-Mar): e.g. "2026-27".
+  function currentFy(){
+    const d = new Date(); const y = d.getFullYear(); const m = d.getMonth()+1;
+    return m >= 4 ? `${y}-${String((y+1)%100).padStart(2,'0')}` : `${y-1}-${String(y%100).padStart(2,'0')}`;
+  }
+
+  // Trigger a browser download of a string as a file.
+  function downloadFile(filename, text, mime){
+    const blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  }
+  // Build a CSV string from a header array + array of row arrays.
+  function toCsv(headers, rows){
+    const cell = v => { const s = v==null?'':String(v); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+    return [headers.map(cell).join(','), ...rows.map(r=>r.map(cell).join(','))].join('\r\n');
+  }
+
+  let allEmployees = [];
+  let allSites = [];
+  // Cache the last generated payload per tab so downloads use the same data.
+  const last = {};
+
+  function switchTab(t){
+    ['pf','esic','q24','q26','f16','gstr9','bocw'].forEach(k=>{
+      document.getElementById('tab-'+k).style.display = (k===t) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active', el.dataset.tab===t));
+    lucide.createIcons();
+  }
+  window.switchTab = switchTab;
+
+  async function init(){
+    // Month selects.
+    const monthOpts = MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+    const now = new Date(); const curMonth = now.getMonth()+1; const curYear = now.getFullYear();
+    document.getElementById('pfMonth').innerHTML = monthOpts;
+    document.getElementById('esicMonth').innerHTML = monthOpts;
+    document.getElementById('pfMonth').value = String(curMonth);
+    document.getElementById('esicMonth').value = String(curMonth);
+    document.getElementById('pfYear').value = curYear;
+    document.getElementById('esicYear').value = curYear;
+    // FY defaults.
+    const fy = currentFy();
+    ['q24Fy','q26Fy','f16Fy','gstr9Fy','bocwFy'].forEach(id=>{ document.getElementById(id).value = fy; });
+
+    try { allEmployees = await erpc.getEmployees() || []; } catch(e){ allEmployees = []; }
+    try { allSites = await erpc.getSites() || []; } catch(e){ allSites = []; }
+    document.getElementById('f16Emp').innerHTML = allEmployees.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('') || '<option value="">— No employees —</option>';
+    document.getElementById('bocwSite').innerHTML = '<option value="">— All sites —</option>' + allSites.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    lucide.createIcons();
+  }
+
+  function sumCard(lbl, val, color){
+    return `<div class="sum-card"><div class="sum-lbl">${esc(lbl)}</div><div class="sum-val"${color?` style="color:${color};"`:''}>${val}</div></div>`;
+  }
+
+  // ---------- PF ECR ----------
+  async function genPf(){
+    const month = +document.getElementById('pfMonth').value;
+    const year = +document.getElementById('pfYear').value;
+    try {
+      const r = await erpc.getPfEcr({ month, year });
+      last.pf = r;
+      const lines = (r && r.lines) || [];
+      const t = (r && r.totals) || {};
+      document.getElementById('pfSummary').innerHTML = lines.length ? (
+        sumCard('Members', fmt(t.members)) +
+        sumCard('EPF', '₹'+fmt(t.epf), 'var(--accent)') +
+        sumCard('EPS', '₹'+fmt(t.eps), 'var(--info)') +
+        sumCard('Employer', '₹'+fmt(t.employer), 'var(--warn)')
+      ) : '';
+      document.getElementById('pfEmpty').style.display = lines.length ? 'none' : 'block';
+      document.getElementById('pfDownloads').style.display = lines.length ? 'flex' : 'none';
+      document.getElementById('pfBody').innerHTML = lines.map(l=>`<tr>
+        <td><span class="code-badge">${esc(l.uan)}</span></td>
+        <td class="name-bold">${esc(l.name)}</td>
+        <td style="text-align:right;">₹${fmt(l.gross_wages)}</td>
+        <td style="text-align:right;">₹${fmt(l.epf_wages)}</td>
+        <td style="text-align:right;">₹${fmt(l.eps_wages)}</td>
+        <td style="text-align:right;">₹${fmt(l.edli_wages)}</td>
+        <td style="text-align:right;" class="amount">₹${fmt(l.epf_contribution)}</td>
+        <td style="text-align:right;" class="amount">₹${fmt(l.eps_contribution)}</td>
+        <td style="text-align:right;">₹${fmt(l.epf_eps_diff)}</td>
+        <td style="text-align:right;">${fmt(l.ncp_days)}</td>
+        <td style="text-align:right;">₹${fmt(l.refund)}</td>
+      </tr>`).join('');
+      if(!lines.length) toast('No PF data for that period');
+    } catch(e){ toast('Error: ' + e.message); }
+  }
+  function downloadPfEcr(){
+    const r = last.pf;
+    if(!r || !r.ecr_text){ toast('Generate the ECR first'); return; }
+    downloadFile(`ECR_${r.month||''}_${r.year||''}.txt`, r.ecr_text, 'text/plain;charset=utf-8');
+    toast('ECR text downloaded');
+  }
+  function downloadPfCsv(){
+    const r = last.pf; const lines = (r && r.lines) || [];
+    if(!lines.length){ toast('Generate the ECR first'); return; }
+    const csv = toCsv(
+      ['UAN','Name','Gross Wages','EPF Wages','EPS Wages','EDLI Wages','EPF Contribution','EPS Contribution','EPF-EPS Diff','NCP Days','Refund'],
+      lines.map(l=>[l.uan,l.name,l.gross_wages,l.epf_wages,l.eps_wages,l.edli_wages,l.epf_contribution,l.eps_contribution,l.epf_eps_diff,l.ncp_days,l.refund]));
+    downloadFile(`PF_ECR_${r.month||''}_${r.year||''}.csv`, csv, 'text/csv;charset=utf-8');
+  }
+
+  // ---------- ESIC ----------
+  async function genEsic(){
+    const month = +document.getElementById('esicMonth').value;
+    const year = +document.getElementById('esicYear').value;
+    try {
+      const r = await erpc.getEsicReturn({ month, year });
+      last.esic = { r, month, year };
+      const lines = (r && r.lines) || [];
+      const t = (r && r.totals) || {};
+      document.getElementById('esicSummary').innerHTML = lines.length ? (
+        sumCard('Members', fmt(t.members)) +
+        sumCard('Employee Contr.', '₹'+fmt(t.employee), 'var(--info)') +
+        sumCard('Employer Contr.', '₹'+fmt(t.employer), 'var(--warn)')
+      ) : '';
+      document.getElementById('esicEmpty').style.display = lines.length ? 'none' : 'block';
+      document.getElementById('esicDownloads').style.display = lines.length ? 'flex' : 'none';
+      document.getElementById('esicBody').innerHTML = lines.map(l=>`<tr>
+        <td><span class="code-badge">${esc(l.ip_number)}</span></td>
+        <td class="name-bold">${esc(l.name)}</td>
+        <td style="text-align:right;">${fmt(l.days)}</td>
+        <td style="text-align:right;">₹${fmt(l.wages)}</td>
+        <td style="text-align:right;" class="amount">₹${fmt(l.employee_contribution)}</td>
+        <td style="text-align:right;" class="amount">₹${fmt(l.employer_contribution)}</td>
+      </tr>`).join('');
+      if(!lines.length) toast('No ESIC data for that period');
+    } catch(e){ toast('Error: ' + e.message); }
+  }
+  function downloadEsicCsv(){
+    const c = last.esic; const lines = (c && c.r && c.r.lines) || [];
+    if(!lines.length){ toast('Generate the return first'); return; }
+    const csv = toCsv(
+      ['IP Number','Name','Days','Wages','Employee Contribution','Employer Contribution'],
+      lines.map(l=>[l.ip_number,l.name,l.days,l.wages,l.employee_contribution,l.employer_contribution]));
+    downloadFile(`ESIC_${c.month||''}_${c.year||''}.csv`, csv, 'text/csv;charset=utf-8');
+  }
+
+  // ---------- TDS 24Q ----------
+  async function genQ24(){
+    const fy = document.getElementById('q24Fy').value.trim();
+    const quarter = document.getElementById('q24Q').value;
+    try {
+      const r = await erpc.getForm24Q({ fy, quarter });
+      last.q24 = { r, fy, quarter };
+      const lines = (r && r.lines) || [];
+      const t = (r && r.totals) || {};
+      document.getElementById('q24Summary').innerHTML = lines.length ? (
+        sumCard('Deductees', fmt(t.deductees)) +
+        sumCard('Total TDS', '₹'+fmt(t.tds), 'var(--accent)') +
+        sumCard('Form', esc((r.form||'24Q')))
+      ) : '';
+      document.getElementById('q24Empty').style.display = lines.length ? 'none' : 'block';
+      document.getElementById('q24Downloads').style.display = lines.length ? 'flex' : 'none';
+      document.getElementById('q24Body').innerHTML = lines.map(l=>`<tr>
+        <td><span class="code-badge">${esc(l.pan)}</span></td>
+        <td class="name-bold">${esc(l.name)}</td>
+        <td style="text-align:right;">₹${fmt(l.salary_paid)}</td>
+        <td style="text-align:right;" class="amount">₹${fmt(l.tds)}</td>
+      </tr>`).join('');
+      if(!lines.length) toast('No 24Q data for that period');
+    } catch(e){ toast('Error: ' + e.message); }
+  }
+  function downloadQ24Csv(){
+    const c = last.q24; const lines = (c && c.r && c.r.lines) || [];
+    if(!lines.length){ toast('Generate the return first'); return; }
+    const csv = toCsv(['PAN','Name','Salary Paid','TDS'], lines.map(l=>[l.pan,l.name,l.salary_paid,l.tds]));
+    downloadFile(`Form24Q_${c.fy||''}_${c.quarter||''}.csv`, csv, 'text/csv;charset=utf-8');
+  }
+
+  // ---------- TDS 26Q ----------
+  async function genQ26(){
+    const fy = document.getElementById('q26Fy').value.trim();
+    const quarter = document.getElementById('q26Q').value;
+    try {
+      const r = await erpc.getForm26Q({ fy, quarter });
+      last.q26 = { r, fy, quarter };
+      const lines = (r && r.lines) || [];
+      const t = (r && r.totals) || {};
+      document.getElementById('q26Summary').innerHTML = lines.length ? (
+        sumCard('Deductees', fmt(t.deductees)) +
+        sumCard('Total TDS', '₹'+fmt(t.tds), 'var(--accent)')
+      ) : '';
+      document.getElementById('q26Empty').style.display = lines.length ? 'none' : 'block';
+      document.getElementById('q26Downloads').style.display = lines.length ? 'flex' : 'none';
+      document.getElementById('q26Body').innerHTML = lines.map(l=>`<tr>
+        <td><span class="code-badge">${esc(l.pan)}</span></td>
+        <td class="name-bold">${esc(l.name)}</td>
+        <td>${esc(l.gstin)||'—'}</td>
+        <td style="text-align:right;">₹${fmt(l.amount_paid)}</td>
+        <td style="text-align:right;" class="amount">₹${fmt(l.tds)}</td>
+      </tr>`).join('');
+      if(!lines.length) toast('No 26Q data for that period');
+    } catch(e){ toast('Error: ' + e.message); }
+  }
+  function downloadQ26Csv(){
+    const c = last.q26; const lines = (c && c.r && c.r.lines) || [];
+    if(!lines.length){ toast('Generate the return first'); return; }
+    const csv = toCsv(['PAN','Name','GSTIN','Amount Paid','TDS'], lines.map(l=>[l.pan,l.name,l.gstin,l.amount_paid,l.tds]));
+    downloadFile(`Form26Q_${c.fy||''}_${c.quarter||''}.csv`, csv, 'text/csv;charset=utf-8');
+  }
+
+  // ---------- Form 16 ----------
+  async function genForm16(){
+    const employee_id = document.getElementById('f16Emp').value;
+    const fy = document.getElementById('f16Fy').value.trim();
+    if(!employee_id){ toast('Select an employee'); return; }
+    try {
+      const r = await erpc.getForm16({ employee_id: +employee_id, fy });
+      if(!r || !r.employee){
+        document.getElementById('f16Card').innerHTML = '';
+        document.getElementById('f16Empty').style.display = 'block';
+        document.getElementById('f16Downloads').style.display = 'none';
+        toast('No Form 16 data for that employee/year');
+        return;
+      }
+      const e = r.employee;
+      document.getElementById('f16Empty').style.display = 'none';
+      document.getElementById('f16Downloads').style.display = 'flex';
+      document.getElementById('f16Card').innerHTML = `<div class="cert">
+        <div class="cert-hdr">Form 16 — Salary Certificate</div>
+        <div class="cert-sub">Financial Year ${esc(r.fy)}</div>
+        <div class="cert-row"><span class="ck">Employee</span><span class="cv">${esc(e.name)}</span></div>
+        <div class="cert-row"><span class="ck">PAN</span><span class="cv">${esc(e.pan)||'—'}</span></div>
+        <div class="cert-row"><span class="ck">UAN</span><span class="cv">${esc(e.uan)||'—'}</span></div>
+        <div class="cert-row"><span class="ck">Designation</span><span class="cv">${esc(e.designation)||'—'}</span></div>
+        <div class="cert-row"><span class="ck">Gross Salary</span><span class="cv">₹${fmt(r.gross_salary)}</span></div>
+        <div class="cert-row"><span class="ck">Deduction — Provident Fund</span><span class="cv">₹${fmt(r.deduction_pf)}</span></div>
+        <div class="cert-row"><span class="ck">Deduction — Professional Tax</span><span class="cv">₹${fmt(r.deduction_pt)}</span></div>
+        <div class="cert-row"><span class="ck">TDS Deducted</span><span class="cv">₹${fmt(r.tds_deducted)}</span></div>
+        <div class="cert-row total"><span class="ck">Net Paid</span><span class="cv">₹${fmt(r.net_paid)}</span></div>
+      </div>`;
+    } catch(e){ toast('Error: ' + e.message); }
+  }
+
+  // ---------- GSTR-9 ----------
+  async function genGstr9(){
+    const fy = document.getElementById('gstr9Fy').value.trim();
+    try {
+      const r = await erpc.getGstr9({ fy });
+      const o = (r && r.outward) || {}; const itc = (r && r.itc) || {}; const net = (r && r.net_tax_payable) || {};
+      const p = (r && r.period) || {};
+      document.getElementById('gstr9Wrap').innerHTML = `
+        <div class="sub-text" style="padding:0 0 12px;">FY ${esc(r.fy)}${p.from?` · ${esc(p.from)} to ${esc(p.to)}`:''}</div>
+        <table><thead><tr>
+          <th>Section</th><th style="text-align:right;">Taxable</th><th style="text-align:right;">CGST</th><th style="text-align:right;">SGST</th><th style="text-align:right;">IGST</th>
+        </tr></thead><tbody>
+          <tr><td class="name-bold">Outward Supplies</td><td style="text-align:right;">₹${fmt(o.taxable)}</td><td style="text-align:right;">₹${fmt(o.cgst)}</td><td style="text-align:right;">₹${fmt(o.sgst)}</td><td style="text-align:right;">₹${fmt(o.igst)}</td></tr>
+          <tr><td class="name-bold">Input Tax Credit (ITC)</td><td style="text-align:right;">₹${fmt(itc.taxable)}</td><td style="text-align:right;">₹${fmt(itc.cgst)}</td><td style="text-align:right;">₹${fmt(itc.sgst)}</td><td style="text-align:right;">₹${fmt(itc.igst)}</td></tr>
+        </tbody><tfoot>
+          <tr><td>Net Tax Payable</td><td style="text-align:right;color:var(--faint);">—</td><td style="text-align:right;color:var(--accent);">₹${fmt(net.cgst)}</td><td style="text-align:right;color:var(--accent);">₹${fmt(net.sgst)}</td><td style="text-align:right;color:var(--accent);">₹${fmt(net.igst)}</td></tr>
+          <tr><td colspan="4">Total Net Tax Payable</td><td style="text-align:right;color:var(--accent);">₹${fmt(net.total)}</td></tr>
+        </tfoot></table>`;
+    } catch(e){
+      document.getElementById('gstr9Wrap').innerHTML = '<div class="empty"><div class="ei">📄</div><p>Could not build GSTR-9 for that year.</p></div>';
+      toast('Error: ' + e.message);
+    }
+  }
+
+  // ---------- BOCW Cess ----------
+  async function genBocw(){
+    const fy = document.getElementById('bocwFy').value.trim();
+    const site_id = document.getElementById('bocwSite').value;
+    try {
+      const r = await erpc.getBocwCess(site_id ? { fy, site_id: +site_id } : { fy });
+      if(!r){
+        document.getElementById('bocwGrid').innerHTML = '';
+        document.getElementById('bocwEmpty').style.display = 'block';
+        toast('No BOCW data for that period');
+        return;
+      }
+      document.getElementById('bocwEmpty').style.display = 'none';
+      const rate = ((r.cess_rate!=null ? r.cess_rate : 0.01) * 100);
+      document.getElementById('bocwGrid').innerHTML = `
+        <div class="cess-card"><div class="cess-lbl">Material Cost</div><div class="cess-val">₹${fmt(r.material_cost)}</div></div>
+        <div class="cess-card"><div class="cess-lbl">Labour Cost</div><div class="cess-val">₹${fmt(r.labour_cost)}</div></div>
+        <div class="cess-card"><div class="cess-lbl">Construction Cost</div><div class="cess-val">₹${fmt(r.construction_cost)}</div></div>
+        <div class="cess-card hero"><div class="cess-lbl">BOCW Cess @ ${fmt2(rate)}%</div><div class="cess-val">₹${fmt(r.cess)}</div></div>`;
+    } catch(e){ toast('Error: ' + e.message); }
+  }
+
+  // Expose for inline onclick handlers.
+  window.genPf = genPf; window.downloadPfEcr = downloadPfEcr; window.downloadPfCsv = downloadPfCsv;
+  window.genEsic = genEsic; window.downloadEsicCsv = downloadEsicCsv;
+  window.genQ24 = genQ24; window.downloadQ24Csv = downloadQ24Csv;
+  window.genQ26 = genQ26; window.downloadQ26Csv = downloadQ26Csv;
+  window.genForm16 = genForm16;
+  window.genGstr9 = genGstr9;
+  window.genBocw = genBocw;
+
+  (function boot(tries){
+    if(window.erp){ init(); return; }
+    if(tries < 50){ setTimeout(()=>boot(tries+1), 100); return; }
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+    d.textContent='⚠️ Could not connect to the data engine. Please reopen the application.';
+    document.body.appendChild(d);
+  })(0);
+</script>
+</body>
+</html>

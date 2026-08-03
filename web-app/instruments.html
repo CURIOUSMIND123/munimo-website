@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>BG / EMD / PDC Register</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;
+  --info:#3b82f6;--warn:#f59e0b;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px 24px;border-bottom:1px solid var(--border);}
+.kpi{background:var(--surface2);border-radius:10px;padding:14px 16px;border:1px solid var(--border);}
+.kpi.amber{cursor:pointer;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.07);}
+.kpi.amber:hover{border-color:rgba(245,158,11,0.5);}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+.kpi-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;gap:10px;flex-wrap:wrap;}
+.toolbar-left{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filter-sel{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--muted);outline:none;}
+.filter-sel option{background:var(--surface2);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-info{background:rgba(59,130,246,0.12);color:var(--info);border:1px solid rgba(59,130,246,0.2);}
+.btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2);}
+.btn-sm{padding:5px 9px;font-size:12px;}
+.tc{padding:0 24px 24px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:13px;color:var(--muted);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+tbody tr.row-expired td{background:rgba(239,68,68,0.05);}
+.name-bold{font-weight:600;color:var(--text);}
+.sub-text{font-size:11px;color:var(--faint);}
+.code-badge{font-size:11px;font-weight:700;font-family:monospace;background:var(--surface3);color:var(--accent);padding:2px 7px;border-radius:5px;}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);}
+.dir-tag{font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:0.4px;display:inline-block;margin-top:3px;}
+.dir-given{background:rgba(59,130,246,0.12);color:var(--info);}
+.dir-received{background:rgba(34,197,94,0.12);color:var(--success);}
+.days-expired{color:var(--danger);font-weight:700;}
+.days-soon{color:var(--warn);font-weight:700;}
+.days-ok{color:var(--muted);}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.t-bg{background:rgba(59,130,246,0.14);color:var(--info);}
+.t-emd{background:rgba(168,85,247,0.14);color:#c084fc;}
+.t-pdc{background:rgba(245,158,11,0.14);color:var(--warn);}
+.b-active{background:rgba(34,197,94,0.12);color:var(--success);}
+.b-released{background:rgba(59,130,246,0.12);color:var(--info);}
+.b-expired{background:rgba(239,68,68,0.12);color:var(--danger);}
+.b-encashed{background:rgba(245,158,11,0.14);color:var(--warn);}
+.b-returned{background:rgba(148,163,184,0.12);color:var(--muted);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:680px;max-height:93vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;font-size:13px;color:var(--text);outline:none;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:60px;}
+.empty{text-align:center;padding:54px 24px;color:var(--faint);}
+.empty .ei{font-size:34px;margin-bottom:10px;}
+.empty p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface3);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 10px 40px rgba(0,0,0,0.5);opacity:0;transition:opacity .2s;pointer-events:none;z-index:500;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="kpi-lbl">Bank Guarantees (BG)</div><div class="kpi-val" id="kBG" style="color:var(--info);">₹0</div><div class="sub-text" id="kBGc">0 instruments</div></div>
+  <div class="kpi"><div class="kpi-lbl">Earnest Money (EMD)</div><div class="kpi-val" id="kEMD" style="color:#c084fc;">₹0</div><div class="sub-text" id="kEMDc">0 instruments</div></div>
+  <div class="kpi"><div class="kpi-lbl">Post-Dated Cheques (PDC)</div><div class="kpi-val" id="kPDC" style="color:var(--warn);">₹0</div><div class="sub-text" id="kPDCc">0 instruments</div></div>
+  <div class="kpi amber" id="kExpiringCard" onclick="showExpiring()"><div class="kpi-lbl">Expiring ≤30 days</div><div class="kpi-val" id="kExpiring" style="color:var(--warn);">0</div><div class="sub-text">Click to filter</div></div>
+</div>
+
+<div class="toolbar">
+  <div class="toolbar-left">
+    <select class="filter-sel" id="typeFilter" onchange="loadInstruments()">
+      <option value="">All Types</option>
+      <option value="BG">BG</option>
+      <option value="EMD">EMD</option>
+      <option value="PDC">PDC</option>
+    </select>
+    <select class="filter-sel" id="statusFilter" onchange="loadInstruments()">
+      <option value="">All Status</option>
+      <option value="active">Active</option>
+      <option value="released">Released</option>
+      <option value="expired">Expired</option>
+      <option value="encashed">Encashed</option>
+      <option value="returned">Returned</option>
+    </select>
+  </div>
+  <div class="toolbar-right">
+    <button class="btn btn-outline" onclick="exportInstrumentsCSV()"><i data-lucide="download" style="width:14px;height:14px;"></i> Export CSV</button>
+    <button class="btn btn-primary" onclick="openInstrumentModal()"><i data-lucide="plus" style="width:14px;height:14px;"></i> New Instrument</button>
+  </div>
+</div>
+
+<div class="tc">
+  <table><thead><tr>
+    <th>Type</th><th>Ref No</th><th>Party</th><th>Purpose</th><th>Site</th>
+    <th style="text-align:right;">Amount</th><th>Bank</th><th>Issue Date</th><th>Expiry</th>
+    <th style="text-align:right;">Days Left</th><th>Status</th><th>Actions</th>
+  </tr></thead>
+  <tbody id="instrBody"></tbody></table>
+  <div class="empty" id="instrEmpty" style="display:none;">
+    <div class="ei">🛡️</div>
+    <p>No instruments recorded. Track bank guarantees, earnest-money deposits and post-dated cheques so renewals and recoveries never slip.</p>
+    <button class="btn btn-primary" onclick="openInstrumentModal()">+ New Instrument</button>
+  </div>
+</div>
+
+<!-- INSTRUMENT MODAL -->
+<div class="modal-overlay" id="instrModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="instrModalTitle">🛡️ New Instrument</div>
+      <button class="close-btn" onclick="closeModal('instrModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="instrId">
+      <div class="form-grid">
+        <div class="form-group"><label>Type *</label>
+          <select id="fType"><option value="BG">BG — Bank Guarantee</option><option value="EMD">EMD — Earnest Money</option><option value="PDC">PDC — Post-Dated Cheque</option></select>
+        </div>
+        <div class="form-group"><label>Direction</label>
+          <select id="fDirection"><option value="given">Given (issued by us)</option><option value="received">Received (held by us)</option></select>
+        </div>
+        <div class="form-group"><label>Ref No</label><input type="text" id="fRefNo" placeholder="e.g. BG-2026-0042"></div>
+        <div class="form-group"><label>Party Name</label><input type="text" id="fParty" placeholder="Client / Subcontractor"></div>
+        <div class="form-group full"><label>Purpose</label><input type="text" id="fPurpose" placeholder="e.g. Performance guarantee for Tender #NH-12"></div>
+        <div class="form-group"><label>Site (optional)</label><select id="fSite"><option value="">— No site —</option></select></div>
+        <div class="form-group"><label>Amount (₹) *</label><input type="number" id="fAmount" placeholder="0"></div>
+        <div class="form-group"><label>Bank Name</label><input type="text" id="fBank" placeholder="e.g. SBI, Main Branch"></div>
+        <div class="form-group"><label>Status</label>
+          <select id="fStatus"><option value="active">Active</option><option value="released">Released</option><option value="expired">Expired</option><option value="encashed">Encashed</option><option value="returned">Returned</option></select>
+        </div>
+        <div class="form-group"><label>Issue Date</label><input type="date" id="fIssue"></div>
+        <div class="form-group"><label>Expiry / Maturity Date</label><input type="date" id="fExpiry"></div>
+        <div class="form-group full"><label>Notes</label><textarea id="fNotes" placeholder="Optional notes"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('instrModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInstrument()"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Instrument</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const erpc = new Proxy({}, { get(_,k){ const t=window.erp||{}; const v=t[k]; if(typeof v!=='function') return v;
+    return async (...a)=>{ const r = await v.apply(t,a);
+      if (r && typeof r==='object' && !Array.isArray(r) && 'success' in r){ if(!r.success) throw new Error(r.error||'Operation failed'); return r.data; }
+      return r; }; } });
+
+  let allInstruments = [];
+  let allSites = [];
+
+  const fmt = n => isNaN(n) ? '0' : Math.round(n||0).toLocaleString('en-IN');
+  function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+  const TYPE_CLS = { BG:'t-bg', EMD:'t-emd', PDC:'t-pdc' };
+  const STATUS_CLS = { active:'b-active', released:'b-released', expired:'b-expired', encashed:'b-encashed', returned:'b-returned' };
+
+  async function init(){
+    try { allSites = await erpc.getSites() || []; } catch(e){ allSites = []; }
+    await loadSummary();
+    await loadInstruments();
+    lucide.createIcons();
+  }
+
+  async function loadSummary(){
+    try {
+      const s = await erpc.getInstrumentsSummary() || {};
+      const bg=s.BG||{}, emd=s.EMD||{}, pdc=s.PDC||{};
+      document.getElementById('kBG').textContent   = '₹' + fmt(bg.amount);
+      document.getElementById('kBGc').textContent  = fmt(bg.count) + ' instruments';
+      document.getElementById('kEMD').textContent  = '₹' + fmt(emd.amount);
+      document.getElementById('kEMDc').textContent = fmt(emd.count) + ' instruments';
+      document.getElementById('kPDC').textContent  = '₹' + fmt(pdc.amount);
+      document.getElementById('kPDCc').textContent = fmt(pdc.count) + ' instruments';
+      document.getElementById('kExpiring').textContent = fmt(s.expiring_soon);
+    } catch(e){ /* leave zeros */ }
+  }
+
+  async function loadInstruments(){
+    const filters = {};
+    const tf = document.getElementById('typeFilter').value;
+    const sf = document.getElementById('statusFilter').value;
+    if(tf) filters.instrument_type = tf;
+    if(sf) filters.status = sf;
+    try { allInstruments = await erpc.getInstruments(filters) || []; } catch(e){ allInstruments = []; }
+    renderInstruments();
+  }
+
+  function showExpiring(){
+    document.getElementById('typeFilter').value = '';
+    document.getElementById('statusFilter').value = 'active';
+    loadInstruments();
+  }
+  window.showExpiring = showExpiring;
+
+  function daysCell(r){
+    if(r.expired){ return '<span class="days-expired">Expired</span>'; }
+    if(r.days_to_expiry==null){ return '<span class="days-ok">—</span>'; }
+    const cls = r.days_to_expiry<=30 ? 'days-soon' : 'days-ok';
+    return `<span class="${cls}">${fmt(r.days_to_expiry)}d</span>`;
+  }
+
+  function renderInstruments(){
+    const list = allInstruments;
+    document.getElementById('instrEmpty').style.display = list.length ? 'none' : 'block';
+    document.getElementById('instrBody').innerHTML = list.map(r=>{
+      const typeCls = TYPE_CLS[r.instrument_type] || 'b-returned';
+      const statCls = STATUS_CLS[r.status] || 'b-returned';
+      const dirCls = r.direction==='received' ? 'dir-received' : 'dir-given';
+      const dirLbl = r.direction==='received' ? 'Received' : 'Given';
+      return `<tr class="${r.expired?'row-expired':''}">
+        <td><span class="badge ${typeCls}">${esc(r.instrument_type)}</span><br><span class="dir-tag ${dirCls}">${dirLbl}</span></td>
+        <td><span class="code-badge">${esc(r.ref_no)||'—'}</span></td>
+        <td><div class="name-bold">${esc(r.party_name)||'—'}</div></td>
+        <td>${esc(r.purpose)||'—'}</td>
+        <td>${esc(r.site_name)||'—'}</td>
+        <td style="text-align:right;" class="amount">₹${fmt(r.amount)}</td>
+        <td>${esc(r.bank_name)||'—'}</td>
+        <td>${esc(r.issue_date)||'—'}</td>
+        <td>${esc(r.expiry_date)||'—'}</td>
+        <td style="text-align:right;">${daysCell(r)}</td>
+        <td><span class="badge ${statCls}">${esc(r.status)}</span></td>
+        <td><div style="display:flex;gap:5px;">
+          <button class="btn btn-outline btn-sm" title="Edit" onclick="openInstrumentModal(${r.id})"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
+          <button class="btn btn-danger btn-sm" title="Delete" onclick="deleteInstrument(${r.id},'${jsArg(r.ref_no||r.party_name||'')}')"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  function exportInstrumentsCSV(){
+    if(!allInstruments.length){ toast('No instruments to export'); return; }
+    const headers = ['Type','Direction','Ref No','Party','Purpose','Site','Amount','Bank','Issue Date','Expiry Date','Days Left','Status','Notes'];
+    const rows = allInstruments.map(r => [
+      r.instrument_type||'', r.direction||'', r.ref_no||'', r.party_name||'', r.purpose||'',
+      r.site_name||'', r.amount||0, r.bank_name||'', r.issue_date||'', r.expiry_date||'',
+      r.expired ? 'Expired' : (r.days_to_expiry!=null ? r.days_to_expiry : ''), r.status||'', r.notes||''
+    ].map(f => `"${String(f).replace(/"/g,'""')}"`));
+    const csv = [headers.join(','), ...rows.map(r=>r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `instruments_register_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    toast('Instruments register exported to CSV');
+  }
+  window.exportInstrumentsCSV = exportInstrumentsCSV;
+
+  function openInstrumentModal(id=null){
+    document.getElementById('instrId').value = id || '';
+    const editing = !!id;
+    document.getElementById('instrModalTitle').textContent = editing ? '🛡️ Edit Instrument' : '🛡️ New Instrument';
+    document.getElementById('fSite').innerHTML = '<option value="">— No site —</option>' +
+      allSites.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    if(editing){
+      const it = allInstruments.find(x=>x.id===id) || {};
+      document.getElementById('fType').value = it.instrument_type||'BG';
+      document.getElementById('fDirection').value = it.direction||'given';
+      document.getElementById('fRefNo').value = it.ref_no||'';
+      document.getElementById('fParty').value = it.party_name||'';
+      document.getElementById('fPurpose').value = it.purpose||'';
+      document.getElementById('fSite').value = it.site_id!=null ? String(it.site_id) : '';
+      document.getElementById('fAmount').value = it.amount||'';
+      document.getElementById('fBank').value = it.bank_name||'';
+      document.getElementById('fStatus').value = it.status||'active';
+      document.getElementById('fIssue').value = it.issue_date||'';
+      document.getElementById('fExpiry').value = it.expiry_date||'';
+      document.getElementById('fNotes').value = it.notes||'';
+    } else {
+      document.getElementById('fType').value='BG';
+      document.getElementById('fDirection').value='given';
+      document.getElementById('fRefNo').value='';
+      document.getElementById('fParty').value='';
+      document.getElementById('fPurpose').value='';
+      document.getElementById('fSite').value='';
+      document.getElementById('fAmount').value='';
+      document.getElementById('fBank').value='';
+      document.getElementById('fStatus').value='active';
+      document.getElementById('fIssue').value='';
+      document.getElementById('fExpiry').value='';
+      document.getElementById('fNotes').value='';
+    }
+    document.getElementById('instrModal').classList.add('open');
+    lucide.createIcons();
+  }
+
+  async function saveInstrument(){
+    const type = document.getElementById('fType').value;
+    if(!['BG','EMD','PDC'].includes(type)){ alert('Select a valid instrument type.'); return; }
+    const amount = +document.getElementById('fAmount').value || 0;
+    if(amount <= 0){ alert('Amount must be greater than zero.'); return; }
+    const idVal = document.getElementById('instrId').value;
+    const data = {
+      instrument_type: type,
+      direction: document.getElementById('fDirection').value,
+      ref_no: document.getElementById('fRefNo').value.trim() || null,
+      party_name: document.getElementById('fParty').value.trim() || null,
+      purpose: document.getElementById('fPurpose').value.trim() || null,
+      site_id: document.getElementById('fSite').value || null,
+      amount,
+      bank_name: document.getElementById('fBank').value.trim() || null,
+      issue_date: document.getElementById('fIssue').value || null,
+      expiry_date: document.getElementById('fExpiry').value || null,
+      status: document.getElementById('fStatus').value,
+      notes: document.getElementById('fNotes').value.trim() || null,
+    };
+    if(idVal){ data.id = +idVal; }
+    try {
+      await erpc.saveInstrument(data);
+      closeModal('instrModal');
+      await loadInstruments(); await loadSummary();
+      toast('Instrument saved');
+    } catch(e){ alert('Error: ' + e.message); }
+  }
+
+  async function deleteInstrument(id, label){
+    if(!confirm(`Delete instrument "${label||id}"? This cannot be undone.`)) return;
+    try {
+      await erpc.deleteInstrument(id);
+      await loadInstruments(); await loadSummary();
+      toast('Instrument deleted');
+    } catch(e){ alert('Error: ' + e.message); }
+  }
+
+  // Expose for inline onclick handlers.
+  window.openInstrumentModal = openInstrumentModal; window.saveInstrument = saveInstrument;
+  window.deleteInstrument = deleteInstrument; window.loadInstruments = loadInstruments;
+  window.closeModal = closeModal;
+  window.refreshPage = function(){ init(); };  // live auto-refresh from the app shell
+
+  (function boot(tries){
+    if(window.erp){ init(); return; }
+    if(tries < 50){ setTimeout(()=>boot(tries+1), 100); return; }
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+    d.textContent='⚠️ Could not connect to the data engine. Please reopen the application.';
+    document.body.appendChild(d);
+  })(0);
+</script>
+</body>
+</html>

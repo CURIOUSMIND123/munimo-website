@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Ask the ERP</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;font-size:14px}
+.header{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+.header p{font-size:12px;color:#64748b;margin-top:2px}
+.note{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:10px 14px;margin:16px 24px 0;color:#059669;font-size:12px;line-height:1.5;display:flex;align-items:center;gap:8px}
+/* agentic agenda */
+.agenda{margin:14px 24px 0;background:#fff;border:1px solid #e2e8f0;border-radius:12px;max-height:42vh;overflow-y:auto}
+.agenda-head{position:sticky;top:0;background:#fff;padding:12px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:baseline;gap:10px;z-index:1}
+.agenda-head b{font-size:14px}.agenda-sub{font-size:12px;color:#64748b}
+.agenda-list{padding:8px 12px 12px}
+.agenda-item{display:flex;align-items:flex-start;gap:11px;padding:11px 8px;border-bottom:1px solid #f8fafc}
+.agenda-item:last-child{border-bottom:none}
+.ai-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+.ai-ico.high{background:#fef2f2;color:#dc2626}.ai-ico.medium{background:#fffbeb;color:#d97706}.ai-ico.low{background:#f1f5f9;color:#64748b}
+.ai-body{flex:1;min-width:0}
+.ai-title{font-size:13px;font-weight:600;color:#1e293b}
+.ai-detail{font-size:12px;color:#64748b;margin-top:2px;line-height:1.5}
+.ai-act{flex:none;align-self:center}
+.ai-btn{background:#6366f1;color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
+.ai-btn:hover{background:#4f46e5}.ai-btn:disabled{opacity:.55;cursor:default}
+.ai-btn.ai-wa{background:#16a34a}.ai-btn.ai-wa:hover{background:#15803d}
+.sugg{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.sugg .chip{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:5px 11px;font-size:12px;cursor:pointer;color:#475569}
+.sugg .chip:hover{border-color:#6366f1;color:#6366f1}
+/* smart-entry draft card */
+.draft{margin-top:10px;border:1px solid #c7d2fe;background:#eef2ff;border-radius:12px;padding:12px}
+.draft-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12.5px;color:#334155}
+.draft-grid b{color:#111827}
+.draft-in{color:#059669;font-weight:800}.draft-out{color:#dc2626;font-weight:800}
+.draft-save{margin-top:10px;width:100%;background:#059669;color:#fff;border:none;border-radius:9px;padding:11px;font-size:14px;font-weight:700;cursor:pointer}
+.draft-save:hover{background:#047857}.draft-save:disabled{opacity:.6;cursor:default}
+.ai-empty{padding:18px 16px;color:#64748b;font-size:13px;text-align:center}
+.ai-done{color:#059669;font-weight:600;font-size:12px;white-space:nowrap}
+.content{padding:14px 24px 24px;display:flex;flex-direction:column;height:calc(100vh - 320px);min-height:240px}
+.thread{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:8px 0}
+.msg{max-width:78%;padding:12px 16px;border-radius:14px;font-size:13px;line-height:1.6;white-space:pre-wrap}
+.msg.user{align-self:flex-end;background:#6366f1;color:#fff;border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:#fff;border:1px solid #e2e8f0;border-bottom-left-radius:4px}
+.msg.bot table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
+.msg.bot th{text-align:left;padding:6px 8px;background:#f8fafc;color:#64748b;font-weight:600;border-bottom:1px solid #e2e8f0}
+.msg.bot td{padding:6px 8px;border-bottom:1px solid #f1f5f9}
+.empty-hint{color:#94a3b8;text-align:center;margin:auto;font-size:13px;max-width:420px;line-height:1.7}
+.empty-hint .chip{display:inline-block;background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:5px 12px;margin:4px;font-size:12px;cursor:pointer;color:#374151}
+.empty-hint .chip:hover{background:#f8fafc;border-color:#6366f1;color:#6366f1}
+.composer{display:flex;gap:10px;padding-top:14px;border-top:1px solid #e2e8f0}
+.composer input{flex:1;padding:12px 16px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none}
+.composer input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.btn{padding:10px 18px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#4f46e5}
+.btn-primary:disabled{opacity:.6;cursor:default}
+.typing{align-self:flex-start;color:#94a3b8;font-size:12px;padding:0 4px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1><i data-lucide="sparkles" style="width:20px;height:20px;color:#6366f1"></i> AI Bookkeeper</h1>
+    <p>Works your books for you — finds what needs doing and does it on one tap. Then ask it anything.</p>
+  </div>
+  <button class="btn btn-primary" id="refreshAgendaBtn" onclick="loadAgenda()" title="Re-scan the books">
+    <i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Re-scan
+  </button>
+</div>
+
+<!-- ═══ Agentic agenda: what the bookkeeper found, with one-tap actions ═══ -->
+<div class="agenda" id="agenda">
+  <div class="agenda-head">
+    <b id="agendaTitle">Scanning your books…</b>
+    <span class="agenda-sub" id="agendaSub"></span>
+  </div>
+  <div id="agendaList" class="agenda-list"></div>
+</div>
+
+<div class="note">
+  <i data-lucide="lock" style="width:14px;height:14px;min-width:14px"></i>
+  Runs entirely on this server. Nothing is ever sent to an outside AI service.
+</div>
+
+<div class="content">
+  <div class="thread" id="thread">
+    <div class="empty-hint" id="emptyHint">
+      Try asking — or type an entry straight in (Hinglish works too):<br>
+      <span class="chip" onclick="ask('What did we spend this month?')">What did we spend this month?</span>
+      <span class="chip" onclick="ask('What is my bank balance?')">What is my bank balance?</span>
+      <span class="chip" onclick="ask('How much loan is outstanding?')">How much loan is outstanding?</span>
+      <span class="chip" onclick="ask('Which site is most profitable?')">Which site is most profitable?</span>
+      <span class="chip" onclick="ask('Who owes me money?')">Who owes me money?</span>
+      <span class="chip" onclick="ask('diesel 500 paid')">diesel 500 paid</span>
+      <span class="chip" onclick="ask('What is our profit this month?')">What is our profit this month?</span>
+    </div>
+  </div>
+  <div class="composer">
+    <input type="text" id="qInput" placeholder="Ask anything — or type an entry: “diesel 500” / “loan given to Akash 100000”…" onkeypress="if(event.key==='Enter')sendQuestion()">
+    <button class="btn btn-primary" id="sendBtn" onclick="sendQuestion()">
+      <i data-lucide="send" style="width:14px;height:14px"></i> Ask
+    </button>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ═══ AI bookkeeper agenda — the agentic layer (find work, do it on one tap) ═══
+let AGENDA = [];
+function actionLabel(it){
+  if(!it.action) return '';
+  if(it.action.type==='categorize') return 'Apply';
+  if(it.action.type==='categorize_all') return 'Fix all';
+  if(it.action.type==='record') return 'Record it';
+  return 'Do it';
+}
+function renderAgenda(){
+  const list=document.getElementById('agendaList');
+  const title=document.getElementById('agendaTitle');
+  const sub=document.getElementById('agendaSub');
+  if(!AGENDA.length){
+    title.textContent='Your books look clean 🎉';
+    sub.textContent='';
+    list.innerHTML='<div class="ai-empty">Nothing needs attention right now. New entries get scanned as they come in.</div>';
+    return;
+  }
+  const high=AGENDA.filter(i=>i.severity==='high').length;
+  const act=AGENDA.filter(i=>i.action).length;
+  title.textContent='Your bookkeeper found '+AGENDA.length+' thing'+(AGENDA.length===1?'':'s')+' to look at';
+  sub.textContent=(high?high+' need attention · ':'')+act+' can be fixed in one tap';
+  list.innerHTML=AGENDA.map((it,i)=>`
+    <div class="agenda-item" id="ai-item-${i}">
+      <div class="ai-ico ${esc(it.severity)}"><i data-lucide="${esc(it.icon||'circle')}" style="width:16px;height:16px"></i></div>
+      <div class="ai-body">
+        <div class="ai-title">${esc(it.title)}</div>
+        <div class="ai-detail">${esc(it.detail)}</div>
+      </div>
+      <div class="ai-act">${it.action?`<button class="ai-btn" onclick="applyAction(${i})">${esc(actionLabel(it))}</button>`:(it.link?`<a class="ai-btn ai-wa" href="${esc(it.link.url)}" target="_blank" rel="noopener">${esc(it.link.label)}</a>`:'')}</div>
+    </div>`).join('');
+  if(window.lucide&&lucide.createIcons)lucide.createIcons();
+}
+async function loadAgenda(){
+  const title=document.getElementById('agendaTitle');
+  title.textContent='Scanning your books…';
+  document.getElementById('agendaSub').textContent='';
+  document.getElementById('agendaList').innerHTML='';
+  let r; try{ r=await window.erp.getBookkeepingAgenda({}); }catch(e){ r={success:false}; }
+  if(r&&r.success&&r.data){ AGENDA=r.data.items||[]; renderAgenda(); }
+  else { title.textContent='Could not scan the books'; document.getElementById('agendaList').innerHTML='<div class="ai-empty">'+esc((r&&r.error)||'This section is restricted for your account.')+'</div>'; }
+}
+async function applyAction(i){
+  const it=AGENDA[i]; if(!it||!it.action) return;
+  const row=document.getElementById('ai-item-'+i);
+  const btn=row?row.querySelector('.ai-btn'):null;
+  if(btn){ btn.disabled=true; btn.textContent='Working…'; }
+  let r; try{ r=await window.erp.applyBookkeepingAction({action:it.action}); }catch(e){ r={success:false,error:'Could not reach the server.'}; }
+  if(r&&r.success){
+    if(row){ const act=row.querySelector('.ai-act'); if(act) act.innerHTML='<span class="ai-done">✓ Done</span>'; }
+    // re-scan shortly so the list reflects the new state (and any follow-on items)
+    setTimeout(loadAgenda, 700);
+  } else {
+    if(btn){ btn.disabled=false; btn.textContent=actionLabel(it); }
+    alert((r&&r.error)||'Could not apply that.');
+  }
+}
+
+function addMessage(text, who) {
+  const hint = document.getElementById('emptyHint');
+  if (hint) hint.remove();
+  const thread = document.getElementById('thread');
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.textContent = text;
+  thread.appendChild(div);
+  thread.scrollTop = thread.scrollHeight;
+  return div;
+}
+
+function addRowsTable(rows, container) {
+  if (!rows || !rows.length) return;
+  const cols = Object.keys(rows[0]);
+  const table = document.createElement('table');
+  table.innerHTML = '<thead><tr>' + cols.map(c => '<th>' + esc(c) + '</th>').join('') + '</tr></thead>' +
+    '<tbody>' + rows.map(r => '<tr>' + cols.map(c => '<td>' + esc(r[c]) + '</td>').join('') + '</tr>').join('') + '</tbody>';
+  container.appendChild(table);
+}
+
+async function ask(question) {
+  document.getElementById('qInput').value = question;
+  await sendQuestion();
+}
+
+// A parsed one-liner becomes a draft card — nothing posts until Save is tapped.
+function renderDraftCard(draft, container) {
+  const card = document.createElement('div');
+  card.className = 'draft';
+  const dir = draft.type === 'credit' ? '<span class="draft-in">MONEY IN</span>' : '<span class="draft-out">MONEY OUT</span>';
+  card.innerHTML = '<div class="draft-grid">' +
+    '<div>' + dir + ' <b>₹' + Math.round(draft.amount).toLocaleString('en-IN') + '</b></div>' +
+    '<div>Date: <b>' + esc(draft.txn_date) + '</b></div>' +
+    '<div>Head: <b>' + esc(draft.category) + '</b></div>' +
+    '<div>Mode: <b>' + esc(draft.payment_mode || 'bank') + '</b></div>' +
+    '<div style="grid-column:1/-1">Note: ' + esc(draft.description || '') + '</div>' +
+    '</div><button class="draft-save">✓ Save entry</button>';
+  const btn = card.querySelector('.draft-save');
+  btn.onclick = async () => {
+    btn.disabled = true; btn.textContent = 'Saving…';
+    let r; try { r = await window.erp.applyBookkeepingAction({ action: { type: 'record', payload: draft } }); }
+    catch (e) { r = { success: false, error: 'Could not reach the server.' }; }
+    if (r && r.success) { btn.textContent = '✓ Saved to the books'; btn.style.background = '#334155'; loadAgenda(); }
+    else { btn.disabled = false; btn.textContent = '✓ Save entry'; alert((r && r.error) || 'Could not save.'); }
+  };
+  container.appendChild(card);
+}
+
+async function sendQuestion() {
+  const input = document.getElementById('qInput');
+  const question = input.value.trim();
+  if (!question) return;
+  input.value = '';
+
+  addMessage(question, 'user');
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  const thread = document.getElementById('thread');
+  const typing = document.createElement('div');
+  typing.className = 'typing';
+  typing.textContent = 'Thinking...';
+  thread.appendChild(typing);
+  thread.scrollTop = thread.scrollHeight;
+
+  let r;
+  try {
+    if (window._pendingEntry) {
+      // Siri-style follow-up: this message answers the bookkeeper's question.
+      const p = window._pendingEntry; window._pendingEntry = null;
+      r = await window.erp.parseQuickEntry({ fill: { draft: p.draft, slot: p.slot, dir: p.dir, text: question } });
+    } else {
+      r = await window.erp.askAssistant(question);
+    }
+  } catch (e) {
+    r = { success: false, error: 'Could not reach the server.' };
+  }
+
+  typing.remove();
+  btn.disabled = false;
+
+  if (r && r.success) {
+    if (r.data.pending) window._pendingEntry = r.data.pending;
+    const div = addMessage(r.data.answer || (r.data.say ? 'Entry ready — ' + r.data.say + '. Check it and tap Save.' : 'No answer.'), 'bot');
+    addRowsTable(r.data.rows, div);
+    if (r.data.draft && !r.data.pending) renderDraftCard(r.data.draft, div);
+    if (Array.isArray(r.data.suggest) && r.data.suggest.length) {
+      const s = document.createElement('div'); s.className = 'sugg';
+      r.data.suggest.forEach(txt => { const c = document.createElement('span'); c.className='chip'; c.textContent = txt; c.onclick = () => ask(txt); s.appendChild(c); });
+      div.appendChild(s);
+    }
+  } else {
+    addMessage(r && r.error ? r.error : 'Sorry, this section is restricted for your account.', 'bot');
+  }
+  input.focus();
+}
+
+// Boot: wait for the secure IPC bridge (window.erp) before allowing questions.
+(function boot(tries) {
+  if (window.erp) { document.getElementById('qInput').focus(); loadAgenda(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = 'Could not connect to the data engine. Please close and reopen the application.';
+  document.body.appendChild(d);
+})(0);
+</script>
+</body>
+</html>

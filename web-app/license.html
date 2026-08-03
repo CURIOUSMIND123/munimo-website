@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Munimo ConstructPro — Activate</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e2e8f0;
+  }
+  .container {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 480px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+  .logo {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 32px;
+  }
+  h1 { font-size: 24px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 32px; }
+  .badge {
+    display: inline-block;
+    background: rgba(16,185,129,0.15);
+    border: 1px solid rgba(16,185,129,0.3);
+    color: #34d399;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 32px;
+    letter-spacing: 0.5px;
+  }
+  label { display: block; text-align: left; font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 8px; letter-spacing: 0.5px; }
+  input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: #f1f5f9;
+    letter-spacing: 2px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 20px;
+  }
+  input:focus { border-color: #10b981; }
+  input::placeholder { letter-spacing: 0; color: #475569; }
+  button {
+    width: 100%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #000;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-bottom: 16px;
+  }
+  button:hover { opacity: 0.9; transform: translateY(-1px); }
+  button:active { transform: translateY(0); }
+  .error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #fca5a5;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .success {
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3);
+    color: #86efac;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .footer { font-size: 11px; color: #475569; margin-top: 8px; }
+  .footer a { color: #64748b; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">🏗️</div>
+  <h1>Munimo ConstructPro</h1>
+  <p class="subtitle">Enterprise Resource Planning for Construction</p>
+  <div class="badge">⚡ LICENSE ACTIVATION REQUIRED</div>
+
+  <label>ENTER YOUR LICENSE KEY</label>
+  <textarea id="licenseKey" rows="3" spellcheck="false" autocomplete="off"
+    placeholder="Paste your full licence key here"
+    style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px 14px;font-size:13px;color:#f1f5f9;font-family:'Consolas','Courier New',monospace;letter-spacing:0;text-align:left;outline:none;resize:vertical;margin-bottom:20px;word-break:break-all;"></textarea>
+
+  <div class="error" id="errorMsg"></div>
+  <div class="success" id="successMsg"></div>
+
+  <button onclick="activate()">🔓 Activate Software</button>
+
+  <div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);">
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;letter-spacing:0.5px;">THIS COMPUTER'S MACHINE ID</div>
+    <div id="machineId" style="font-family:'Consolas',monospace;font-size:15px;color:#34d399;letter-spacing:2px;user-select:all;">····-····-····-····</div>
+    <button onclick="copyMachineId()" style="width:auto;background:transparent;border:1px solid rgba(255,255,255,0.15);color:#94a3b8;font-size:11px;font-weight:600;padding:6px 14px;margin:10px 0 0;border-radius:8px;">📋 Copy Machine ID</button>
+  </div>
+
+  <p class="footer" style="margin-top:16px;">For a full or 30-day trial key, send your Machine ID to your provider:<br>
+    <a href="https://wa.me/919599942248" target="_blank">WhatsApp 9599942248</a> · support@munimo.online</p>
+</div>
+
+<script>
+let MACHINE_ID = '';
+
+async function loadMachineId() {
+  try {
+    const r = await window.erp.getMachineId();
+    if (r && r.success) { MACHINE_ID = r.data; document.getElementById('machineId').textContent = r.data; }
+  } catch (e) {}
+}
+loadMachineId();
+
+function copyMachineId() {
+  if (!MACHINE_ID) return;
+  navigator.clipboard.writeText(MACHINE_ID).then(() => {
+    const b = event.target; const t = b.textContent; b.textContent = '✅ Copied'; setTimeout(() => b.textContent = t, 1500);
+  }).catch(() => {});
+}
+
+async function activate() {
+  const key = document.getElementById('licenseKey').value.trim();
+  const err = document.getElementById('errorMsg');
+  const suc = document.getElementById('successMsg');
+  err.style.display = 'none';
+  suc.style.display = 'none';
+
+  if (!key) {
+    err.textContent = 'Please enter your license key.';
+    err.style.display = 'block';
+    return;
+  }
+
+  const result = await window.erp.activateLicense(key);
+  if (result.success) {
+    const t = result.data && result.data.type;
+    suc.textContent = t === 'T'
+      ? '✅ Trial activated' + (result.data.days ? ' — ' + result.data.days + ' days' : '') + '! Redirecting to login...'
+      : '✅ License activated successfully! Redirecting to login...';
+    suc.style.display = 'block';
+    setTimeout(() => window.location.href = 'login.html', 1800);
+  } else {
+    err.textContent = '❌ ' + result.error;
+    err.style.display = 'block';
+  }
+}
+
+// Ctrl+Enter activates (plain Enter makes newlines in the paste box).
+document.getElementById('licenseKey').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) activate();
+});
+</script>
+</body>
+</html>

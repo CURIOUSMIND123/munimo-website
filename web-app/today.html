@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;--info:#3b82f6;--warn:#f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:16px;max-width:760px;margin:0 auto;padding-bottom:40px;}
+.hello{font-size:20px;font-weight:800;margin-bottom:2px;}
+.hello small{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:3px;}
+
+/* KPI cards — big, tappable, stack on phone */
+.kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:16px 0;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:transform .1s,border-color .15s;}
+.kpi:active{transform:scale(0.98);}
+.kpi:hover{border-color:rgba(255,255,255,0.16);}
+.kpi .lbl{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:6px;}
+.kpi .val{font-size:21px;font-weight:800;margin-top:8px;font-variant-numeric:tabular-nums;line-height:1.1;}
+.kpi .sub{font-size:11px;color:var(--faint);margin-top:4px;}
+.kpi .sub .od{color:var(--warn);font-weight:700;}
+
+/* Quick actions — large touch targets */
+.section-h{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 10px;}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.act{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;transition:transform .1s,background .15s;}
+.act:active{transform:scale(0.97);}
+.act:hover{background:var(--surface2);}
+.act .ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+.act .ic svg{width:20px;height:20px;}
+.act .t{font-size:12px;font-weight:600;color:var(--text);line-height:1.25;}
+.ic-green{background:rgba(16,185,129,.14);color:var(--accent);}
+.ic-blue{background:rgba(59,130,246,.14);color:var(--info);}
+.ic-amber{background:rgba(245,158,11,.14);color:var(--warn);}
+.ic-purple{background:rgba(168,85,247,.14);color:#a855f7;}
+.ic-red{background:rgba(239,68,68,.14);color:var(--danger);}
+.ic-slate{background:rgba(148,163,184,.14);color:var(--muted);}
+
+/* Who owes me */
+.owe{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.owe-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);}
+.owe-row:last-child{border-bottom:none;}
+.owe-av{width:36px;height:36px;border-radius:10px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--accent);flex-shrink:0;}
+.owe-info{flex:1;min-width:0;}
+.owe-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.owe-meta{font-size:11px;color:var(--faint);margin-top:1px;}
+.owe-amt{font-size:14px;font-weight:800;color:var(--danger);white-space:nowrap;}
+.owe-wa{width:38px;height:38px;border-radius:10px;background:rgba(34,197,94,.14);color:#22c55e;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.owe-wa:active{transform:scale(0.94);}
+.owe-wa svg{width:18px;height:18px;}
+.empty{text-align:center;padding:30px 16px;color:var(--faint);font-size:13px;}
+.skel{color:var(--faint);font-size:13px;padding:10px 2px;}
+
+/* Payment reminders center */
+.rm-overlay{position:fixed;inset:0;background:rgba(2,6,23,.72);z-index:900;display:none;align-items:center;justify-content:center;padding:16px;}
+.rm-overlay.open{display:flex;}
+.rm-box{width:min(560px,96vw);max-height:88vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.rm-head{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);}
+.rm-title{font-size:15px;font-weight:800;}
+.rm-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.rm-x{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;}
+.rm-tools{display:flex;align-items:center;gap:8px;padding:10px 18px;border-bottom:1px solid var(--border);}
+.rm-chk{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;}
+.rm-btn{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;}
+.rm-btn:hover{color:var(--text);}
+.rm-list{overflow-y:auto;padding:6px 0;}
+.rm-row{display:flex;align-items:center;gap:11px;padding:11px 18px;border-bottom:1px solid rgba(255,255,255,.03);}
+.rm-row input[type=checkbox]{width:16px;height:16px;flex-shrink:0;}
+.rm-info{flex:1;min-width:0;}
+.rm-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rm-meta{font-size:11px;color:var(--faint);margin-top:1px;}
+.rm-amt{font-size:13px;font-weight:800;color:var(--danger);white-space:nowrap;}
+.rm-wa{width:36px;height:36px;border-radius:9px;background:rgba(34,197,94,.14);color:#22c55e;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.rm-wa svg{width:17px;height:17px;}
+.rm-foot{padding:11px 18px;border-top:1px solid var(--border);font-size:11px;color:var(--faint);}
+
+/* Action Center — proactive "what needs attention" feed */
+.ac-summary{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.ac-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.ac-pill.urgent{background:rgba(239,68,68,.14);color:var(--danger);}
+.ac-pill.warn{background:rgba(245,158,11,.14);color:var(--warn);}
+.ac-pill.info{background:rgba(59,130,246,.14);color:var(--info);}
+.ac-card{display:flex;align-items:flex-start;gap:11px;background:var(--surface);border:1px solid var(--border);border-left-width:3px;border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:background .15s;}
+.ac-card:hover{background:var(--surface2);}
+.ac-card:active{transform:scale(0.99);}
+.ac-card.urgent{border-left-color:var(--danger);}
+.ac-card.warn{border-left-color:var(--warn);}
+.ac-card.info{border-left-color:var(--info);}
+.ac-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ac-ic svg{width:17px;height:17px;}
+.ac-card.urgent .ac-ic{background:rgba(239,68,68,.14);color:var(--danger);}
+.ac-card.warn .ac-ic{background:rgba(245,158,11,.14);color:var(--warn);}
+.ac-card.info .ac-ic{background:rgba(59,130,246,.14);color:var(--info);}
+.ac-body{flex:1;min-width:0;}
+.ac-title{font-size:13px;font-weight:700;color:var(--text);}
+.ac-detail{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4;}
+.ac-chev{color:var(--faint);align-self:center;}
+.ac-allclear{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="hello" id="hello">Hello 👋<small id="todayDate"></small></div>
+
+<div class="kpis">
+  <div class="kpi" onclick="go('cashflow')">
+    <div class="lbl"><i data-lucide="landmark" style="width:13px;height:13px;"></i> In Bank</div>
+    <div class="val" id="kBank" style="color:var(--accent);">₹0</div>
+    <div class="sub">Across all accounts</div>
+  </div>
+  <div class="kpi" onclick="go('invoices')">
+    <div class="lbl"><i data-lucide="download" style="width:13px;height:13px;"></i> To Collect</div>
+    <div class="val" id="kRec" style="color:var(--info);">₹0</div>
+    <div class="sub" id="kRecSub">—</div>
+  </div>
+  <div class="kpi" onclick="go('expenses')">
+    <div class="lbl"><i data-lucide="upload" style="width:13px;height:13px;"></i> To Pay</div>
+    <div class="val" id="kPay" style="color:var(--warn);">₹0</div>
+    <div class="sub" id="kPaySub">—</div>
+  </div>
+</div>
+
+<div class="section-h">Needs your attention <span id="acCount" style="color:var(--faint);font-weight:400;"></span></div>
+<div id="actionCenter"><div class="skel">Loading…</div></div>
+
+<div class="section-h">Quick actions</div>
+<div class="actions">
+  <!-- Simple view: money in/out + commission -->
+  <div class="act" data-view="lite" onclick="quickMoney('credit')"><div class="ic ic-green"><i data-lucide="hand-coins"></i></div><div class="t">Money In</div></div>
+  <div class="act" data-view="lite" onclick="quickMoney('debit')"><div class="ic ic-amber"><i data-lucide="banknote"></i></div><div class="t">Money Out</div></div>
+  <div class="act" data-view="lite" onclick="go('commission')"><div class="ic ic-blue"><i data-lucide="handshake"></i></div><div class="t">Commission</div></div>
+  <!-- Full view -->
+  <div class="act" data-view="full" onclick="go('invoices')"><div class="ic ic-green"><i data-lucide="file-plus"></i></div><div class="t">New Invoice</div></div>
+  <div class="act" data-view="full" onclick="go('invoices')"><div class="ic ic-blue"><i data-lucide="hand-coins"></i></div><div class="t">Record Receipt</div></div>
+  <div class="act" data-view="full" onclick="go('expenses')"><div class="ic ic-amber"><i data-lucide="receipt"></i></div><div class="t">New Expense</div></div>
+  <div class="act" data-view="full" onclick="go('labour')"><div class="ic ic-purple"><i data-lucide="hard-hat"></i></div><div class="t">Labour Attendance</div></div>
+  <!-- shared -->
+  <div class="act" onclick="go('reports')"><div class="ic ic-slate"><i data-lucide="bar-chart-3"></i></div><div class="t">Reports</div></div>
+  <div class="act" data-view="full" onclick="go('askerp')"><div class="ic ic-green"><i data-lucide="message-square"></i></div><div class="t">Ask the ERP</div></div>
+</div>
+
+<div class="section-h" style="display:flex;align-items:center;justify-content:space-between;">
+  <span>Who owes me <span id="oweCount" style="color:var(--faint);font-weight:400;"></span></span>
+  <button id="remindAllBtn" onclick="openReminders()" style="display:none;align-items:center;gap:6px;background:rgba(34,197,94,.14);color:#22c55e;border:1px solid rgba(34,197,94,.25);border-radius:9px;padding:6px 11px;font-size:12px;font-weight:700;cursor:pointer;text-transform:none;letter-spacing:0;">
+    <i data-lucide="message-circle" style="width:14px;height:14px;"></i> Reminders
+  </button>
+</div>
+<div class="owe" id="oweList"><div class="skel">Loading…</div></div>
+
+<!-- PAYMENT REMINDERS CENTER -->
+<div class="rm-overlay" id="rmOverlay" onclick="if(event.target===this)closeReminders()">
+  <div class="rm-box">
+    <div class="rm-head">
+      <div>
+        <div class="rm-title">Payment reminders</div>
+        <div class="rm-sub" id="rmSub">Chase overdue receivables on WhatsApp</div>
+      </div>
+      <button class="rm-x" onclick="closeReminders()"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="rm-tools">
+      <label class="rm-chk"><input type="checkbox" id="rmAll" onchange="rmToggleAll()"> Select all</label>
+      <div style="flex:1;"></div>
+      <button class="rm-btn" onclick="rmCopySelected()"><i data-lucide="copy" style="width:13px;height:13px;"></i> Copy</button>
+      <button class="rm-btn" onclick="rmExportSelected()"><i data-lucide="download" style="width:13px;height:13px;"></i> CSV</button>
+    </div>
+    <div class="rm-list" id="rmList"></div>
+    <div class="rm-foot" id="rmFoot"></div>
+  </div>
+</div>
+
+<script>
+const fmt = n => '₹' + Math.round(Number(n)||0).toLocaleString('en-IN');
+const fmtShort = n => { n = Math.round(Number(n)||0); if (n>=10000000) return '₹'+(n/10000000).toFixed(2)+'Cr'; if (n>=100000) return '₹'+(n/100000).toFixed(2)+'L'; if (n>=1000) return '₹'+(n/1000).toFixed(1)+'k'; return '₹'+n; };
+const esc = s => s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// Navigate the parent shell (this page lives in the app iframe).
+function go(page){ try{ if(window.parent && window.parent.navigate) return window.parent.navigate(page); }catch(e){} location.href = page + '.html'; }
+window.go = go;
+
+// Open the Cash Flow money-in/out form straight from a quick action.
+function quickMoney(type){ try{ if(window.parent && window.parent.quickMoney) return window.parent.quickMoney(type); }catch(e){} go('cashflow'); }
+window.quickMoney = quickMoney;
+
+// Quick actions adapt to Simple vs Full view (the app shell sets body.lite-view).
+function isLiteView(){ try{ return !!(window.parent && window.parent.document && window.parent.document.body.classList.contains('lite-view')); }catch(e){ return false; } }
+function applyQuickView(){
+  var lite = isLiteView();
+  var els = document.querySelectorAll('.act[data-view]');
+  for (var i=0;i<els.length;i++){ els[i].style.display = (els[i].getAttribute('data-view') === (lite?'lite':'full')) ? '' : 'none'; }
+}
+window.applyQuickView = applyQuickView;
+
+let _company = { name: 'us' };
+let _clients = [];
+let _oweRows = [];     // aggregated who-owes-me rows (with an `overdue` flag)
+let _rmOverdue = [];   // the overdue subset currently shown in the reminders modal
+
+async function init(){
+  const u = (()=>{ try{ return JSON.parse(sessionStorage.getItem('erp_user')||'{}'); }catch(e){ return {}; } })();
+  document.getElementById('hello').childNodes[0].nodeValue = 'Hello' + (u && u.name ? ', ' + u.name.split(' ')[0] : '') + ' 👋';
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  try { const c = await window.erp.getCompany(); if(c && c.success && c.data) _company = c.data; } catch(e){}
+  applyQuickView();
+
+  // Headline numbers (staff-readable dashboard KPIs).
+  try {
+    // NOTE: the bridge method is getDashboardKPIs (capital KPIs) — the lowercase
+    // spelling silently threw inside this try{} and left the tiles at ₹0 forever.
+    const r = await window.erp.getDashboardKPIs();
+    if (r && r.success){
+      const d = r.data;
+      document.getElementById('kBank').textContent = fmtShort(d.bankBalance);
+      document.getElementById('kRec').textContent  = fmtShort(d.totalRec);
+      document.getElementById('kPay').textContent  = fmtShort(d.totalPay);
+      document.getElementById('kRecSub').textContent = (d.pendingInvCount||0) + ' open invoice' + ((d.pendingInvCount===1)?'':'s');
+      document.getElementById('kPaySub').textContent = (d.pendingExpCount||0) + ' bill' + ((d.pendingExpCount===1)?'':'s') + ' to pay';
+    }
+  } catch(e){}
+
+  // Proactive action center — what needs attention today.
+  await loadActionCenter();
+
+  // Overdue + who-owes list need receivables aging (accountant+). Guard it so a
+  // lower-privilege login simply does not see this block instead of erroring.
+  try { const cl = await window.erp.getClients(); _clients = (cl && cl.success && cl.data) || []; } catch(e){}
+  renderOwes(await loadOwes());
+  lucide.createIcons();
+}
+
+async function loadActionCenter(){
+  const host = document.getElementById('actionCenter');
+  try {
+    const r = await window.erp.getActionCenter();
+    if (!r || !r.success){ host.innerHTML = ''; document.getElementById('acCount').textContent = ''; return; }
+    const { alerts = [], counts = {}, total = 0 } = r.data || {};
+    if (!total){
+      host.innerHTML = '<div class="ac-allclear"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--success);"></i> All clear — nothing needs attention right now.</div>';
+      document.getElementById('acCount').textContent = '';
+      lucide.createIcons();
+      return;
+    }
+    document.getElementById('acCount').textContent = '· ' + total;
+    const labels = { urgent: 'urgent', warn: 'soon', info: 'info' };
+    const pills = ['urgent','warn','info'].filter(k => counts[k] > 0)
+      .map(k => `<span class="ac-pill ${k}">${counts[k]} ${labels[k]}</span>`).join('');
+    host.innerHTML = (pills ? `<div class="ac-summary">${pills}</div>` : '') + alerts.map(al => `
+      <div class="ac-card ${esc(al.severity)}" onclick="acAct('${jsArg(al.category)}','${jsArg(al.screen)}')">
+        <div class="ac-ic"><i data-lucide="${esc(al.icon)}"></i></div>
+        <div class="ac-body">
+          <div class="ac-title">${esc(al.title)}</div>
+          <div class="ac-detail">${esc(al.detail)}</div>
+        </div>
+        <div class="ac-chev"><i data-lucide="chevron-right" style="width:16px;height:16px;"></i></div>
+      </div>`).join('');
+    lucide.createIcons();
+  } catch(e){ host.innerHTML = ''; document.getElementById('acCount').textContent = ''; }
+}
+
+// An overdue-receivables alert opens the WhatsApp reminders center directly;
+// everything else deep-links to its screen.
+function acAct(category, screen){
+  if (category === 'receivable' && _oweRows.some(r => r.overdue)) { openReminders(); return; }
+  go(screen);
+}
+window.acAct = acAct;
+
+async function loadOwes(){
+  try {
+    const r = await window.erp.getReceivablesAging();
+    if (!r || !r.success) return null;
+    const b = r.data || {};
+    const all = ['current','d0_30','d31_60','d61_90','d90plus'].flatMap(k => (b[k]||[]).map(i => ({...i, overdue: k!=='current'})));
+    // Aggregate by client.
+    const byClient = {};
+    let overdueCount = 0;
+    all.forEach(i => {
+      const key = i.client_name || '—';
+      byClient[key] = byClient[key] || { name: key, amount: 0, overdue: false };
+      byClient[key].amount += i.balance_amount || 0;
+      if (i.overdue) { byClient[key].overdue = true; overdueCount++; }
+    });
+    const rows = Object.values(byClient).sort((a,b)=>b.amount-a.amount);
+    // Reflect overdue count on the To-Collect card.
+    if (overdueCount > 0) {
+      document.getElementById('kRecSub').innerHTML = (rows.length) + ' parties · <span class="od">' + overdueCount + ' overdue</span>';
+    }
+    return rows;
+  } catch(e){ return null; }
+}
+
+function clientPhone(name){
+  const c = _clients.find(x => (x.name||x.client_name) === name);
+  return c ? (c.phone || c.mobile || '') : '';
+}
+
+function renderOwes(rows){
+  const el = document.getElementById('oweList');
+  // Capture the rows + reveal the Reminders button only when something is overdue.
+  _oweRows = Array.isArray(rows) ? rows : [];
+  const overdueCount = _oweRows.filter(r => r.overdue).length;
+  const rb = document.getElementById('remindAllBtn');
+  if (rb) rb.style.display = overdueCount ? 'inline-flex' : 'none';
+  if (rows === null){ el.innerHTML = '<div class="empty">Receivables are visible to accountant & owner logins.</div>'; document.getElementById('oweCount').textContent=''; return; }
+  if (!rows.length){ el.innerHTML = '<div class="empty">🎉 Nothing outstanding — all clients are settled.</div>'; return; }
+  document.getElementById('oweCount').textContent = '· top ' + Math.min(rows.length,5);
+  el.innerHTML = rows.slice(0,5).map(r => {
+    const initials = (r.name||'?').trim().slice(0,2).toUpperCase();
+    return `<div class="owe-row">
+      <div class="owe-av">${esc(initials)}</div>
+      <div class="owe-info">
+        <div class="owe-name">${esc(r.name)}</div>
+        <div class="owe-meta">${r.overdue ? '<span style="color:var(--warn);font-weight:600;">Overdue</span> · ' : ''}tap reminder to chase</div>
+      </div>
+      <div class="owe-amt">${fmt(r.amount)}</div>
+      <button class="owe-wa" title="Send WhatsApp reminder" onclick="remind('${jsArg(r.name)}',${Math.round(r.amount)})"><i data-lucide="message-circle"></i></button>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+// One-tap WhatsApp payment reminder.
+function remind(name, amount){
+  const phone = clientPhone(name);
+  const co = _company.name || 'us';
+  const msg = `Dear ${name},\n\nGentle reminder: an amount of ₹${amount.toLocaleString('en-IN')} is currently outstanding on your account with ${co}. Kindly arrange the payment at your earliest convenience.\n\nThank you.`;
+  const text = encodeURIComponent(msg);
+  let wa = String(phone||'').replace(/\D/g,'');
+  if (wa.length === 10) wa = '91' + wa;
+  const url = wa ? ('https://wa.me/' + wa + '?text=' + text) : ('https://wa.me/?text=' + text);
+  window.open(url, '_blank');
+}
+window.remind = remind;
+
+// ─── Payment reminders center — bulk-chase overdue receivables on WhatsApp ───
+function reminderText(name, amount){
+  const co = _company.name || 'us';
+  return `Dear ${name},\n\nGentle reminder: an amount of ₹${Math.round(amount).toLocaleString('en-IN')} is currently outstanding on your account with ${co}. Kindly arrange the payment at your earliest convenience.\n\nThank you.`;
+}
+function openReminders(){
+  _rmOverdue = _oweRows.filter(r => r.overdue);
+  const list = document.getElementById('rmList');
+  document.getElementById('rmSub').textContent = _rmOverdue.length
+    ? (_rmOverdue.length + ' client' + (_rmOverdue.length===1?'':'s') + ' overdue · tap WhatsApp to remind')
+    : 'Nothing overdue right now';
+  const all = document.getElementById('rmAll'); if (all) all.checked = false;
+  list.innerHTML = _rmOverdue.length ? _rmOverdue.map((r, i) => {
+    const ph = clientPhone(r.name);
+    return `<div class="rm-row">
+      <input type="checkbox" class="rm-cb" data-i="${i}" onchange="rmUpdateFoot()">
+      <div class="rm-info">
+        <div class="rm-name">${esc(r.name)}</div>
+        <div class="rm-meta">Overdue${ph ? ' · ' + esc(ph) : ' · no phone on file'}</div>
+      </div>
+      <div class="rm-amt">${fmt(r.amount)}</div>
+      <button class="rm-wa" title="Send WhatsApp reminder" onclick="remind('${jsArg(r.name)}',${Math.round(r.amount)})"><i data-lucide="message-circle"></i></button>
+    </div>`;
+  }).join('') : '<div class="empty">🎉 No overdue clients — all settled.</div>';
+  rmUpdateFoot();
+  document.getElementById('rmOverlay').classList.add('open');
+  lucide.createIcons();
+}
+function closeReminders(){ document.getElementById('rmOverlay').classList.remove('open'); }
+function rmToggleAll(){
+  const on = document.getElementById('rmAll').checked;
+  document.querySelectorAll('#rmList .rm-cb').forEach(cb => { cb.checked = on; });
+  rmUpdateFoot();
+}
+function rmSelected(){
+  return [...document.querySelectorAll('#rmList .rm-cb')]
+    .filter(cb => cb.checked).map(cb => _rmOverdue[+cb.dataset.i]).filter(Boolean);
+}
+function rmUpdateFoot(){
+  const sel = rmSelected();
+  const total = sel.reduce((s, r) => s + (r.amount || 0), 0);
+  document.getElementById('rmFoot').textContent = sel.length
+    ? `${sel.length} selected · ${fmt(total)} — Copy builds a reminders sheet, CSV exports them.`
+    : 'Select clients to copy or export their reminders, or tap WhatsApp on any row.';
+}
+function rmCopySelected(){
+  const sel = rmSelected(); if (!sel.length){ rmUpdateFoot(); return; }
+  const text = sel.map(r => `${r.name} — ₹${Math.round(r.amount).toLocaleString('en-IN')}${clientPhone(r.name)?' ('+clientPhone(r.name)+')':''}\n${reminderText(r.name, r.amount)}`).join('\n\n———\n\n');
+  try { navigator.clipboard.writeText(text); document.getElementById('rmFoot').textContent = `Copied ${sel.length} reminder(s) to the clipboard.`; }
+  catch(e){ document.getElementById('rmFoot').textContent = 'Could not access the clipboard.'; }
+}
+function rmExportSelected(){
+  const sel = rmSelected(); if (!sel.length){ rmUpdateFoot(); return; }
+  let csv = 'Client,Phone,Outstanding,Status\n';
+  sel.forEach(r => { csv += `"${(r.name||'').replace(/"/g,'""')}","${clientPhone(r.name)||''}",${Math.round(r.amount||0)},Overdue\n`; });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `overdue_reminders_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  document.getElementById('rmFoot').textContent = `Exported ${sel.length} client(s) to CSV.`;
+}
+window.openReminders = openReminders; window.closeReminders = closeReminders;
+window.rmToggleAll = rmToggleAll; window.rmUpdateFoot = rmUpdateFoot;
+window.rmCopySelected = rmCopySelected; window.rmExportSelected = rmExportSelected;
+
+window.refreshPage = function(){ init(); };  // live auto-refresh from the app shell
+
+(function boot(t){ if(window.erp){ init(); return; } if(t<50){ setTimeout(()=>boot(t+1),100); return; }
+  document.getElementById('oweList').innerHTML = '<div class="empty">⚠️ Could not connect. Please reopen the app.</div>'; })(0);
+</script>
+</body>
+</html>

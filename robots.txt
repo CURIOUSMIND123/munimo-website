@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /web-app/
+Disallow: /lite-app/
 
 Sitemap: https://munimo.online/sitemap.xml

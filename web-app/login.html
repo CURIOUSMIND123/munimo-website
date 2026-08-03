@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Munimo ConstructPro — Login</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    min-height: 100vh;
+    display: flex;
+    color: #e2e8f0;
+  }
+  .left-panel {
+    flex: 1;
+    background: linear-gradient(160deg, #1e3a5f 0%, #0f172a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .left-panel .big-logo {
+    font-size: 80px; margin-bottom: 24px;
+  }
+  .left-panel h2 {
+    font-size: 28px; font-weight: 800; color: #f1f5f9; margin-bottom: 12px; text-align: center;
+  }
+  .left-panel p {
+    color: #64748b; font-size: 14px; text-align: center; max-width: 280px; line-height: 1.6;
+  }
+  .features { margin-top: 40px; width: 100%; max-width: 300px; }
+  .feature {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 13px; color: #94a3b8;
+  }
+  .feature .icon { font-size: 18px; }
+  .right-panel {
+    width: 440px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+  }
+  .logo-sm {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(16,185,129,0.3);
+  }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #f1f5f9; }
+  .subtitle { font-size: 13px; color: #64748b; margin-bottom: 36px; }
+  .form-group { width: 100%; margin-bottom: 18px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 8px; letter-spacing: 0.5px; }
+  input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-size: 15px;
+    color: #f1f5f9;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  input:focus { border-color: #10b981; background: rgba(16,185,129,0.05); }
+  .login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #000;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+    box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .login-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+  .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.25);
+    color: #fca5a5;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+    width: 100%;
+  }
+  .hint {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 20px;
+    font-size: 12px;
+    color: #475569;
+  }
+  .hint strong { color: #64748b; display: block; margin-bottom: 6px; }
+  .hint span { display: block; line-height: 1.8; }
+  .version { margin-top: 24px; font-size: 11px; color: #334155; }
+</style>
+</head>
+<body>
+<div class="left-panel">
+  <img src="../assets/logo.svg" alt="Munimo ConstructPro" style="width:160px;margin-bottom:24px;" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'🏗️',style:'font-size:80px;margin-bottom:24px'}))">
+  <h2>Munimo ConstructPro</h2>
+  <p>Complete business management for construction companies — invoicing, GST, payroll &amp; site P&amp;L</p>
+  <div class="features">
+    <div class="feature"><span class="icon">👷</span> Employee &amp; Payroll Management</div>
+    <div class="feature"><span class="icon">🧾</span> Invoice &amp; Billing (AR/AP)</div>
+    <div class="feature"><span class="icon">📷</span> OCR Vendor Bill Scanner</div>
+    <div class="feature"><span class="icon">💰</span> Cash Flow Planning</div>
+    <div class="feature"><span class="icon">📊</span> GST &amp; Tax Reports</div>
+    <div class="feature"><span class="icon">📁</span> Year-end CA Package</div>
+  </div>
+</div>
+
+<div class="right-panel">
+  <img src="../assets/logo.svg" alt="Munimo" style="width:56px;height:56px;border-radius:14px;margin-bottom:20px;box-shadow:0 8px 24px rgba(16,185,129,0.3);" onerror="this.outerHTML='<div class=\'logo-sm\'>🏗️</div>'">
+  <h1>Welcome Back</h1>
+  <p class="subtitle">Sign in to your company account</p>
+
+  <div class="error" id="errorMsg"></div>
+
+  <div class="form-group">
+    <label>USERNAME</label>
+    <input type="text" id="username" placeholder="Enter username" autocomplete="off">
+  </div>
+  <div class="form-group">
+    <label>PASSWORD</label>
+    <input type="password" id="password" placeholder="Enter password">
+  </div>
+
+  <button class="login-btn" id="loginBtn" onclick="doLogin()">
+    <span class="spinner" id="loginSpinner"></span>
+    <span id="loginBtnText">Sign In →</span>
+  </button>
+
+  <div class="hint">
+    <strong>🔑 Default Login Credentials</strong>
+    <span>Admin: admin / admin@123</span>
+    <span>Accounts: accounts / acc@123</span>
+    <span>HR: hr / hr@123</span>
+  </div>
+
+  <p class="version" id="ver">Munimo ConstructPro v1.0.0</p>
+  <p class="version" style="margin-top:6px;">Support: Munimo · 📞 9599942248 · ✉️ support@munimo.online</p>
+</div>
+
+<script>
+if (window.erp && window.erp.getAppVersion) {
+  window.erp.getAppVersion().then(v => {
+    document.getElementById('ver').textContent = 'Munimo ConstructPro v' + v;
+  }).catch(() => {});
+}
+
+async function doLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const err      = document.getElementById('errorMsg');
+  const btn      = document.getElementById('loginBtn');
+  const spinner  = document.getElementById('loginSpinner');
+  const btnText  = document.getElementById('loginBtnText');
+
+  err.style.display = 'none';
+
+  if (!username || !password) {
+    err.textContent   = 'Please enter both username and password.';
+    err.style.display = 'block';
+    return;
+  }
+
+  // Show loading state
+  btn.disabled          = true;
+  spinner.style.display = 'block';
+  btnText.textContent   = 'Signing in…';
+
+  try {
+    const r = await window.erp.login({ username, password });
+    if (r.success) {
+      sessionStorage.setItem('erp_user', JSON.stringify(r.data));
+      // The app opens in Simple or Full view based on the company's lite_mode
+      // flag (handled inside app.html), so login always goes to the app shell.
+      await window.erp.gotoDashboard();
+    } else {
+      err.textContent   = r.error || 'Invalid username or password.';
+      err.style.display = 'block';
+    }
+  } catch (e) {
+    err.textContent   = 'Login failed: ' + (e.message || 'Unknown error');
+    err.style.display = 'block';
+  } finally {
+    btn.disabled          = false;
+    spinner.style.display = 'none';
+    btnText.textContent   = 'Sign In →';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// Kill any old root-scoped service worker left over from a previous deployment
+// where the field PWA lived at /. Safe to run on every login page load.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => {
+      if (!r.scope.includes('/field/')) r.unregister();
+    });
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>

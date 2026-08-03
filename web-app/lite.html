@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Munimo — Simple Cashbook</title>
+<style>
+  :root{
+    --green:#16a34a; --green-d:#15803d; --ink:#0f172a; --muted:#64748b;
+    --line:#e2e8f0; --bg:#f1f5f9; --card:#ffffff; --red:#dc2626; --amber:#d97706;
+    --in:#16a34a; --out:#dc2626; --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;}
+  .wrap{max-width:560px;margin:0 auto;min-height:100vh;background:var(--bg);padding-bottom:84px;}
+  header{position:sticky;top:0;z-index:20;background:var(--green);color:#fff;
+    padding:14px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+  header .logo{width:30px;height:30px;border-radius:8px;background:#fff;color:var(--green);
+    font-weight:800;display:flex;align-items:center;justify-content:center;font-size:18px;}
+  header h1{font-size:16px;margin:0;font-weight:700;line-height:1.1;}
+  header .co{font-size:11px;opacity:.85;font-weight:500;}
+  header .grow{flex:1;}
+  header a.full{color:#fff;font-size:11px;text-decoration:none;border:1px solid rgba(255,255,255,.5);
+    padding:5px 9px;border-radius:20px;font-weight:600;white-space:nowrap;}
+  .tab{display:none;padding:14px;}
+  .tab.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .cash-big{text-align:center;padding:22px 16px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;}
+  .cash-big .lbl{font-size:12px;opacity:.9;font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
+  .cash-big .amt{font-size:38px;font-weight:800;margin:4px 0 2px;line-height:1;}
+  .cash-big .tie{font-size:11px;opacity:.9;margin-top:8px;}
+  .cash-big .tie a{color:#fff;text-decoration:underline;}
+  .acct-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
+  .chip{background:rgba(255,255,255,.16);border-radius:20px;padding:4px 11px;font-size:11px;font-weight:600;}
+  .stats{display:flex;gap:10px;margin-bottom:14px;}
+  .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;}
+  .stat .s-l{font-size:11px;color:var(--muted);font-weight:600;}
+  .stat .s-v{font-size:18px;font-weight:800;margin-top:3px;}
+  .stat.in .s-v{color:var(--in);} .stat.out .s-v{color:var(--out);}
+  .sec-title{font-size:13px;font-weight:700;color:var(--muted);margin:2px 4px 8px;text-transform:uppercase;letter-spacing:.4px;}
+  .insight{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:12px;margin-bottom:8px;font-size:13px;line-height:1.35;background:#f8fafc;border:1px solid var(--line);}
+  .insight .dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;background:var(--muted);}
+  .insight.good .dot,.insight.good{}.insight.good .dot{background:var(--green);}
+  .insight.warn .dot{background:var(--amber);} .insight.bad .dot{background:var(--red);}
+  .insight.info .dot{background:#3b82f6;}
+  .insight.bad{background:#fef2f2;border-color:#fecaca;} .insight.warn{background:#fffbeb;border-color:#fde68a;}
+  .insight.good{background:#f0fdf4;border-color:#bbf7d0;}
+  .row-tx{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line);}
+  .row-tx:last-child{border-bottom:none;}
+  .tx-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0;}
+  .tx-ico.in{background:#dcfce7;color:var(--in);} .tx-ico.out{background:#fee2e2;color:var(--out);}
+  .tx-main{flex:1;min-width:0;}
+  .tx-head{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tx-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+  .tx-amt{font-size:15px;font-weight:800;white-space:nowrap;}
+  .tx-amt.in{color:var(--in);} .tx-amt.out{color:var(--out);}
+  .big-btns{display:flex;gap:12px;margin-top:4px;}
+  .big-btns button{flex:1;border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;}
+  .big-btns .b-in{background:var(--in);} .big-btns .b-out{background:var(--out);}
+  /* form */
+  label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:14px 2px 6px;}
+  input,select,textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:13px;
+    font-size:16px;background:#fff;color:var(--ink);font-family:inherit;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green);}
+  .io-toggle{display:flex;gap:0;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;}
+  .io-toggle button{flex:1;border:none;background:#fff;padding:14px;font-size:15px;font-weight:700;color:var(--muted);cursor:pointer;}
+  .io-toggle button.on-out{background:var(--out);color:#fff;}
+  .io-toggle button.on-in{background:var(--in);color:#fff;}
+  .amt-in{font-size:30px!important;font-weight:800;text-align:center;padding:16px!important;}
+  .quick{background:#f0fdf4;border:1px dashed #86efac;border-radius:12px;padding:11px;margin-bottom:8px;}
+  .quick label{margin:0 0 6px;color:var(--green-d);}
+  .quick input{border-color:#86efac;}
+  .quick .hint{font-size:11px;color:var(--muted);margin-top:6px;}
+  .btn-save{width:100%;background:var(--green);color:#fff;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:800;margin-top:20px;cursor:pointer;}
+  .btn-save:active{background:var(--green-d);}
+  .btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink);border-radius:12px;padding:11px 14px;font-size:14px;font-weight:700;cursor:pointer;}
+  .filters{display:flex;gap:8px;margin-bottom:12px;}
+  .filters select,.filters input{padding:9px 10px;font-size:13px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:8px 6px;border-bottom:2px solid var(--line);}
+  td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600;}
+  td .d-del{color:var(--red);cursor:pointer;font-size:12px;font-weight:700;}
+  tfoot td{font-weight:800;border-top:2px solid var(--line);border-bottom:none;}
+  .head-card{display:flex;align-items:center;gap:12px;padding:13px 14px;}
+  .head-card .hc-main{flex:1;min-width:0;}
+  .head-card .hc-name{font-size:15px;font-weight:700;}
+  .head-card .hc-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .bar{height:7px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:7px;}
+  .bar > i{display:block;height:100%;background:var(--green);border-radius:6px;}
+  .bar.over > i{background:var(--red);} .bar.near > i{background:var(--amber);}
+  .hc-act{font-size:12px;color:var(--muted);cursor:pointer;font-weight:700;padding:4px;}
+  .empty{text-align:center;color:var(--muted);padding:30px 16px;font-size:14px;}
+  .empty .e-ico{font-size:34px;margin-bottom:8px;}
+  nav.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);
+    display:flex;max-width:560px;margin:0 auto;z-index:30;}
+  nav.bottom button{flex:1;border:none;background:none;padding:9px 4px 10px;font-size:10px;font-weight:700;
+    color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  nav.bottom button .ni{font-size:20px;line-height:1;}
+  nav.bottom button.on{color:var(--green);}
+  nav.bottom button.add{color:#fff;}
+  nav.bottom button.add .ni{background:var(--green);color:#fff;width:46px;height:46px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:26px;margin-top:-18px;box-shadow:0 4px 10px rgba(22,163,74,.4);}
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+    padding:12px 18px;border-radius:24px;font-size:14px;font-weight:600;z-index:50;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%;text-align:center;}
+  .toast.show{opacity:1;}
+  .toast.err{background:var(--red);}
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:60;display:none;align-items:flex-end;justify-content:center;}
+  .modal.show{display:flex;}
+  .modal .sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:20px 18px 28px;animation:up .25s ease;}
+  @keyframes up{from{transform:translateY(100%)}to{transform:none}}
+  .modal h3{margin:0 0 4px;font-size:18px;}
+  .modal .x{float:right;font-size:22px;color:var(--muted);cursor:pointer;line-height:1;}
+  .muted{color:var(--muted);font-size:12px;}
+  .center{text-align:center;}
+</style>
+<style>.ni svg{width:20px;height:20px;display:block;margin:0 auto 2px}.e-ico svg{width:34px;height:34px;display:block;margin:0 auto;opacity:.5}header .logo{background:transparent!important;padding:0;overflow:hidden}</style></head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><img src="assets/logo.svg" alt="Munimo" style="width:100%;height:100%;object-fit:contain"></div>
+    <div>
+      <h1>Simple Cashbook</h1>
+      <div class="co" id="coName">Munimo</div>
+    </div>
+    <div class="grow"></div>
+    <a class="full" href="app.html" title="Open the full ERP">Full ERP →</a>
+  </header>
+
+  <!-- HOME -->
+  <section class="tab active" id="tab-home">
+    <div class="card cash-big">
+      <div class="lbl">Cash in hand & bank</div>
+      <div class="amt" id="cashTotal">₹0</div>
+      <div class="acct-chips" id="acctChips"></div>
+      <div class="tie">✓ Tallies with your books — <a href="app.html" id="tieLink">see ledger</a></div>
+    </div>
+    <div class="stats">
+      <div class="stat in"><div class="s-l">This month IN</div><div class="s-v" id="mIn">₹0</div></div>
+      <div class="stat out"><div class="s-l">This month OUT</div><div class="s-v" id="mOut">₹0</div></div>
+      <div class="stat"><div class="s-l">Net</div><div class="s-v" id="mNet">₹0</div></div>
+    </div>
+    <div class="big-btns">
+      <button class="b-in"  id="homeIn">＋ Money In</button>
+      <button class="b-out" id="homeOut">－ Money Out</button>
+    </div>
+    <div style="height:14px"></div>
+    <div class="sec-title">Smart insights</div>
+    <div class="card" id="insights"><div class="muted center">Loading…</div></div>
+    <div class="sec-title">Recent entries</div>
+    <div class="card" id="recent"><div class="muted center">Loading…</div></div>
+  </section>
+
+  <!-- ADD -->
+  <section class="tab" id="tab-add">
+    <div class="card">
+      <div class="quick">
+        <label>⚡ Quick add — just type it</label>
+        <input id="quickText" placeholder="e.g. paid 500 cash for diesel" autocomplete="off">
+        <div class="hint">Type a line like “received 20000 from client” or “paid 1500 upi for cement” and we’ll fill the form.</div>
+      </div>
+      <div class="io-toggle" id="ioToggle">
+        <button data-io="out" class="on-out">－ Money Out (kharcha)</button>
+        <button data-io="in">＋ Money In (receipt)</button>
+      </div>
+      <label>Amount (₹)</label>
+      <input id="fAmt" class="amt-in" type="number" inputmode="decimal" placeholder="0" min="0" step="0.01">
+      <label>Budget head</label>
+      <select id="fHead"></select>
+      <label>From / To account</label>
+      <select id="fAcct"></select>
+      <label>Date</label>
+      <input id="fDate" type="date">
+      <label>Note (optional)</label>
+      <input id="fNote" placeholder="What was this for? Party name, bill no…" autocomplete="off">
+      <button class="btn-save" id="saveEntry">Save entry</button>
+    </div>
+  </section>
+
+  <!-- BOOK -->
+  <section class="tab" id="tab-book">
+    <div class="sec-title">Cashbook / ledger</div>
+    <div class="filters">
+      <input type="month" id="bkMonth">
+      <select id="bkHead"><option value="">All heads</option></select>
+    </div>
+    <div class="card" id="bookCard"><div class="muted center">Loading…</div></div>
+  </section>
+
+  <!-- HEADS -->
+  <section class="tab" id="tab-heads">
+    <div class="sec-title">Budget heads <span class="muted">(this month)</span></div>
+    <button class="btn-ghost" id="addHeadBtn" style="margin-bottom:12px;">＋ New budget head</button>
+    <div id="headsList"></div>
+  </section>
+
+  <!-- COMMISSION -->
+  <section class="tab" id="tab-commission">
+    <div class="sec-title">Commission <span class="muted">(this month)</span></div>
+    <div class="stats">
+      <div class="stat in"><div class="s-l">Earned</div><div class="s-v" id="cmEarn">₹0</div></div>
+      <div class="stat out"><div class="s-l">Paid</div><div class="s-v" id="cmPaid">₹0</div></div>
+      <div class="stat"><div class="s-l">Net</div><div class="s-v" id="cmNet">₹0</div></div>
+    </div>
+    <button class="btn-ghost" id="addCommBtn" style="margin-bottom:12px;width:100%;">＋ Record commission</button>
+    <div class="card" id="commList"><div class="muted center">Loading…</div></div>
+    <div class="muted center" style="margin-top:10px;font-size:11px;">Commission with GST &amp; 194H TDS — posts to your books automatically.</div>
+  </section>
+
+  <nav class="bottom" id="nav">
+    <button data-tab="home" class="on"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>Home</button>
+    <button data-tab="book"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg></span>Book</button>
+    <button data-tab="add" class="add"><span class="ni">＋</span></button>
+    <button data-tab="heads"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg></span>Heads</button>
+    <button data-tab="commission"><span class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5 5 5-11L17 12h4"/></svg></span>Commission</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- budget head editor -->
+<div class="modal" id="headModal">
+  <div class="sheet">
+    <span class="x" id="headX">&times;</span>
+    <h3 id="headTitle">New budget head</h3>
+    <div class="muted" style="margin-bottom:4px;">A budget head is a spending category (Material, Labour, Transport…).</div>
+    <label>Name</label>
+    <input id="hName" placeholder="e.g. Material" autocomplete="off">
+    <label>Monthly budget (₹, optional)</label>
+    <input id="hBudget" type="number" inputmode="decimal" placeholder="0" min="0">
+    <button class="btn-save" id="hSave">Save head</button>
+    <button class="btn-ghost" id="hDelete" style="width:100%;margin-top:10px;display:none;color:#dc2626;border-color:#fecaca;">Remove this head</button>
+  </div>
+</div>
+
+<!-- commission editor -->
+<div class="modal" id="commModal">
+  <div class="sheet">
+    <span class="x" id="commX">&times;</span>
+    <h3>Record commission</h3>
+    <div class="muted" style="margin-bottom:6px;">Real commission you earn or pay — GST &amp; 194H TDS handled for you.</div>
+    <div class="io-toggle" id="cmIo">
+      <button data-dir="earned" class="on-in">＋ Earned (income)</button>
+      <button data-dir="paid">－ Paid (expense)</button>
+    </div>
+    <label>Party name</label>
+    <input id="cmParty" placeholder="Who paid you / who you paid" autocomplete="off">
+    <label>What was it for?</label>
+    <input id="cmNarr" placeholder="Real deal — e.g. brokerage on cotton lot" autocomplete="off">
+    <label>Commission amount (₹)</label>
+    <input id="cmGross" type="number" inputmode="decimal" min="0" placeholder="0">
+    <label>GST</label>
+    <select id="cmGst"><option value="0">No GST</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select>
+    <label>194H TDS</label>
+    <select id="cmTds"><option value="0">No TDS</option><option value="2" selected>2% (194H)</option><option value="5">5% (old)</option></select>
+    <label>Account (money in / out)</label>
+    <select id="cmAcct"></select>
+    <label>Date</label>
+    <input id="cmDate" type="date">
+    <div class="quick" id="cmCalc" style="background:#f1f5f9;border-color:#cbd5e1;"></div>
+    <button class="btn-save" id="cmSave">Save commission</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var E = window.erp;
+  var S = { io:'out', accounts:[], heads:[], editHeadId:null, commDir:'earned' };
+  function $(id){return document.getElementById(id);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function inr(n){n=Math.round((Number(n)||0)*100)/100;return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:2});}
+  function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  var toastT;
+  function toast(msg,isErr){var t=$('toast');t.textContent=msg;t.className='toast show'+(isErr?' err':'');clearTimeout(toastT);toastT=setTimeout(function(){t.className='toast';},2600);}
+
+  // ── navigation ──
+  function show(tab){
+    var tabs=document.querySelectorAll('.tab');for(var i=0;i<tabs.length;i++)tabs[i].classList.remove('active');
+    var el=$('tab-'+tab); if(el)el.classList.add('active');
+    var btns=document.querySelectorAll('#nav button');for(var j=0;j<btns.length;j++)btns[j].classList.toggle('on',btns[j].getAttribute('data-tab')===tab&&btns[j].className.indexOf('add')<0);
+    if(tab==='home')loadHome();
+    if(tab==='book')loadBook();
+    if(tab==='heads')loadHeads();
+    if(tab==='commission')loadCommission();
+    window.scrollTo(0,0);
+  }
+  $('nav').addEventListener('click',function(e){var b=e.target.closest('button');if(b)show(b.getAttribute('data-tab'));});
+
+  // ── boot ──
+  function boot(){
+    E.getSession().then(function(r){
+      if(r&&r.success&&r.data){ $('coName').textContent=(r.data.company||r.data.tenant||'Munimo'); }
+    });
+    ensureAccountsThenLoad();
+  }
+  // Lite mode requires at least one cash/bank account so every entry attaches to
+  // one — that is what keeps the cashbook tied to the books. Auto-create a
+  // "Cash in Hand" account the first time if the company has none.
+  function ensureAccountsThenLoad(){
+    E.getBanks().then(function(r){
+      var list=(r&&r.success&&r.data)?r.data:[];
+      if(!list.length){
+        E.saveBank({account_name:'Cash in Hand',bank_name:'Cash',account_type:'cash',opening_balance:0,opening_date:todayStr()}).then(function(){
+          loadAccounts(loadHome);
+        });
+      } else { S.accounts=list; fillAccountPicker(); loadHome(); }
+    });
+  }
+  function loadAccounts(cb){ E.getBanks().then(function(r){ S.accounts=(r&&r.success&&r.data)?r.data:[]; fillAccountPicker(); if(cb)cb(); }); }
+  function fillAccountPicker(){
+    var sel=$('fAcct'); sel.innerHTML='';
+    S.accounts.forEach(function(a){
+      var o=document.createElement('option');o.value=a.id;
+      o.textContent=a.account_name+(a.bank_name&&a.bank_name!=='Cash'?' · '+a.bank_name:'');
+      sel.appendChild(o);
+    });
+    var add=document.createElement('option');add.value='__new';add.textContent='＋ Add bank / cash account…';sel.appendChild(add);
+  }
+
+  // ── HOME ──
+  function loadHome(){
+    E.getLiteSummary({today:todayStr()}).then(function(r){
+      if(!r||!r.success){toast((r&&r.error)||'Could not load',true);return;}
+      var d=r.data;
+      $('cashTotal').textContent=inr(d.cash.total);
+      $('acctChips').innerHTML=d.cash.accounts.map(function(a){return '<span class="chip">'+esc(a.account_name)+': '+inr(a.current_balance)+'</span>';}).join('');
+      $('mIn').textContent=inr(d.flow.month_in);
+      $('mOut').textContent=inr(d.flow.month_out);
+      $('mNet').textContent=inr(d.flow.month_net);
+      $('mNet').style.color=d.flow.month_net<0?'var(--out)':'var(--in)';
+      $('insights').innerHTML=(d.insights||[]).map(function(x){
+        return '<div class="insight '+esc(x.tone)+'"><span class="dot"></span><span>'+esc(x.text)+'</span></div>';
+      }).join('')||'<div class="muted center">No insights yet.</div>';
+      var rec=d.recent||[];
+      $('recent').innerHTML=rec.length?rec.map(txRow).join(''):'<div class="empty"><div class="e-ico">🧾</div>No entries yet. Tap ＋ to add your first.</div>';
+    });
+  }
+  function txRow(t){
+    var isIn=t.type==='credit';
+    return '<div class="row-tx"><div class="tx-ico '+(isIn?'in':'out')+'">'+(isIn?'↓':'↑')+'</div>'+
+      '<div class="tx-main"><div class="tx-head">'+esc(t.category||'Uncategorised')+'</div>'+
+      '<div class="tx-sub">'+esc(t.txn_date)+(t.description?' · '+esc(t.description):'')+(t.bank_name?' · '+esc(t.bank_name):'')+'</div></div>'+
+      '<div class="tx-amt '+(isIn?'in':'out')+'">'+(isIn?'+':'−')+inr(t.amount)+'</div></div>';
+  }
+  $('homeIn').addEventListener('click',function(){setIO('in');show('add');});
+  $('homeOut').addEventListener('click',function(){setIO('out');show('add');});
+
+  // ── ADD ──
+  function setIO(io){
+    S.io=io;
+    var btns=$('ioToggle').querySelectorAll('button');
+    btns.forEach(function(b){
+      var on=b.getAttribute('data-io')===io;
+      b.className=on?('on-'+io):'';
+    });
+  }
+  $('ioToggle').addEventListener('click',function(e){var b=e.target.closest('button');if(b)setIO(b.getAttribute('data-io'));});
+  $('fAcct').addEventListener('change',function(){
+    if(this.value==='__new'){
+      var name=prompt('Account name (e.g. HDFC Current, Cash in Hand):');
+      if(name&&name.trim()){
+        E.saveBank({account_name:name.trim(),bank_name:name.trim(),account_type:'bank',opening_balance:0,opening_date:todayStr()}).then(function(r){
+          if(r&&r.success){loadAccounts(function(){$('fAcct').value=r.data;});toast('Account added');}
+          else toast((r&&r.error)||'Could not add',true);
+        });
+      } else { this.value=S.accounts.length?S.accounts[0].id:''; }
+    }
+  });
+  function fillHeadPickers(){
+    var sel=$('fHead'); var cur=sel.value; sel.innerHTML='';
+    S.heads.forEach(function(h){var o=document.createElement('option');o.value=h.name;o.textContent=h.name;sel.appendChild(o);});
+    var add=document.createElement('option');add.value='__new';add.textContent='＋ New budget head…';sel.appendChild(add);
+    if(cur)sel.value=cur;
+    var bk=$('bkHead'); var cur2=bk.value; bk.innerHTML='<option value="">All heads</option>';
+    S.heads.forEach(function(h){var o=document.createElement('option');o.value=h.name;o.textContent=h.name;bk.appendChild(o);});
+    bk.value=cur2;
+  }
+  $('fHead').addEventListener('change',function(){
+    if(this.value==='__new'){ this.value=S.heads.length?S.heads[0].name:''; openHead(null); }
+  });
+  function refreshHeads(cb){ E.getBudgetHeads({}).then(function(r){ S.heads=(r&&r.success&&r.data)?r.data:[]; fillHeadPickers(); if(cb)cb(); }); }
+
+  // smart quick-add parser (offline, rule-based)
+  $('quickText').addEventListener('input',function(){ parseQuick(this.value); });
+  function parseQuick(txt){
+    if(!txt)return; var t=' '+txt.toLowerCase()+' ';
+    if(/\b(received|recd|got|credit|aaya|aya|mila|jama|deposit|income|sale)\b/.test(t))setIO('in');
+    else if(/\b(paid|pay|spent|spend|kharch|diya|gaya|debit|bought|purchase|withdraw)\b/.test(t))setIO('out');
+    var mode=null;
+    if(/\b(cash|nagad)\b/.test(t))mode='cash';
+    else if(/\b(upi|gpay|phonepe|paytm|googlepay)\b/.test(t))mode='upi';
+    else if(/\b(bank|neft|rtgs|imps|cheque|check|transfer)\b/.test(t))mode='bank';
+    var num=txt.replace(/,/g,'').match(/(\d+(?:\.\d+)?)\s*([kl])?/i);
+    if(num){var v=parseFloat(num[1]);if(num[2]){if(num[2].toLowerCase()==='k')v*=1000;if(num[2].toLowerCase()==='l')v*=100000;}$('fAmt').value=v;}
+    // match a known head name appearing in the text
+    for(var i=0;i<S.heads.length;i++){ if(t.indexOf(' '+S.heads[i].name.toLowerCase())>=0){ $('fHead').value=S.heads[i].name; break; } }
+    // pick a matching account by payment mode
+    if(mode){ for(var j=0;j<S.accounts.length;j++){ var a=S.accounts[j]; if((mode==='cash'&&a.account_type==='cash')||(mode!=='cash'&&a.account_type!=='cash')){ $('fAcct').value=a.id; break; } } }
+    var note=txt.replace(/\b(paid|pay|received|recd|got|spent|spend|for|to|from|cash|upi|bank|neft|cheque|rs|rupees|inr)\b/gi,'')
+      .replace(/[\d,]+\s*[kl]?/gi,'').replace(/\s+/g,' ').trim();
+    if(note)$('fNote').value=note.charAt(0).toUpperCase()+note.slice(1);
+  }
+
+  $('saveEntry').addEventListener('click',function(){
+    var amt=parseFloat($('fAmt').value);
+    if(!(amt>0)){toast('Enter an amount',true);return;}
+    var head=$('fHead').value; if(!head||head==='__new'){toast('Pick a budget head',true);return;}
+    var acct=$('fAcct').value; if(!acct||acct==='__new'){toast('Pick an account',true);return;}
+    var date=$('fDate').value||todayStr();
+    var accObj=S.accounts.filter(function(a){return String(a.id)===String(acct);})[0]||{};
+    var payload={
+      txn_date:date,
+      type: S.io==='in'?'credit':'debit',
+      category: head,
+      description: $('fNote').value.trim()||null,
+      amount: amt,
+      bank_account_id: parseInt(acct,10),
+      payment_mode: accObj.account_type==='cash'?'cash':'bank'
+    };
+    $('saveEntry').disabled=true;
+    E.saveTransaction(payload).then(function(r){
+      $('saveEntry').disabled=false;
+      if(r&&r.success){
+        toast((S.io==='in'?'Money in':'Money out')+' saved · '+inr(amt));
+        $('fAmt').value='';$('fNote').value='';$('quickText').value='';
+        loadAccounts();
+        show('home');
+      } else toast((r&&r.error)||'Could not save',true);
+    });
+  });
+
+  // ── BOOK ──
+  function loadBook(){
+    var month=$('bkMonth').value||todayStr().slice(0,7);
+    var headF=$('bkHead').value;
+    var filt={from_date:month+'-01',to_date:month+'-31'};
+    if(headF)filt.category=headF;
+    // running balance needs an opening figure: cash before this month =
+    // (current total) − (net movement from this month's start to today).
+    Promise.all([E.getTransactions(filt),E.getBanks()]).then(function(res){
+      var rows=(res[0]&&res[0].success&&res[0].data)?res[0].data.filter(function(t){return t.type==='credit'||t.type==='debit';}):[];
+      rows.sort(function(a,b){return a.txn_date<b.txn_date?-1:a.txn_date>b.txn_date?1:(a.id-b.id);});
+      var totIn=0,totOut=0,run=0;
+      var body=rows.map(function(t){
+        var isIn=t.type==='credit';
+        if(isIn){totIn+=t.amount;run+=t.amount;}else{totOut+=t.amount;run-=t.amount;}
+        return '<tr><td>'+esc(t.txn_date.slice(5))+'<div class="tx-sub">'+esc(t.category||'—')+(t.description?' · '+esc(t.description):'')+'</div></td>'+
+          '<td class="num" style="color:var(--in)">'+(isIn?inr(t.amount):'')+'</td>'+
+          '<td class="num" style="color:var(--out)">'+(!isIn?inr(t.amount):'')+'</td>'+
+          '<td class="num">'+inr(run)+'</td>'+
+          '<td><span class="d-del" data-del="'+t.id+'">✕</span></td></tr>';
+      }).join('');
+      if(!rows.length){ $('bookCard').innerHTML='<div class="empty"><div class="e-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h7M8 11h7"/></svg></div>No entries this month.</div>'; return; }
+      $('bookCard').innerHTML='<table><thead><tr><th>Date / head</th><th class="num">In</th><th class="num">Out</th><th class="num">Balance</th><th></th></tr></thead>'+
+        '<tbody>'+body+'</tbody>'+
+        '<tfoot><tr><td>Month total</td><td class="num" style="color:var(--in)">'+inr(totIn)+'</td><td class="num" style="color:var(--out)">'+inr(totOut)+'</td><td class="num">'+inr(totIn-totOut)+'</td><td></td></tr></tfoot></table>'+
+        '<div class="muted center" style="margin-top:10px;">Net movement this month. Running balance is cumulative within the list.</div>';
+    });
+  }
+  $('bookCard').addEventListener('click',function(e){
+    var d=e.target.closest('[data-del]'); if(!d)return;
+    if(!confirm('Delete this entry? This also updates your cash balance and books.'))return;
+    E.deleteTransaction(parseInt(d.getAttribute('data-del'),10)).then(function(r){
+      if(r&&r.success){toast('Entry deleted');loadBook();}
+      else toast((r&&r.error)||'Could not delete',true);
+    });
+  });
+  $('bkMonth').addEventListener('change',loadBook);
+  $('bkHead').addEventListener('change',loadBook);
+
+  // ── HEADS ──
+  function loadHeads(){
+    var month=todayStr().slice(0,7);
+    E.getBudgetHeads({from_date:month+'-01',to_date:month+'-31'}).then(function(r){
+      var heads=(r&&r.success&&r.data)?r.data:[];
+      S.heads=heads; fillHeadPickers();
+      if(!heads.length){
+        $('headsList').innerHTML='<div class="empty"><div class="e-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/></svg></div>No budget heads yet.<br><br>'+
+          '<button class="btn-ghost" id="seedHeads">Add common heads</button></div>';
+        var sb=$('seedHeads'); if(sb)sb.addEventListener('click',seedHeads);
+        return;
+      }
+      $('headsList').innerHTML=heads.map(function(h){
+        var hasB=h.monthly_budget>0;
+        var pct=hasB?Math.min(100,h.pct):0;
+        var cls=h.pct>=100?'over':(h.pct>=80?'near':'');
+        var sub=hasB?(inr(h.spent)+' of '+inr(h.monthly_budget)+' · '+(h.remaining>=0?inr(h.remaining)+' left':inr(-h.remaining)+' over')):(inr(h.spent)+' spent this month');
+        return '<div class="card head-card"><div class="hc-main"><div class="hc-name">'+esc(h.name)+'</div>'+
+          '<div class="hc-sub">'+sub+'</div>'+(hasB?'<div class="bar '+cls+'"><i style="width:'+pct+'%"></i></div>':'')+'</div>'+
+          '<span class="hc-act" data-edit="'+h.id+'">Edit</span></div>';
+      }).join('');
+    });
+  }
+  function seedHeads(){
+    var common=['Material','Labour','Transport','Food & Tea','Fuel','Office','Misc'];
+    var i=0;(function next(){ if(i>=common.length){toast('Heads added');loadHeads();return;} E.saveBudgetHead({name:common[i++]}).then(next); })();
+  }
+  $('headsList').addEventListener('click',function(e){
+    var ed=e.target.closest('[data-edit]'); if(ed)openHead(parseInt(ed.getAttribute('data-edit'),10));
+  });
+  $('addHeadBtn').addEventListener('click',function(){openHead(null);});
+  function openHead(id){
+    S.editHeadId=id;
+    var h=id?S.heads.filter(function(x){return x.id===id;})[0]:null;
+    $('headTitle').textContent=h?'Edit budget head':'New budget head';
+    $('hName').value=h?h.name:'';
+    $('hBudget').value=(h&&h.monthly_budget)?h.monthly_budget:'';
+    $('hDelete').style.display=h?'block':'none';
+    $('headModal').classList.add('show');
+  }
+  function closeHead(){$('headModal').classList.remove('show');}
+  $('headX').addEventListener('click',closeHead);
+  $('headModal').addEventListener('click',function(e){if(e.target===this)closeHead();});
+  $('hSave').addEventListener('click',function(){
+    var name=$('hName').value.trim(); if(!name){toast('Enter a name',true);return;}
+    var payload={name:name,monthly_budget:parseFloat($('hBudget').value)||0};
+    if(S.editHeadId)payload.id=S.editHeadId;
+    E.saveBudgetHead(payload).then(function(r){
+      if(r&&r.success){toast('Head saved');closeHead();refreshHeads(function(){loadHeads();});}
+      else toast((r&&r.error)||'Could not save',true);
+    });
+  });
+  $('hDelete').addEventListener('click',function(){
+    if(!S.editHeadId)return;
+    if(!confirm('Remove this head? Past entries keep their category and stay in the books.'))return;
+    E.deleteBudgetHead(S.editHeadId).then(function(r){
+      if(r&&r.success){toast('Head removed');closeHead();refreshHeads(function(){loadHeads();});}
+      else toast((r&&r.error)||'Could not remove',true);
+    });
+  });
+
+  // ── COMMISSION ──
+  function loadCommission(){
+    var month=todayStr().slice(0,7);
+    E.getCommissionSummary({from_date:month+'-01',to_date:month+'-31'}).then(function(r){
+      if(r&&r.success){var d=r.data;
+        $('cmEarn').textContent=inr(d.earned.gross);$('cmPaid').textContent=inr(d.paid.gross);
+        $('cmNet').textContent=inr(d.net_commission);$('cmNet').style.color=d.net_commission<0?'var(--out)':'var(--in)';}
+    });
+    E.getCommissionEntries({from_date:month+'-01',to_date:month+'-31'}).then(function(r){
+      var rows=(r&&r.success&&r.data)?r.data:[];
+      if(!rows.length){$('commList').innerHTML='<div class="empty"><div class="e-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5 5 5-11L17 12h4"/></svg></div>No commission yet this month. Tap ＋ above.</div>';return;}
+      $('commList').innerHTML=rows.map(function(c){var earn=c.direction==='earned';
+        return '<div class="row-tx"><div class="tx-ico '+(earn?'in':'out')+'">'+(earn?'↓':'↑')+'</div>'+
+          '<div class="tx-main"><div class="tx-head">'+esc(c.party_name)+'</div>'+
+          '<div class="tx-sub">'+esc(c.entry_date)+' · '+(earn?'earned':'paid')+(c.narration?' · '+esc(c.narration):'')+'</div></div>'+
+          '<div style="text-align:right;"><div class="tx-amt '+(earn?'in':'out')+'">'+(earn?'+':'−')+inr(c.net_amount)+'</div>'+
+          '<span class="d-del" data-cdel="'+c.id+'" style="font-size:11px;">remove</span></div></div>';
+      }).join('');
+    });
+  }
+  function cmSetDir(d){S.commDir=d;$('cmIo').querySelectorAll('button').forEach(function(b){var on=b.getAttribute('data-dir')===d;b.className=on?(d==='earned'?'on-in':'on-out'):'';});cmRecalc();}
+  $('cmIo').addEventListener('click',function(e){var b=e.target.closest('button');if(b)cmSetDir(b.getAttribute('data-dir'));});
+  function cmRecalc(){
+    var g=parseFloat($('cmGross').value)||0,gr=parseFloat($('cmGst').value)||0,tr=parseFloat($('cmTds').value)||0;
+    var gst=Math.round(g*gr/100*100)/100,tds=Math.round(g*tr/100*100)/100,net=Math.round((g+gst-tds)*100)/100;
+    var verb=S.commDir==='earned'?'You receive':'You pay';
+    function r(a,b){return '<div style="display:flex;justify-content:space-between;padding:1px 0;"><span>'+a+'</span><span>'+b+'</span></div>';}
+    $('cmCalc').innerHTML=r('Commission',inr(g))+(gst?r('+ GST',inr(gst)):'')+(tds?r('− TDS 194H','−'+inr(tds)):'')+
+      '<div style="display:flex;justify-content:space-between;font-weight:800;border-top:1px dashed #cbd5e1;margin-top:5px;padding-top:6px;"><span>'+verb+'</span><span>'+inr(net)+'</span></div>';
+  }
+  ['cmGross','cmGst','cmTds'].forEach(function(id){$(id).addEventListener('input',cmRecalc);$(id).addEventListener('change',cmRecalc);});
+  function openComm(){
+    var sel=$('cmAcct');sel.innerHTML='';
+    S.accounts.forEach(function(a){var o=document.createElement('option');o.value=a.id;o.textContent=a.account_name;sel.appendChild(o);});
+    $('cmParty').value='';$('cmNarr').value='';$('cmGross').value='';$('cmDate').value=todayStr();$('cmGst').value='0';$('cmTds').value='2';
+    cmSetDir('earned');$('commModal').classList.add('show');cmRecalc();
+  }
+  function closeComm(){$('commModal').classList.remove('show');}
+  $('commX').addEventListener('click',closeComm);
+  $('commModal').addEventListener('click',function(e){if(e.target===this)closeComm();});
+  $('addCommBtn').addEventListener('click',openComm);
+  $('cmSave').addEventListener('click',function(){
+    var party=$('cmParty').value.trim();if(!party){toast('Enter party name',true);return;}
+    var gross=parseFloat($('cmGross').value);if(!(gross>0)){toast('Enter amount',true);return;}
+    var acct=$('cmAcct').value;if(!acct){toast('Pick an account',true);return;}
+    $('cmSave').disabled=true;
+    E.saveCommissionEntry({direction:S.commDir,party_name:party,narration:$('cmNarr').value.trim()||null,
+      entry_date:$('cmDate').value||todayStr(),gross_amount:gross,gst_rate:parseFloat($('cmGst').value)||0,
+      tds_rate:parseFloat($('cmTds').value)||0,bank_account_id:parseInt(acct,10)}).then(function(r){
+      $('cmSave').disabled=false;
+      if(r&&r.success){toast('Commission saved');closeComm();loadAccounts();loadCommission();}
+      else toast((r&&r.error)||'Could not save',true);
+    });
+  });
+  $('commList').addEventListener('click',function(e){
+    var d=e.target.closest('[data-cdel]');if(!d)return;
+    if(!confirm('Remove this commission entry? It reverses the cash and your books.'))return;
+    E.deleteCommissionEntry(parseInt(d.getAttribute('data-cdel'),10)).then(function(r){
+      if(r&&r.success){toast('Removed');loadAccounts();loadCommission();}else toast((r&&r.error)||'Could not remove',true);});
+  });
+
+  // init
+  $('fDate').value=todayStr();
+  $('bkMonth').value=todayStr().slice(0,7);
+  setIO('out');
+  refreshHeads();
+  boot();
+})();
+</script>
+</body>
+</html>

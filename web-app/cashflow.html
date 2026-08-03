@@ -1,0 +1,2203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Cash Flow & Bank Book</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<script src="vendor/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#22d3ee;--accent2:#0891b2;--success:#22c55e;--danger:#ef4444;
+  --warn:#10b981;--info:#3b82f6;--purple:#a855f7;
+  --radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px;}
+/* TABS */
+.tabs{display:flex;gap:4px;padding:14px 22px 0;border-bottom:1px solid var(--border);background:var(--surface);}
+.tab{padding:9px 16px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:12px 22px;border-bottom:1px solid var(--border);}
+.kpi{background:var(--surface2);border-radius:10px;padding:12px 14px;border:1px solid var(--border);}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;}
+.kpi-val{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+.kpi-sub{font-size:10px;color:var(--faint);margin-top:2px;}
+.cr{color:var(--success);}
+.dr{color:var(--danger);}
+.bd-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+@media(max-width:780px){.bd-grid{grid-template-columns:1fr;}}
+.bd-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+.bd-card h4{margin:0 0 12px;font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.4px;}
+.bd-row{margin-bottom:11px;}
+.bd-row-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;margin-bottom:4px;}
+.bd-label{color:var(--text);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bd-amt{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.bd-bar{height:6px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden;}
+.bd-bar > i{display:block;height:100%;background:linear-gradient(90deg,#10b981,#3b82f6);border-radius:5px;}
+.bd-empty{color:var(--muted);font-size:12px;padding:6px 0;}
+.am{color:var(--warn);}
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.toolbar-left{display:flex;gap:8px;align-items:center;}
+.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;}
+.search-box{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 12px;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:12px;width:180px;}
+.search-box input::placeholder{color:var(--faint);}
+.btn{display:flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-success{background:rgba(34,197,94,0.1);color:var(--success);border:1px solid rgba(34,197,94,0.2);}
+.btn-danger-sm{background:rgba(239,68,68,0.1);color:var(--danger);border:1px solid rgba(239,68,68,0.15);padding:4px 8px;font-size:11px;border-radius:6px;cursor:pointer;}
+.btn-sm{padding:5px 9px;font-size:11px;}
+.seg{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.seg-btn{padding:6px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;transition:all 0.15s;}
+.seg-btn.active{background:var(--accent2);color:#fff;}
+/* TABLE */
+.tc{padding:0 22px 20px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:12px;color:var(--muted);padding:10px 10px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+.name-bold{font-weight:600;color:var(--text);}
+.sub-text{font-size:10px;color:var(--faint);}
+.badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;display:inline-block;}
+.b-credit{background:rgba(34,197,94,0.1);color:var(--success);}
+.b-debit{background:rgba(239,68,68,0.1);color:var(--danger);}
+.b-transfer{background:rgba(168,85,247,0.1);color:var(--purple);}
+.b-pending{background:rgba(16,185,129,0.1);color:var(--warn);}
+.b-cleared{background:rgba(34,211,238,0.1);color:var(--accent);}
+.b-reconciled{background:rgba(34,197,94,0.15);color:var(--success);}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;}
+/* CHART AREA */
+.chart-area{display:grid;grid-template-columns:2fr 1fr;gap:14px;padding:14px 22px;border-bottom:1px solid var(--border);}
+.chart-card{background:var(--surface2);border-radius:12px;padding:16px;border:1px solid var(--border);}
+.chart-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:12px;}
+.chart-wrap{position:relative;height:200px;}
+/* FORECAST TABLE */
+.forecast-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:12px;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.fc-head{background:var(--surface3);padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;}
+.fc-cell{padding:8px 10px;font-size:12px;font-variant-numeric:tabular-nums;border-top:1px solid rgba(255,255,255,0.04);}
+.fc-pos{color:var(--success);font-weight:700;}
+.fc-neg{color:var(--danger);font-weight:700;}
+/* ALERT BANNER */
+.alert-banner{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;margin:12px 22px 0;}
+.alert-banner.warn{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:var(--warn);}
+.alert-banner.danger{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);}
+.alert-banner.ok{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);color:var(--success);}
+/* RECON */
+.recon-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:14px 22px;}
+.recon-col{background:var(--surface2);border-radius:12px;padding:16px;border:1px solid var(--border);}
+.recon-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.recon-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;}
+.recon-row:last-child{border-bottom:none;}
+.recon-total{display:flex;justify-content:space-between;padding:10px 0 0;font-size:13px;font-weight:700;color:var(--text);border-top:1px solid var(--border);margin-top:4px;}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;display:none;align-items:center;justify-content:center;padding:14px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:14px;font-weight:700;}
+.modal-body{padding:18px 20px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;border-radius:6px;}
+.close-btn:hover{color:var(--text);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:12px;color:var(--text);outline:none;transition:border-color 0.2s;width:100%;}
+input:focus,select:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+.divider-label{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:0.5px;text-transform:uppercase;padding:8px 0 2px;border-bottom:1px solid rgba(34,211,238,0.15);grid-column:1/-1;}
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;color:var(--faint);}
+.empty .ei{font-size:40px;margin-bottom:8px;}
+/* BANK CARD */
+.bank-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px 22px;border-bottom:1px solid var(--border);}
+.bank-card{background:linear-gradient(135deg,var(--surface2),var(--surface3));border-radius:12px;padding:16px;border:1px solid var(--border);position:relative;overflow:hidden;}
+.bank-card::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(34,211,238,0.06);}
+.bc-bank{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px;}
+.bc-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;}
+.bc-bal{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.bc-num{font-size:10px;color:var(--faint);margin-top:4px;}
+/* TRANSFER */
+.transfer-form{max-width:520px;margin:20px auto;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:24px;}
+.transfer-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:18px;}
+.transfer-arrow{display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent);padding:8px 0;}
+/* RECON TABLE */
+.recon-txn-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.recon-txn-row:last-child{border-bottom:none;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('cashflow')">💰 Cash Flow</div>
+  <div class="tab" onclick="switchTab('bankbook')">🏦 Bank Book</div>
+  <div class="tab" onclick="switchTab('transfer')">🔁 Inter-Bank Transfer</div>
+  <div class="tab" onclick="switchTab('forecast')">📈 Forecast</div>
+  <div class="tab" onclick="switchTab('recon')">🔄 Reconciliation</div>
+  <div class="tab" onclick="switchTab('breakdown')">📊 Breakdown</div>
+</div>
+
+<!-- ═══════════════ CASH FLOW TAB ═══════════════ -->
+<div id="tab-cashflow">
+  <div class="kpi-row">
+    <div class="kpi" onclick="goKpi('bankbook')" style="cursor:pointer;" title="Click to open Bank Book"><div class="kpi-lbl">Total Cash (All Banks)</div><div class="kpi-val cr" id="cfTotalCash">₹0</div><div class="kpi-sub">Click to view bank accounts →</div></div>
+    <div class="kpi" onclick="goKpi('cashflow','credit')" style="cursor:pointer;" title="Click to view this month's credits"><div class="kpi-lbl">Inflows This Month</div><div class="kpi-val cr" id="cfIn">₹0</div><div class="kpi-sub">Click to view credits →</div></div>
+    <div class="kpi" onclick="goKpi('cashflow','debit')" style="cursor:pointer;" title="Click to view this month's debits"><div class="kpi-lbl">Outflows This Month</div><div class="kpi-val dr" id="cfOut">₹0</div><div class="kpi-sub">Click to view debits →</div></div>
+    <div class="kpi" onclick="goKpi('cashflow','all')" style="cursor:pointer;" title="Click to view the full ledger"><div class="kpi-lbl">Net This Month</div><div class="kpi-val" id="cfNet">₹0</div><div class="kpi-sub">Click to view ledger →</div></div>
+    <div class="kpi" onclick="goKpi('recon')" style="cursor:pointer;" title="Click to open Reconciliation"><div class="kpi-lbl">Unreconciled</div><div class="kpi-val am" id="cfUnrecon">0</div><div class="kpi-sub">Click to reconcile →</div></div>
+  </div>
+  <div id="alertBanner"></div>
+  <div style="padding:8px 22px;font-size:11px;color:var(--faint);background:rgba(168,85,247,0.04);border-bottom:1px solid var(--border);">
+    ℹ️ Inter-bank transfers are shown in the <strong style="color:var(--purple);">🔁 Inter-Bank Transfer</strong> tab and excluded here to avoid double-counting.
+  </div>
+  <div class="chart-area">
+    <div class="chart-card">
+      <div class="chart-title">📊 Monthly Cash Flow Trend (Last 6 months)</div>
+      <div class="chart-wrap"><canvas id="cfChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🍩 Expense Breakdown</div>
+      <div class="chart-wrap"><canvas id="expChart"></canvas></div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-box">
+        <i data-lucide="search" style="width:13px;height:13px;color:var(--faint);"></i>
+        <input type="text" placeholder="Search transactions..." id="cfSearch" oninput="renderCF()">
+      </div>
+      <div class="seg">
+        <button class="seg-btn active" id="seg-all" onclick="filterCF('all')">All</button>
+        <button class="seg-btn" id="seg-credit" onclick="filterCF('credit')">Credits</button>
+        <button class="seg-btn" id="seg-debit" onclick="filterCF('debit')">Debits</button>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <select id="cfMonth" onchange="renderCF()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--muted);outline:none;"></select>
+      <span id="cfMgmtBadge" style="display:none;font-size:10px;background:#4c1d95;color:#c4b5fd;padding:2px 8px;border-radius:12px;font-weight:700;">🔓 MGMT</span>
+      <button class="btn btn-outline" id="cfMgmtBtn" onclick="toggleCfMgmt()" style="background:rgba(124,58,237,.12);color:#a78bfa;border:1px solid rgba(124,58,237,.25);" title="Show private management entries in cashflow">🔒</button>
+      <button class="btn btn-outline" onclick="exportCFCSV()"><i data-lucide="download" style="width:13px;height:13px;"></i> Export</button>
+      <button class="btn btn-outline" onclick="openImportModal()" title="Upload a filled cashbook sheet (CSV) — for entries made offline"><i data-lucide="upload" style="width:13px;height:13px;"></i> Import sheet</button>
+      <button class="btn btn-success" onclick="openCFModal('credit')">+ Receipt</button>
+      <button class="btn btn-primary" onclick="openCFModal('debit')">+ Payment</button>
+      <button class="btn btn-outline" onclick="goCommission()" title="Commission carries GST &amp; 194H TDS, so it has its own quick entry">+ Commission</button>
+    </div>
+  </div>
+
+  <!-- Management PIN modal for cashflow -->
+  <div id="cfPinModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);align-items:center;justify-content:center;">
+    <div style="background:#1e293b;border:1px solid rgba(255,255,255,.08);border-radius:14px;width:340px;padding:28px;text-align:center;">
+      <div style="font-size:24px;margin-bottom:8px;">🔒</div>
+      <div style="font-weight:700;font-size:15px;color:#f1f5f9;margin-bottom:6px;">Management View</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:20px;line-height:1.5;">Enter PIN to overlay private management entries in the cashflow ledger.</div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-bottom:12px;">
+        <input id="cfP1" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="cfPinNext(this,'cfP2')" onkeydown="cfPinBack(event,'','cfP1')">
+        <input id="cfP2" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="cfPinNext(this,'cfP3')" onkeydown="cfPinBack(event,'cfP1','cfP2')">
+        <input id="cfP3" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="cfPinNext(this,'cfP4')" onkeydown="cfPinBack(event,'cfP2','cfP3')">
+        <input id="cfP4" type="password" maxlength="1" style="width:50px;height:54px;background:#243147;border:2px solid rgba(255,255,255,.1);border-radius:10px;text-align:center;font-size:22px;color:#f1f5f9;outline:none;" oninput="cfPinNext(this,null)" onkeydown="cfPinBack(event,'cfP3','cfP4')" onkeypress="if(event.key==='Enter')verifyCfPin()">
+      </div>
+      <div id="cfPinErr" style="color:#f87171;font-size:12px;min-height:18px;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button onclick="closeCfPinModal()" style="padding:8px 18px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,.15);color:#94a3b8;cursor:pointer;font-size:12px;">Cancel</button>
+        <button onclick="verifyCfPin()" style="padding:8px 18px;border-radius:8px;background:#7c3aed;color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:600;">Unlock →</button>
+      </div>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Date</th><th>Description</th><th>Category</th><th>Bank Account</th>
+      <th>Ref No.</th><th>Type</th><th>Amount</th><th>Balance</th><th>Actions</th>
+    </tr></thead>
+    <tbody id="cfBody"></tbody></table>
+    <div class="empty" id="cfEmpty" style="display:none;">
+      <div class="ei">💰</div>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:10px;">No transactions yet. Add receipts and payments to track cash flow.<br><span style="font-size:11px;color:var(--faint);">ℹ️ Inter-bank transfers appear in the 🔁 Inter-Bank Transfer tab (excluded here to avoid double-counting).</span></p>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button class="btn btn-success" onclick="openCFModal('credit')">+ Add Receipt</button>
+        <button class="btn btn-primary" onclick="openCFModal('debit')">+ Add Payment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ BANK BOOK ═══════════════ -->
+<div id="tab-bankbook" style="display:none;">
+  <div class="bank-cards" id="bankCards">
+    <div class="bank-card" style="border:1px dashed rgba(34,211,238,0.3);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;min-height:90px;" onclick="openAddBankModal()">
+      <i data-lucide="plus-circle" style="width:20px;height:20px;color:var(--accent);"></i>
+      <span style="font-size:12px;color:var(--accent);font-weight:600;">Add Bank Account</span>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <select id="bankFilter" onchange="renderBankBook()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--muted);outline:none;">
+        <option value="">All Accounts</option>
+      </select>
+      <input type="date" id="bbFromDate" onchange="renderBankBook()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--muted);outline:none;">
+      <input type="date" id="bbToDate" onchange="renderBankBook()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--muted);outline:none;">
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-outline" onclick="exportBankCSV()"><i data-lucide="download" style="width:13px;height:13px;"></i> Export</button>
+      <button class="btn btn-primary" onclick="openBankTxnModal()"><i data-lucide="plus" style="width:13px;height:13px;"></i> Add Transaction</button>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Date</th><th>Description</th><th>Account</th><th>Ref / Cheque No.</th>
+      <th>Debit</th><th>Credit</th><th>Balance</th><th>Reconciled</th><th>Actions</th>
+    </tr></thead>
+    <tbody id="bankBody"></tbody></table>
+    <div class="empty" id="bankEmpty" style="display:none;">
+      <div class="ei">🏦</div>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:10px;">No bank transactions. Add an account first then record transactions.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ INTER-BANK TRANSFER ═══════════════ -->
+<div id="tab-transfer" style="display:none;">
+  <div style="padding:20px 22px 0;">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">🔁 Inter-Bank Transfer</div>
+    <div style="font-size:11px;color:var(--muted);">Transfer funds between your bank accounts. Both debit and credit entries will be created automatically.</div>
+  </div>
+  <div class="transfer-form">
+    <div class="transfer-title">New Transfer</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Transfer Date *</label><input type="date" id="trDate"></div>
+      <div class="form-group"><label>Amount (₹) *</label><input type="number" id="trAmount" placeholder="0.00"></div>
+      <div class="form-group"><label>From Account *</label><select id="trFrom"><option value="">Select source account</option></select></div>
+      <div class="form-group"><label>To Account *</label><select id="trTo"><option value="">Select destination account</option></select></div>
+      <div class="form-group full"><label>Description</label><input type="text" id="trDesc" placeholder="e.g. Fund transfer from SBI to HDFC"></div>
+      <div class="form-group"><label>Payment Mode</label>
+        <select id="trMode">
+          <option>NEFT</option><option>RTGS</option><option>IMPS</option>
+          <option>Cheque</option><option>Cash Transfer</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Reference No.</label><input type="text" id="trRef" placeholder="UTR / Cheque No."></div>
+      <div class="form-group"><label>Notes</label><input type="text" id="trNotes" placeholder="Optional notes"></div>
+    </div>
+    <div id="trStatus" style="display:none;margin-top:14px;border-radius:9px;padding:10px 13px;font-size:12.5px;font-weight:600;"></div>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn btn-outline" onclick="resetTransferForm()">Reset</button>
+      <button class="btn btn-primary" id="trExecBtn" onclick="saveTransfer()"><i data-lucide="arrow-right-left" style="width:13px;height:13px;"></i> Execute Transfer</button>
+    </div>
+  </div>
+  <div style="padding:0 22px 20px;">
+    <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">Recent Transfers</div>
+    <div class="tc" style="padding:0;">
+      <table><thead><tr>
+        <th>Date</th><th>From Account</th><th>To Account</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Description</th>
+      </tr></thead>
+      <tbody id="transferBody"></tbody></table>
+      <div class="empty" id="transferEmpty" style="display:none;">
+        <div class="ei">🔁</div>
+        <p style="color:var(--muted);font-size:12px;">No transfers recorded yet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ FORECAST ═══════════════ -->
+<div id="tab-forecast" style="display:none;">
+  <div style="padding:14px 22px 6px;">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">📈 3-Month Cash Flow Forecast</div>
+    <div style="font-size:11px;color:var(--muted);">Based on pending invoices, upcoming bills, and historical inflows/outflows.</div>
+  </div>
+  <div style="padding:0 22px 14px;">
+    <div class="chart-card" style="margin-top:12px;">
+      <div class="chart-title">Forecast vs Actual</div>
+      <div class="chart-wrap" style="height:240px;"><canvas id="forecastChart"></canvas></div>
+    </div>
+    <div id="forecastTableWrap" style="margin-top:14px;"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 22px 20px;">
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">📥 Expected Inflows (Pending Invoices)</div>
+      <div id="forecastInflows"></div>
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">📤 Expected Outflows (Pending Bills)</div>
+      <div id="forecastOutflows"></div>
+    </div>
+  </div>
+  <div style="padding:0 22px 20px;">
+    <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">⚠️ Upcoming Payment Alerts</div>
+    <div id="payAlerts"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ RECONCILIATION ═══════════════ -->
+<div id="tab-recon" style="display:none;">
+  <div style="padding:14px 22px 6px;">
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">🔄 Bank Reconciliation Statement</div>
+    <div style="font-size:11px;color:var(--muted);">Match your bank statement balance with your books to find discrepancies.</div>
+  </div>
+  <!-- STATEMENT IMPORT + AUTO-MATCH -->
+  <div style="margin:12px 22px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:16px;">
+    <div style="font-size:12px;font-weight:700;color:var(--info);margin-bottom:6px;">⚡ Import Bank Statement (CSV) — Auto-Match</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+      Download your statement as CSV from net-banking, then import it here. Columns needed: <b>Date, Description, Debit, Credit</b> (extra columns are ignored). Entries are auto-matched to book transactions with the same amount within ±5 days.
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <select id="stmtBankSel" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--text);outline:none;">
+        <option value="">Select bank account…</option>
+      </select>
+      <input type="file" id="stmtFile" accept=".csv,text/csv" style="font-size:12px;color:var(--muted);">
+      <button class="btn btn-primary btn-sm" onclick="importStatement()"><i data-lucide="upload" style="width:13px;height:13px;"></i> Import &amp; Auto-Match</button>
+      <span id="stmtStatus" style="font-size:11px;color:var(--muted);"></span>
+    </div>
+    <div id="stmtLinesWrap" style="display:none;margin-top:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Imported Statement Lines</div>
+      <div style="max-height:260px;overflow-y:auto;">
+        <table><thead><tr>
+          <th>Date</th><th>Description</th><th>Debit</th><th>Credit</th><th>Match</th><th></th>
+        </tr></thead>
+        <tbody id="stmtLinesBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:10px 22px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border);">
+    <select id="reconBankFilter" onchange="renderReconTxns()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--muted);outline:none;">
+      <option value="">All Accounts</option>
+    </select>
+    <input type="date" id="reconFromDate" onchange="renderReconTxns()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--muted);outline:none;">
+    <input type="date" id="reconToDate" onchange="renderReconTxns()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--muted);outline:none;">
+    <span style="font-size:11px;color:var(--muted);">Check transactions to mark as reconciled</span>
+    <button class="btn btn-success btn-sm" onclick="reconcileSelected()"><i data-lucide="check-circle" style="width:13px;height:13px;"></i> Reconcile Selected</button>
+  </div>
+  <div class="tc" style="padding:10px 22px 0;">
+    <table><thead><tr>
+      <th><input type="checkbox" id="reconSelectAll" onchange="toggleAllRecon(this.checked)"></th>
+      <th>Date</th><th>Description</th><th>Account</th><th>Debit</th><th>Credit</th><th>Status</th>
+    </tr></thead>
+    <tbody id="reconBody"></tbody></table>
+    <div class="empty" id="reconEmpty" style="display:none;">
+      <div class="ei">✅</div>
+      <p style="color:var(--muted);font-size:12px;">All transactions are reconciled!</p>
+    </div>
+  </div>
+  <div class="recon-grid" style="margin-top:16px;">
+    <!-- BALANCE AS PER BANK -->
+    <div class="recon-col">
+      <div class="recon-title">🏦 Balance as per Bank Statement</div>
+      <div class="recon-row"><span>Closing balance (bank)</span><input type="number" id="rBankBal" placeholder="0" style="width:120px;text-align:right;" oninput="calcRecon()"></div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:8px 0 4px;">Add: Cheques issued but not presented</div>
+      <div id="rUnpresented"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addReconRow('unpresented')">+ Add</button>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:8px 0 4px;">Less: Cheques deposited but not cleared</div>
+      <div id="rUncleared"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addReconRow('uncleared')">+ Add</button>
+      <div class="recon-total"><span>Adjusted Bank Balance</span><span id="rAdjBank" class="cr">₹0</span></div>
+    </div>
+    <!-- BALANCE AS PER BOOKS -->
+    <div class="recon-col">
+      <div class="recon-title">📚 Balance as per Books</div>
+      <div class="recon-row"><span>Cash book balance</span><input type="number" id="rBookBal" placeholder="0" style="width:120px;text-align:right;" oninput="calcRecon()"></div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:8px 0 4px;">Add: Credits by bank not in books</div>
+      <div id="rCreditsNotBooks"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addReconRow('credits')">+ Add</button>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:8px 0 4px;">Less: Debits by bank not in books</div>
+      <div id="rDebitsNotBooks"></div>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addReconRow('debits')">+ Add</button>
+      <div class="recon-total"><span>Adjusted Book Balance</span><span id="rAdjBook" class="cr">₹0</span></div>
+    </div>
+  </div>
+  <div style="padding:0 22px 20px;">
+    <div id="reconResult" style="margin-top:12px;background:var(--surface2);border-radius:10px;padding:16px;border:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">Difference (should be ₹0 if balanced)</span>
+        <span id="reconDiff" style="font-size:18px;font-weight:800;color:var(--success);">₹0</span>
+      </div>
+      <div id="reconStatus" style="margin-top:8px;font-size:12px;color:var(--success);">✅ Books are balanced</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ BREAKDOWN TAB ═══════════════ -->
+<div id="tab-breakdown" style="display:none;">
+  <div style="display:flex;align-items:center;gap:10px;padding:16px 22px 6px;flex-wrap:wrap;">
+    <div style="font-size:14px;font-weight:700;color:var(--text);flex:1;">Money in / out — which head, vendor &amp; site is the most</div>
+    <select id="bdPeriod" onchange="renderBreakdown()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12px;color:var(--muted);outline:none;">
+      <option value="month">This month</option>
+      <option value="fy">This financial year</option>
+      <option value="all">All time</option>
+    </select>
+  </div>
+  <div id="bdContent" class="bd-grid" style="padding:8px 22px 22px;"></div>
+</div>
+
+<!-- ═══════════ IMPORT SHEET MODAL ═══════════ -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📥 Import cashbook sheet</div>
+      <button class="close-btn" onclick="closeModal('importModal')"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;">For entries written offline. <b>1.</b> Download the template and fill one row per entry. <b>2.</b> Save it as <b>CSV</b>. <b>3.</b> Upload here — each entry tags to the right bank/head and posts to the books automatically.</p>
+      <button class="btn btn-outline btn-sm" onclick="downloadCFTemplate()" style="margin-bottom:12px;"><i data-lucide="download" style="width:12px;height:12px;"></i> Download blank template</button>
+      <div><label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Upload filled sheet (.csv)</label>
+        <input type="file" id="importFile" accept=".csv,text/csv,text/plain" onchange="previewCFImport()" style="width:100%;margin-top:5px;font-size:12px;color:var(--muted);"></div>
+      <div id="importPreview" style="margin-top:12px;font-size:12px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('importModal')">Cancel</button>
+      <button class="btn btn-primary" id="importBtn" onclick="doCFImport()" disabled><i data-lucide="upload" style="width:13px;height:13px;"></i> Import entries</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CASH FLOW MODAL ═══════════ -->
+<div class="modal-overlay" id="cfModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="cfModalTitle">💳 Add Transaction</div>
+      <button class="close-btn" onclick="closeModal('cfModal')"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Type</label>
+          <select id="cfType" onchange="updateCFCategories()">
+            <option value="credit">Receipt (Money In)</option>
+            <option value="debit">Payment (Money Out)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Date *</label><input type="date" id="cfDate"></div>
+        <div class="form-group full"><label>Description *</label><input type="text" id="cfDesc" placeholder="What is this transaction for?"></div>
+        <div class="form-group"><label>Head</label>
+          <select id="cfCat" onchange="_cfHeadTouched=true;onCFHeadChange()"></select>
+          <div id="cfAutoNote" style="display:none;font-size:11px;color:#8b5cf6;margin-top:4px;"></div>
+        </div>
+        <div class="form-group"><label>Sub-Category</label><input type="text" id="cfSubCat" placeholder="Optional"></div>
+        <div class="form-group" id="cfCommGst" style="display:none;"><label>GST %</label>
+          <select id="cfGst"><option value="0">No GST</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option></select>
+        </div>
+        <div class="form-group" id="cfCommTds" style="display:none;"><label>194H TDS %</label>
+          <select id="cfTds"><option value="0">No TDS</option><option value="2" selected>2% (194H)</option><option value="5">5%</option></select>
+        </div>
+        <div class="form-group full" id="cfLoanWrap" style="display:none;"><label>Which loan?</label>
+          <select id="cfLoan" onchange="onCFLoanChange()"></select>
+        </div>
+        <div class="form-group"><label>Amount (₹) *</label><input type="number" id="cfAmt" placeholder="0"></div>
+        <div class="form-group"><label>Payment Mode</label>
+          <select id="cfMode"><option>Bank Transfer</option><option>Cheque</option><option>Cash</option><option>UPI</option><option>DD</option><option>NEFT</option><option>RTGS</option></select>
+        </div>
+        <div class="form-group"><label>Bank Account</label>
+          <select id="cfBank"><option value="">-- Select Bank --</option></select>
+        </div>
+        <div class="form-group"><label>Reference / Cheque No.</label><input type="text" id="cfRef" placeholder="Optional"></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="cfNotes" placeholder="Additional notes"></div>
+        <div class="form-group"><label>Client <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <select id="cfClient" onchange="cfAutoFill('client')"><option value="">— none —</option></select>
+        </div>
+        <div class="form-group"><label>Vendor <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <select id="cfVendor" onchange="cfAutoFill('vendor')"><option value="">— none —</option></select>
+        </div>
+        <div class="form-group"><label>Site <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <select id="cfSite"><option value="">— none —</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('cfModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCF()"><i data-lucide="save" style="width:13px;height:13px;"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BANK ACCOUNT MODAL -->
+<div class="modal-overlay" id="addBankModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="bankModalTitle">🏦 Add Bank Account</div>
+      <button class="close-btn" onclick="closeModal('addBankModal')"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Account Name / Nick *</label><input type="text" id="baName" placeholder="e.g. SBI Current, Petty Cash"></div>
+        <div class="form-group"><label>Bank Name</label><input type="text" id="baBankName" placeholder="SBI / HDFC / ICICI..."></div>
+        <div class="form-group"><label>Branch</label><input type="text" id="baBranch" placeholder="Branch name"></div>
+        <div class="form-group"><label>Account Number</label><input type="text" id="baAccNo" placeholder="Full account number"></div>
+        <div class="form-group"><label>IFSC Code</label><input type="text" id="baIFSC" placeholder="SBIN0001234"></div>
+        <div class="form-group"><label>Account Type</label>
+          <select id="baType"><option>Current</option><option>Savings</option><option>Cash</option><option>OD</option></select>
+        </div>
+        <div class="form-group"><label>Opening Balance (₹)</label><input type="number" id="baOpenBal" placeholder="0"></div>
+        <div class="form-group"><label>Opening Date</label><input type="date" id="baOpenDate"></div>
+        <div class="form-group full"><label>Signatories</label><input type="text" id="baSignatories" placeholder="Authorised signatories"></div>
+        <div class="form-group full" style="flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" id="baIsPrimary" style="width:auto;">
+          <label style="text-transform:none;font-size:12px;font-weight:600;color:var(--text);">Set as primary account</label>
+        </div>
+        <input type="hidden" id="baEditId">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addBankModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBankAccount()" id="bankSaveBtn">Add Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- BANK TXN MODAL -->
+<div class="modal-overlay" id="bankTxnModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <div class="modal-title">🏦 Add Bank Transaction</div>
+      <button class="close-btn" onclick="closeModal('bankTxnModal')"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Date *</label><input type="date" id="btDate"></div>
+        <div class="form-group"><label>Type</label>
+          <select id="btType" onchange="updateBTCategories()">
+            <option value="credit">Credit (Deposit)</option>
+            <option value="debit">Debit (Withdrawal)</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Description *</label><input type="text" id="btDesc" placeholder="Description of transaction"></div>
+        <div class="form-group"><label>Account *</label>
+          <select id="btAccount"><option value="">Select account</option></select>
+        </div>
+        <div class="form-group"><label>Category</label>
+          <select id="btCat"></select>
+        </div>
+        <div class="form-group"><label>Amount (₹) *</label><input type="number" id="btAmt" placeholder="0"></div>
+        <div class="form-group"><label>Payment Mode</label>
+          <select id="btMode"><option>Bank Transfer</option><option>Cheque</option><option>Cash</option><option>UPI</option><option>NEFT</option><option>RTGS</option></select>
+        </div>
+        <div class="form-group"><label>Ref / Cheque No.</label><input type="text" id="btRef" placeholder="Optional"></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="btNotes" placeholder="Optional notes"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('bankTxnModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBankTxn()">Save Transaction</button>
+    </div>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+const fmt  = n => Math.round(Math.abs(n) || 0).toLocaleString('en-IN');
+const fmtS = n => (n < 0 ? '-' : '') + '₹' + fmt(n);
+const today = () => new Date().toISOString().split('T')[0];
+const TABS  = ['cashflow','bankbook','transfer','forecast','recon','breakdown'];
+
+const CREDIT_CATS = ['Sales Receipt','Client Receipt','Advance Receipt','Loan Received','Refund','Other Income'];
+const DEBIT_CATS  = ['Vendor Payment','Salary','Labour Wages','Equipment Rent','Fuel','Materials','Tax/GST','TDS Payment','Bank Charges','Rent','Utilities','Other Expense'];
+
+let cfTypeFilter = 'all';
+let _banksCache  = [];
+let _allTxnsCache = [];
+let lastCF = {};
+try { lastCF = JSON.parse(localStorage.getItem('cf_lastUsed') || '{}'); } catch(_) {}
+function saveLastCF(d) {
+  lastCF = { payment_mode: d.payment_mode, bank_account_id: d.bank_account_id,
+             credit_cat: d.type === 'credit' ? d.category : lastCF.credit_cat,
+             debit_cat:  d.type === 'debit'  ? d.category : lastCF.debit_cat };
+  try { localStorage.setItem('cf_lastUsed', JSON.stringify(lastCF)); } catch(_) {}
+}
+
+// ─── Month selector ──────────────────────────────────────────────────────────
+(function(){
+  const sel = document.getElementById('cfMonth');
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d   = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const v   = d.getFullYear() + '-' + (d.getMonth() + 1).toString().padStart(2,'0');
+    const lbl = d.toLocaleString('en-IN', { month:'long', year:'numeric' });
+    sel.innerHTML += `<option value="${v}" ${i===0?'selected':''}>${lbl}</option>`;
+  }
+})();
+
+// ─── KPI card click-through (matches the dashboard's clickable KPI cards) ────
+function goKpi(tab, filter) {
+  switchTab(tab);
+  if (filter) filterCF(filter);
+}
+
+// ─── Tab switching ───────────────────────────────────────────────────────────
+function switchTab(t) {
+  const tab = t === 'banks' ? 'bankbook' : (TABS.includes(t) ? t : 'cashflow');
+  TABS.forEach(x => {
+    document.getElementById('tab-' + x).style.display = x === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', TABS[i] === tab);
+  });
+  if (tab === 'cashflow') renderCF();
+  if (tab === 'bankbook') renderBankBook();
+  if (tab === 'transfer') renderTransferTab();
+  if (tab === 'forecast') renderForecast();
+  if (tab === 'recon')    renderReconTxns();
+  if (tab === 'breakdown') renderBreakdown();
+}
+
+// ─── Breakdown: money in/out by head / vendor / site / client ────────────────
+async function renderBreakdown() {
+  const period = (document.getElementById('bdPeriod') || {}).value || 'month';
+  const now = new Date();
+  let from, to;
+  if (period === 'all') { from = '1900-01-01'; to = '2999-12-31'; }
+  else if (period === 'fy') {
+    const y = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    from = y + '-04-01'; to = (y + 1) + '-03-31';
+  } else {
+    const y = now.getFullYear(), m = now.getMonth() + 1, last = new Date(y, m, 0).getDate();
+    from = `${y}-${String(m).padStart(2, '0')}-01`;
+    to   = `${y}-${String(m).padStart(2, '0')}-${last}`;
+  }
+  const wrap = document.getElementById('bdContent');
+  wrap.innerHTML = '<div class="bd-empty">Loading…</div>';
+  let d = null;
+  try { const r = await window.erp.getCashAnalysis({ from_date: from, to_date: to }); d = r && r.data ? r.data : null; }
+  catch (e) { wrap.innerHTML = '<div class="bd-empty">Could not load breakdown.</div>'; return; }
+  if (!d) { wrap.innerHTML = '<div class="bd-empty">No data.</div>'; return; }
+  const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const card = (title, rows) => {
+    if (!rows || !rows.length) return `<div class="bd-card"><h4>${title}</h4><div class="bd-empty">No entries in this period.</div></div>`;
+    const max = Math.max.apply(null, rows.map(r => r.money_in + r.money_out).concat([1]));
+    const body = rows.slice(0, 12).map(r => {
+      const pct = Math.round((r.money_in + r.money_out) / max * 100);
+      const amt = (r.money_out ? `<span class="dr">−₹${fmt(r.money_out)}</span>` : '') + (r.money_in ? ` <span class="cr">+₹${fmt(r.money_in)}</span>` : '');
+      return `<div class="bd-row"><div class="bd-row-top"><span class="bd-label">${esc(r.label)}</span><span class="bd-amt">${amt}</span></div><div class="bd-bar"><i style="width:${pct}%"></i></div></div>`;
+    }).join('');
+    return `<div class="bd-card"><h4>${title} <span style="color:var(--muted);font-weight:500;">(${rows.length})</span></h4>${body}</div>`;
+  };
+  wrap.innerHTML = card('By Head', d.by_head) + card('By Vendor', d.by_vendor) + card('By Site', d.by_site) + card('By Client', d.by_client);
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+async function init() {
+  await loadBanks();
+  await loadCFMasters();
+  await renderCF();
+}
+
+// Master data for the money-in/out form: custom heads (ledger accounts) plus
+// the client / vendor / site tag lists.
+let _cfHeads = [];
+let _cfLoans = [];
+async function loadCFMasters() {
+  const pick = (r) => (Array.isArray(r) ? r : (r && r.data ? r.data : []));
+  try {
+    const [heads, clients, vendors, sites, loans] = await Promise.all([
+      window.erp.getCashHeads({}), window.erp.getClients(), window.erp.getVendors(), window.erp.getSites(), window.erp.getLoans(),
+    ]);
+    _cfHeads = pick(heads);
+    _cfLoans = (loans && loans.data && loans.data.loans) ? loans.data.loans : [];
+    const fill = (id, rows, label) => {
+      const el = document.getElementById(id); if (!el) return;
+      el.innerHTML = '<option value="">— none —</option>' +
+        rows.map((r) => `<option value="${r.id}">${(r.name || '').replace(/</g, '&lt;')}</option>`).join('');
+    };
+    fill('cfClient', pick(clients));
+    fill('cfVendor', pick(vendors));
+    fill('cfSite', pick(sites));
+    fillLoanPicker();
+  } catch (e) { console.error('loadCFMasters error', e); }
+  updateCFCategories();
+}
+function fillLoanPicker() {
+  const el = document.getElementById('cfLoan'); if (!el) return;
+  const money = (n) => '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN');
+  el.innerHTML = _cfLoans.map((l) =>
+    `<option value="${(l.name || '').replace(/"/g, '&quot;')}">${(l.party || l.name || '').replace(/</g, '&lt;')} — ${l.kind === 'liability' ? 'we owe ' : 'owed to us '}${money(l.outstanding)}</option>`).join('')
+    + '<option value="__newloan">➕ New loan account…</option>';
+}
+
+async function loadBanks() {
+  try {
+    const res = await window.erp.getBanks();
+    _banksCache = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+  } catch(e) {
+    console.error('loadBanks error', e);
+    _banksCache = [];
+  }
+  populateBankSelects();
+}
+
+function populateBankSelects() {
+  const bOpts = _banksCache.map(b =>
+    `<option value="${b.id}">${b.account_name}${b.bank_name ? ' — ' + b.bank_name : ''}</option>`
+  ).join('');
+  ['cfBank','btAccount','bankFilter','reconBankFilter','trFrom','trTo','stmtBankSel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const defaultOpt = (id === 'bankFilter' || id === 'reconBankFilter')
+      ? '<option value="">All Accounts</option>'
+      : (id === 'trFrom' || id === 'trTo')
+        ? '<option value="">Select account</option>'
+        : '<option value="">-- Select Bank --</option>';
+    el.innerHTML = defaultOpt + bOpts;
+  });
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ─── Head (category) helpers ─────────────────────────────────────────────────
+// The Head dropdown is the user's own income/expense ledger accounts (cash_heads)
+// for the current direction, plus a "create new head" option. Falls back to the
+// built-in suggestions only until the user has created their own.
+function updateCFCategories() {
+  const type = document.getElementById('cfType').value;
+  const kind = type === 'credit' ? 'income' : 'expense';
+  const mine = (_cfHeads || []).filter(h => h.kind === kind).map(h => h.name);
+  const defaults = type === 'credit' ? CREDIT_CATS : DEBIT_CATS;
+  // ALWAYS merge the built-in options with the user's own heads (their heads
+  // first), de-duplicated case-insensitively — creating a head must never hide
+  // the standard options.
+  const seen = new Set(); const names = [];
+  for (const n of mine.concat(defaults)) { const k = n.trim().toLowerCase(); if (k && !seen.has(k)) { seen.add(k); names.push(n); } }
+  const el = document.getElementById('cfCat');
+  el.innerHTML = names.map(c => `<option>${c.replace(/</g, '&lt;')}</option>`).join('')
+    + '<option value="__loan">🏦 Loan — receive / repay</option>'
+    + '<option value="__commission">🤝 Commission (GST / 194H TDS)</option>'
+    + '<option value="__new">➕ Create new head…</option>';
+  // reset to a normal head -> hide the commission + loan extra fields
+  document.getElementById('cfCommGst').style.display = 'none';
+  document.getElementById('cfCommTds').style.display = 'none';
+  document.getElementById('cfLoanWrap').style.display = 'none';
+}
+
+async function onCFHeadChange() {
+  const el = document.getElementById('cfCat');
+  const comm = el.value === '__commission';
+  const loan = el.value === '__loan';
+  document.getElementById('cfCommGst').style.display = comm ? '' : 'none';
+  document.getElementById('cfCommTds').style.display = comm ? '' : 'none';
+  document.getElementById('cfLoanWrap').style.display = loan ? '' : 'none';
+  if (el.value !== '__new') return;
+  const name = (window.prompt('New head name (e.g. EMI Payment, Diesel):') || '').trim();
+  const type = document.getElementById('cfType').value;
+  if (!name) { updateCFCategories(); return; }
+  const r = await window.erp.saveCashHead({ name, kind: type === 'credit' ? 'income' : 'expense' });
+  if (r && r.success === false) { alert(r.error || 'Could not create head'); updateCFCategories(); return; }
+  await loadCFMasters();
+  // re-select the new head
+  const sel = document.getElementById('cfCat');
+  for (const o of sel.options) { if (o.value === name || o.text === name) { sel.value = o.value; break; } }
+}
+
+// "Which loan?" picker. Choosing "New loan account" creates the loan inline:
+// money IN = a loan we received (liability); money OUT = a loan we gave (asset).
+async function onCFLoanChange() {
+  const el = document.getElementById('cfLoan');
+  if (el.value !== '__newloan') return;
+  const party = (window.prompt('New loan — name of the lender / borrower:') || '').trim();
+  if (!party) { fillLoanPicker(); return; }
+  const type = document.getElementById('cfType').value;
+  const kind = type === 'credit' ? 'liability' : 'asset';
+  const name = (kind === 'asset' ? 'Loan Given: ' : 'Loan: ') + party;
+  const r = await window.erp.saveCashHead({ name, kind });
+  if (r && r.success === false) { alert(r.error || 'Could not create loan'); fillLoanPicker(); return; }
+  await loadCFMasters();
+  document.getElementById('cfCat').value = '__loan';
+  document.getElementById('cfLoanWrap').style.display = '';
+  const sel = document.getElementById('cfLoan');
+  for (const o of sel.options) { if (o.value === name) { sel.value = name; break; } }
+}
+
+function updateBTCategories() {
+  const type = document.getElementById('btType').value;
+  const cats = type === 'credit' ? CREDIT_CATS : DEBIT_CATS;
+  document.getElementById('btCat').innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+}
+
+function filterCF(type) {
+  cfTypeFilter = type;
+  ['all','credit','debit'].forEach(x =>
+    document.getElementById('seg-' + x).classList.toggle('active', x === type)
+  );
+  renderCF();
+}
+
+// ─── CF Modal ────────────────────────────────────────────────────────────────
+// Commission carries GST + 194H TDS, so it has its own register rather than a
+// plain money-in/out row. Open it (in the app shell, switch screens; standalone,
+// load the page directly).
+function goCommission() {
+  try { if (window.parent && window.parent !== window && typeof window.parent.navigate === 'function') { window.parent.navigate('commission'); return; } } catch (e) {}
+  window.location.href = 'commission.html';
+}
+
+// ─── Import a filled cashbook sheet (CSV) ────────────────────────────────────
+let _importRows = [];
+function openImportModal() {
+  document.getElementById('importFile').value = '';
+  document.getElementById('importPreview').innerHTML = '';
+  document.getElementById('importBtn').disabled = true;
+  _importRows = [];
+  document.getElementById('importModal').classList.add('open');
+}
+function dlFile(text, name) {
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(text);
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+function downloadCFTemplate() {
+  const banks = (_banksCache || []).map(b => b.account_name).join(' | ') || 'Cash in Hand';
+  const heads = (_cfHeads || []).map(h => h.name).slice(0, 24).join(' | ');
+  const lines = [
+    'Date,Type,Bank,Head,Party,Site,Amount,Note',
+    '05-04-2026,Out,IDFC,Material,Dalmia Cement,AR Site,18750,299 bags cement',
+    '06-04-2026,In,SBI CC,Project Bills / Revenue,,,500000,SMC bill payment',
+    '',
+    '# Fill one row per entry, then delete these # lines and Save As CSV.',
+    '# Date = DD-MM-YYYY   ·   Type = In or Out   ·   Amount = numbers only',
+    '# Bank — use exactly one of: ' + banks,
+    heads ? '# Head — your existing heads: ' + heads + '  (a new name is created automatically)' : '# Head = any category, e.g. Material, Salary, Fuel, Loan: Niptu Paul',
+    '# Party and Site are optional. Leave blank if not needed.',
+  ];
+  dlFile(lines.join('\n'), 'Cashbook_Template.csv');
+}
+function parseCSV(text) {
+  const out = [];
+  String(text).split(/\r?\n/).forEach(line => {
+    if (!line.trim() || line.trim().startsWith('#')) return;
+    const cells = []; let cur = '', q = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { q = !q; }
+      else if (c === ',' && !q) { cells.push(cur); cur = ''; }
+      else cur += c;
+    }
+    cells.push(cur);
+    out.push(cells.map(c => c.trim().replace(/^"|"$/g, '')));
+  });
+  return out;
+}
+function normDate(s) {
+  s = String(s || '').trim();
+  let m = s.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  m = s.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{2})$/);           // 05-04-26 → 2026
+  if (m) return `20${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  return null;   // unreadable date = a row ERROR, never silently "today"
+}
+function previewCFImport() {
+  const f = document.getElementById('importFile').files[0];
+  const prev = document.getElementById('importPreview');
+  if (!f) { prev.innerHTML = ''; return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    const rows = parseCSV(rd.result);
+    if (rows.length < 2) { prev.innerHTML = '<span style="color:var(--danger);">No data rows found.</span>'; return; }
+    const header = rows[0].map(h => h.toLowerCase());
+    const idx = n => header.findIndex(h => h.includes(n));
+    const di = idx('date'), ti = idx('type'), bi = idx('bank'), hi = idx('head'), pi = idx('party'), si = idx('site'), ai = idx('amount'), ni = idx('note');
+    if (di < 0 || ti < 0 || ai < 0) { prev.innerHTML = '<span style="color:var(--danger);">The sheet needs at least Date, Type and Amount columns.</span>'; return; }
+    _importRows = rows.slice(1).filter(r => r.length > 1 && (r[ai] || '').trim()).map(r => ({
+      date: r[di], type: r[ti], bank: bi >= 0 ? (r[bi] || '') : '', head: hi >= 0 ? (r[hi] || '') : '',
+      party: pi >= 0 ? (r[pi] || '') : '', site: si >= 0 ? (r[si] || '') : '', amount: r[ai], note: ni >= 0 ? (r[ni] || '') : '',
+    }));
+    prev.innerHTML = `<b>${_importRows.length}</b> entr${_importRows.length === 1 ? 'y' : 'ies'} ready. Click “Import entries”.`;
+    document.getElementById('importBtn').disabled = _importRows.length === 0;
+  };
+  rd.readAsText(f);
+}
+async function doCFImport() {
+  if (!_importRows.length) return;
+  const btn = document.getElementById('importBtn'); btn.disabled = true;
+  const prev = document.getElementById('importPreview'); prev.innerHTML = 'Importing…';
+  const pick = r => (Array.isArray(r) ? r : (r && r.data ? r.data : []));
+  const [cl, ve, si] = await Promise.all([window.erp.getClients(), window.erp.getVendors(), window.erp.getSites()]);
+  const clients = pick(cl), vendors = pick(ve), sites = pick(si);
+  const bankByName = {}; (_banksCache || []).forEach(b => bankByName[(b.account_name || '').toLowerCase()] = b.id);
+  const findId = (arr, name) => { if (!name) return null; const m = arr.find(x => (x.name || '').toLowerCase() === name.toLowerCase()); return m ? m.id : null; };
+  const headSet = new Set((_cfHeads || []).map(h => (h.name || '').toLowerCase()));
+  let okN = 0, dupN = 0; const errs = [];
+  // duplicate shield: uploading the same sheet twice must NOT double the books.
+  const existing = await window.erp.getTransactions({});
+  const seen = new Set((existing && existing.data ? existing.data : [])
+    .map(t => [t.txn_date, t.type, t.amount, (t.category || '').toLowerCase()].join('|')));
+  for (let i = 0; i < _importRows.length; i++) {
+    const r = _importRows[i];
+    const tRaw = (r.type || '').trim();
+    if (!/^(in|credit|receipt|out|debit|payment|paid)$/i.test(tRaw)) { errs.push(`Row ${i + 1}: Type must be In or Out (got “${tRaw || 'blank'}”)`); continue; }
+    const type = /^(in|credit|receipt)$/i.test(tRaw) ? 'credit' : 'debit';
+    const rowDate = normDate(r.date);
+    if (!rowDate) { errs.push(`Row ${i + 1}: date “${r.date}” not understood (use DD-MM-YYYY)`); continue; }
+    const bankId = bankByName[(r.bank || '').toLowerCase()];
+    if (r.bank && !bankId) { errs.push(`Row ${i + 1}: bank “${r.bank}” not found`); continue; }
+    const amt = parseFloat(String(r.amount).replace(/[₹, ]/g, ''));
+    if (!(amt > 0)) { errs.push(`Row ${i + 1}: amount missing/invalid`); continue; }
+    if (r.head && !headSet.has(r.head.toLowerCase())) {
+      await window.erp.saveCashHead({ name: r.head, kind: type === 'credit' ? 'income' : 'expense' });
+      headSet.add(r.head.toLowerCase());
+    }
+    // Rubber-banding on the template too: whatever a row leaves blank (Head,
+    // Bank, Site) is filled from this party's own history — explicit cells win.
+    let rowHead = r.head, rowBank = bankId || null, rowSite = findId(sites, r.site);
+    let rowMode = /cash/i.test(r.bank) ? 'cash' : 'bank';
+    const cid = type === 'credit' ? findId(clients, r.party) : null;
+    const vid = findId(vendors, r.party);
+    if ((!rowHead || !rowBank || !rowSite) && (cid || vid)) {
+      try {
+        const dd = await window.erp.getEntryDefaults(cid ? { client_id: cid } : { vendor_id: vid });
+        if (dd && dd.success && dd.data) {
+          if (!rowHead && dd.data.category) rowHead = dd.data.category;
+          if (!rowBank && dd.data.bank_account_id) { rowBank = dd.data.bank_account_id; rowMode = dd.data.payment_mode || rowMode; }
+          if (!rowSite && dd.data.site_id) rowSite = dd.data.site_id;
+        }
+      } catch (e) {}
+    }
+    const finalHead = rowHead || (type === 'credit' ? 'Other Receipts' : 'General Expenses');
+    const dupKey = [rowDate, type, amt, finalHead.toLowerCase()].join('|');
+    if (seen.has(dupKey)) { dupN++; continue; }               // already in the books
+    const payload = {
+      txn_date: rowDate, type, category: finalHead,
+      amount: amt, bank_account_id: rowBank, description: r.note || '',
+      client_id: cid, vendor_id: vid, site_id: rowSite,
+      payment_mode: rowMode,
+    };
+    let res = await window.erp.saveTransaction(payload);
+    if (res && res.success === false && /too many/i.test(res.error || '')) {
+      await new Promise(w => setTimeout(w, 2500));            // rate-limited: breathe, retry once
+      res = await window.erp.saveTransaction(payload);
+    }
+    if (res && res.success !== false) { okN++; seen.add(dupKey); }
+    else errs.push(`Row ${i + 1}: ${(res && res.error) || 'failed'}`);
+  }
+  prev.innerHTML = `<b style="color:var(--success);">✓ Imported ${okN} entr${okN === 1 ? 'y' : 'ies'}.</b>` +
+    (dupN ? `<div style="color:var(--muted);margin-top:6px;">${dupN} already in the books — skipped (safe to re-upload the same sheet).</div>` : '') +
+    (errs.length ? `<div style="color:var(--danger);margin-top:8px;">${errs.length} skipped:<br>${errs.slice(0, 10).join('<br>')}</div>` : '');
+  btn.disabled = false;
+  await loadBanks(); await loadCFMasters(); await renderCF();
+}
+
+// ── Rubber-banding: pick a party → their usual head/site/bank fill themselves.
+// Only fields the user hasn't touched are filled, and a small note says what
+// happened so it never feels spooky. Learned from this tenant's own entries.
+let _cfHeadTouched = false;
+async function cfAutoFill(kind) {
+  const sel = document.getElementById(kind === 'vendor' ? 'cfVendor' : 'cfClient');
+  const id = sel && sel.value;
+  const note = document.getElementById('cfAutoNote');
+  if (!id) { if (note) note.style.display = 'none'; return; }
+  let r; try { r = await window.erp.getEntryDefaults(kind === 'vendor' ? { vendor_id: Number(id) } : { client_id: Number(id) }); } catch (e) { return; }
+  if (!r || !r.success || !r.data || !r.data.hits) return;
+  const d = r.data, filled = [];
+  const cat = document.getElementById('cfCat');
+  if (!_cfHeadTouched && d.category && [...cat.options].some(o => o.value === d.category || o.text === d.category)) {
+    cat.value = d.category; onCFHeadChange(); filled.push('head “' + d.category + '”');
+  }
+  const site = document.getElementById('cfSite');
+  if (site && !site.value && d.site_id && [...site.options].some(o => o.value === String(d.site_id))) {
+    site.value = String(d.site_id); filled.push('site');
+  }
+  const bank = document.getElementById('cfBank');
+  if (bank && !bank.value && d.bank_account_id && [...bank.options].some(o => o.value === String(d.bank_account_id))) {
+    bank.value = String(d.bank_account_id); filled.push('bank');
+  }
+  if (note) {
+    if (filled.length) { note.textContent = '✨ Filled from this party\'s history: ' + filled.join(', ') + ' — change if wrong.'; note.style.display = ''; }
+    else note.style.display = 'none';
+  }
+}
+
+function openCFModal(type = 'debit') {
+  _cfHeadTouched = false;
+  const _n = document.getElementById('cfAutoNote'); if (_n) _n.style.display = 'none';
+  document.getElementById('cfType').value   = type;
+  document.getElementById('cfDate').value   = today();
+  document.getElementById('cfDesc').value   = '';
+  document.getElementById('cfAmt').value    = '';
+  document.getElementById('cfRef').value    = '';
+  document.getElementById('cfNotes').value  = '';
+  document.getElementById('cfSubCat').value = '';
+  document.getElementById('cfModalTitle').textContent =
+    type === 'credit' ? '✅ Add Receipt (Money In)' : '💳 Add Payment (Money Out)';
+  ['cfClient','cfVendor','cfSite'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  updateCFCategories();
+  // rubber-band last used values
+  if (lastCF.payment_mode) document.getElementById('cfMode').value = lastCF.payment_mode;
+  if (lastCF.bank_account_id) document.getElementById('cfBank').value = lastCF.bank_account_id;
+  const rememberedCat = type === 'credit' ? lastCF.credit_cat : lastCF.debit_cat;
+  if (rememberedCat) {
+    const catEl = document.getElementById('cfCat');
+    for (let o of catEl.options) { if (o.value === rememberedCat) { catEl.value = rememberedCat; break; } }
+  }
+  document.getElementById('cfModal').classList.add('open');
+  setTimeout(() => document.getElementById('cfDesc').focus(), 50);
+}
+
+async function saveCF() {
+  const desc = document.getElementById('cfDesc').value.trim();
+  const amt  = parseFloat(document.getElementById('cfAmt').value) || 0;
+  const type = document.getElementById('cfType').value;
+  const bankId = document.getElementById('cfBank').value;
+  if (!desc || !amt) { alert('Description and amount are required.'); return; }
+
+  let category = document.getElementById('cfCat').value;
+  if (category === '__new') { alert('Pick a head, or create one first.'); return; }
+
+  // Loan: tag the entry to the chosen loan account. Money in tops it up; money
+  // out (EMI / repayment) reduces the outstanding — the ledger handles it because
+  // the loan head is a liability/asset, so no special posting is needed here.
+  if (category === '__loan') {
+    const lv = document.getElementById('cfLoan').value;
+    if (!lv || lv === '__newloan') { alert('Pick a loan (or create a new loan account).'); return; }
+    category = lv;
+  }
+
+  // Commission folds into money-in/out: the Commission head captures GST + 194H
+  // TDS and posts the proper commission double-entry (it also shows in this list).
+  if (category === '__commission') {
+    const selText = (id) => { const el = document.getElementById(id); const o = el.options[el.selectedIndex]; return (o && o.value) ? o.text : ''; };
+    const tagName = selText('cfVendor') || selText('cfClient');
+    const party = tagName || desc;
+    try {
+      const res = await window.erp.saveCommissionEntry({
+        direction: type === 'credit' ? 'earned' : 'paid',
+        party_name: party,
+        // if the party already came from a vendor/client tag, keep the description
+        // as the narration; if party fell back to the description, don't repeat it
+        narration: tagName ? desc : null,
+        entry_date: document.getElementById('cfDate').value,
+        gross_amount: amt, gst_rate: parseFloat(document.getElementById('cfGst').value) || 0,
+        tds_rate: parseFloat(document.getElementById('cfTds').value) || 0,
+        bank_account_id: bankId ? parseInt(bankId) : null,
+        payment_mode: document.getElementById('cfMode').value,
+        reference_no: document.getElementById('cfRef').value || null,
+        notes: document.getElementById('cfNotes').value || null,
+      });
+      if (res && res.success === false) throw new Error(res.error || 'Save failed');
+      closeModal('cfModal'); await loadBanks(); await renderCF();
+    } catch (e) { alert('Failed to save commission: ' + (e.message || e)); }
+    return;
+  }
+
+  const idOf = (id) => { const v = (document.getElementById(id) || {}).value; return v ? parseInt(v, 10) : null; };
+  const data = {
+    txn_date        : document.getElementById('cfDate').value,
+    type,
+    category,
+    sub_category    : document.getElementById('cfSubCat').value,
+    description     : desc,
+    amount          : amt,
+    payment_mode    : document.getElementById('cfMode').value,
+    bank_account_id : bankId ? parseInt(bankId) : null,
+    cheque_no       : document.getElementById('cfRef').value,
+    reference_no    : document.getElementById('cfRef').value,
+    notes           : document.getElementById('cfNotes').value,
+    client_id       : idOf('cfClient'),
+    vendor_id       : idOf('cfVendor'),
+    site_id         : idOf('cfSite')
+  };
+
+  try {
+    const res = await window.erp.saveTransaction(data);
+    if (res && res.success === false) throw new Error(res.error || 'Save failed');
+    saveLastCF(data);
+    closeModal('cfModal');
+    await loadBanks();
+    await renderCF();
+  } catch(e) {
+    console.error('saveCF error', e);
+    alert('Failed to save transaction: ' + (e.message || e));
+  }
+}
+
+// ─── Render Cash Flow tab ─────────────────────────────────────────────────────
+async function renderCF() {
+  const search   = (document.getElementById('cfSearch') || {value:''}).value.toLowerCase();
+  const monthSel = document.getElementById('cfMonth').value;
+  const [yr, mo] = monthSel.split('-').map(Number);
+  const fromDate = `${yr}-${String(mo).padStart(2,'0')}-01`;
+  const lastDay  = new Date(yr, mo, 0).getDate();
+  const toDate   = `${yr}-${String(mo).padStart(2,'0')}-${lastDay}`;
+
+  let allTxns = [];
+  try {
+    const txnFilters = cfMgmtPin ? { management_pin: cfMgmtPin } : {};
+    const res = await window.erp.getTransactions(txnFilters);
+    allTxns = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+  } catch(e) {
+    console.error('getTransactions error', e);
+  }
+  _allTxnsCache = allTxns;
+
+  // KPIs
+  const totalCash = _banksCache.reduce((s, b) => s + (parseFloat(b.current_balance) || 0), 0);
+  const monthTxns = allTxns.filter(t => t.txn_date >= fromDate && t.txn_date <= toDate && t.type !== 'transfer');
+  let inflow  = 0, outflow = 0;
+  monthTxns.forEach(t => {
+    if (t.type === 'credit') inflow  += parseFloat(t.amount) || 0;
+    else                     outflow += parseFloat(t.amount) || 0;
+  });
+  const net       = inflow - outflow;
+  const unreconCt = allTxns.filter(t => !t.is_reconciled && t.type !== 'transfer').length;
+
+  document.getElementById('cfTotalCash').textContent = '₹' + fmt(totalCash);
+  document.getElementById('cfIn').textContent        = '₹' + fmt(inflow);
+  document.getElementById('cfOut').textContent       = '₹' + fmt(outflow);
+  document.getElementById('cfNet').textContent       = (net >= 0 ? '₹' : '-₹') + fmt(net);
+  document.getElementById('cfNet').className         = 'kpi-val ' + (net >= 0 ? 'cr' : 'dr');
+  document.getElementById('cfUnrecon').textContent   = unreconCt;
+
+  // Alert banner
+  const banner = document.getElementById('alertBanner');
+  if (totalCash < 0)
+    banner.innerHTML = `<div class="alert-banner danger">⚠️ Negative total cash position! Total: ₹${fmt(totalCash)}. Urgent action needed.</div>`;
+  else if (totalCash < 50000)
+    banner.innerHTML = `<div class="alert-banner warn">⚠️ Low total cash balance: ₹${fmt(totalCash)}. Consider collecting pending receivables.</div>`;
+  else
+    banner.innerHTML = `<div class="alert-banner ok">✅ Healthy cash position: ₹${fmt(totalCash)}</div>`;
+
+  // Build running balance for table using bank opening balances
+  // Opening balance = sum of opening_balance of all banks + net before current month
+  let openBal = _banksCache.reduce((s, b) => s + (parseFloat(b.opening_balance) || 0), 0);
+  allTxns
+    .filter(t => t.txn_date < fromDate && t.type !== 'transfer')
+    .sort((a, b) => a.txn_date.localeCompare(b.txn_date))
+    .forEach(t => { openBal += t.type === 'credit' ? parseFloat(t.amount) : -parseFloat(t.amount); });
+
+  // Apply filters for table display
+  let filtered = monthTxns.filter(t =>
+    t.type !== 'transfer' &&
+    (!search ||
+      (t.description || '').toLowerCase().includes(search) ||
+      (t.category    || '').toLowerCase().includes(search)) &&
+    (cfTypeFilter === 'all' || t.type === cfTypeFilter)
+  ).sort((a, b) => a.txn_date.localeCompare(b.txn_date));
+
+  let rb = openBal;
+  const rows = filtered.map(t => {
+    rb += t.type === 'credit' ? parseFloat(t.amount) : -parseFloat(t.amount);
+    return { t, bal: rb };
+  });
+
+  const body = document.getElementById('cfBody');
+  document.getElementById('cfEmpty').style.display = filtered.length ? 'none' : 'block';
+  body.innerHTML = rows.map(({ t, bal }) => {
+    const bankName = (_banksCache.find(b => b.id == t.bank_account_id) || {}).account_name || '—';
+    // Receipts/payments that came from an invoice or vendor bill payment can
+    // jump straight to that source document — same "click to drill in"
+    // pattern as the dashboard KPI cards, applied to the cash flow ledger.
+    const linked = t.reference_type === 'invoice' || t.reference_type === 'expense';
+    const isComm = t.reference_type === 'commission';
+    const rowAttrs = linked
+      ? `class="cf-row-linked" style="cursor:pointer;" onclick="goToSource('${jsArg(t.reference_type)}')" title="Click to open the ${t.reference_type === 'invoice' ? 'Sales Invoices' : 'Vendor Bills'} page"`
+      : (isComm ? `class="cf-row-linked" style="cursor:pointer;" onclick="goCommission()" title="Click to open the Commission register"` : '');
+    return `<tr ${rowAttrs}>
+      <td>${t.txn_date}</td>
+      <td><div class="name-bold">${escHtml(t.description || '')}${(linked || isComm) ? ' <span style="color:var(--accent);font-size:10px;">↗</span>' : ''}</div>
+          <div class="sub-text">${escHtml(t.payment_mode || '')}${t.cheque_no ? ' · ' + escHtml(t.cheque_no) : ''}</div></td>
+      <td><span class="badge" style="background:rgba(34,211,238,0.1);color:var(--accent);">${escHtml(t.category || '')}</span></td>
+      <td>${escHtml(bankName)}</td>
+      <td>${escHtml(t.reference_no || t.cheque_no || '—')}</td>
+      <td><span class="badge b-${t.type}">${t.type === 'credit' ? 'Receipt' : 'Payment'}</span></td>
+      <td class="amount ${t.type === 'credit' ? 'cr' : 'dr'}">${t.type === 'credit' ? '+' : '-'}₹${fmt(parseFloat(t.amount))}</td>
+      <td class="amount ${bal >= 0 ? 'cr' : 'dr'}">₹${fmt(bal)}</td>
+      <td>${t.source === 'mgmt' ? '<span style="font-size:10px;color:#a78bfa;font-weight:600;">🔒 Private</span>' : ((linked || isComm) ? `<span style="font-size:10px;color:var(--muted);" title="${isComm ? 'Commission entries are managed from the Commission screen' : 'Linked payments are voided from the invoice/bill, not deleted here'}">🔒</span>` : `<button class="btn-danger-sm" onclick="event.stopPropagation();deleteTxn(${t.id})">✕</button>`)}</td>
+    </tr>`;
+  }).join('');
+
+  lucide.createIcons();
+  drawCFChart(allTxns);
+  drawExpChart(monthTxns);
+}
+
+async function deleteTxn(id) {
+  if (!confirm('Delete this transaction?')) return;
+  try {
+    const res = await window.erp.deleteTransaction(id);
+    if (res && res.success === false) { alert(res.error || 'Could not delete this entry.'); return; }
+    await loadBanks();
+    await renderCF();
+  } catch(e) {
+    alert('Failed to delete: ' + (e.message || e));
+  }
+}
+
+// Drill-down from a linked cash-flow row to the invoice/bill it came from —
+// mirrors the dashboard KPI cards' "click to open the related list" pattern.
+function goToSource(referenceType) {
+  const page = referenceType === 'invoice' ? 'invoices' : 'expenses';
+  try {
+    if (window.parent && window.parent !== window && typeof window.parent.navigate === 'function') {
+      window.parent.navigate(page);
+      return;
+    }
+  } catch (_) { /* cross-origin or standalone — fall through */ }
+  // Not embedded in the app shell (e.g. opened directly) — just go there.
+  window.location.href = page + '.html';
+}
+
+// ─── Charts ──────────────────────────────────────────────────────────────────
+function drawCFChart(allTxns) {
+  const ctx = document.getElementById('cfChart');
+  if (!ctx) return;
+  const now = new Date();
+  const labels = [], inflows = [], outflows = [], nets = [];
+  for (let i = 5; i >= 0; i--) {
+    const d  = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const yr = d.getFullYear(), mo = d.getMonth() + 1;
+    const from = `${yr}-${String(mo).padStart(2,'0')}-01`;
+    const to   = `${yr}-${String(mo).padStart(2,'0')}-${new Date(yr, mo, 0).getDate()}`;
+    labels.push(d.toLocaleString('en-IN', { month:'short' }));
+    let inf = 0, out = 0;
+    allTxns.filter(t => t.txn_date >= from && t.txn_date <= to && t.type !== 'transfer')
+      .forEach(t => {
+        if (t.type === 'credit') inf += parseFloat(t.amount) || 0;
+        else                     out += parseFloat(t.amount) || 0;
+      });
+    inflows.push(inf / 1000);
+    outflows.push(out / 1000);
+    nets.push((inf - out) / 1000);
+  }
+  if (window._cfC) window._cfC.destroy();
+  window._cfC = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label:'Inflow (₹K)',  data:inflows,  backgroundColor:'rgba(34,197,94,0.5)', borderColor:'#22c55e', borderWidth:1, borderRadius:4 },
+      { label:'Outflow (₹K)', data:outflows, backgroundColor:'rgba(239,68,68,0.5)', borderColor:'#ef4444', borderWidth:1, borderRadius:4 },
+      { label:'Net (₹K)',     data:nets, type:'line', borderColor:'#22d3ee', tension:0.4, pointRadius:3, fill:false, borderWidth:2 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},
+      scales:{
+        x:{ticks:{color:'#475569',font:{size:10}},grid:{color:'rgba(255,255,255,0.03)'}},
+        y:{ticks:{color:'#475569',font:{size:10},callback:v=>'₹'+v+'K'},grid:{color:'rgba(255,255,255,0.05)'}}
+      }
+    }
+  });
+}
+
+function drawExpChart(monthTxns) {
+  const ctx = document.getElementById('expChart');
+  if (!ctx) return;
+  const cats = {};
+  monthTxns.filter(t => t.type === 'debit')
+    .forEach(t => { cats[t.category || 'Other'] = (cats[t.category || 'Other'] || 0) + (parseFloat(t.amount) || 0); });
+  const labels = Object.keys(cats), data = Object.values(cats);
+  if (!data.length) { if (window._expC) window._expC.destroy(); return; }
+  const colors = ['#ef4444','#f59e0b','#22c55e','#3b82f6','#a855f7','#22d3ee','#f97316','#84cc16'];
+  if (window._expC) window._expC.destroy();
+  window._expC = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor:colors.slice(0, labels.length), borderWidth:0 }] },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'right', labels:{ color:'#94a3b8', font:{size:10}, boxWidth:10 } } } }
+  });
+}
+
+// ─── Bank Book ───────────────────────────────────────────────────────────────
+function openAddBankModal(editId) {
+  document.getElementById('baName').value        = '';
+  document.getElementById('baBankName').value    = '';
+  document.getElementById('baBranch').value      = '';
+  document.getElementById('baAccNo').value       = '';
+  document.getElementById('baIFSC').value        = '';
+  document.getElementById('baType').value        = 'Current';
+  document.getElementById('baOpenBal').value     = '';
+  document.getElementById('baOpenDate').value    = today();
+  document.getElementById('baSignatories').value = '';
+  document.getElementById('baIsPrimary').checked = false;
+  document.getElementById('baEditId').value      = '';
+  document.getElementById('bankModalTitle').textContent = '🏦 Add Bank Account';
+  document.getElementById('bankSaveBtn').textContent    = 'Add Account';
+
+  if (editId) {
+    const b = _banksCache.find(x => x.id == editId);
+    if (b) {
+      document.getElementById('baName').value        = b.account_name || '';
+      document.getElementById('baBankName').value    = b.bank_name    || '';
+      document.getElementById('baBranch').value      = b.branch       || '';
+      document.getElementById('baAccNo').value       = b.account_number || '';
+      document.getElementById('baIFSC').value        = b.ifsc         || '';
+      document.getElementById('baType').value        = b.account_type || 'Current';
+      document.getElementById('baOpenBal').value     = b.opening_balance || '';
+      document.getElementById('baOpenDate').value    = b.opening_date || today();
+      document.getElementById('baSignatories').value = b.signatories  || '';
+      document.getElementById('baIsPrimary').checked = !!b.is_primary;
+      document.getElementById('baEditId').value      = b.id;
+      document.getElementById('bankModalTitle').textContent = '🏦 Edit Bank Account';
+      document.getElementById('bankSaveBtn').textContent    = 'Save Changes';
+    }
+  }
+  document.getElementById('addBankModal').classList.add('open');
+}
+
+async function saveBankAccount() {
+  const name = document.getElementById('baName').value.trim();
+  if (!name) { alert('Account name is required.'); return; }
+  const editId = document.getElementById('baEditId').value;
+  const data = {
+    account_name    : name,
+    bank_name       : document.getElementById('baBankName').value,
+    branch          : document.getElementById('baBranch').value,
+    account_number  : document.getElementById('baAccNo').value,
+    ifsc            : document.getElementById('baIFSC').value,
+    account_type    : document.getElementById('baType').value,
+    opening_balance : parseFloat(document.getElementById('baOpenBal').value) || 0,
+    opening_date    : document.getElementById('baOpenDate').value,
+    signatories     : document.getElementById('baSignatories').value,
+    is_primary      : document.getElementById('baIsPrimary').checked ? 1 : 0
+  };
+  if (editId) data.id = parseInt(editId);
+  try {
+    await window.erp.saveBank(data);
+    closeModal('addBankModal');
+    await loadBanks();
+    renderBankBook();
+  } catch(e) {
+    alert('Failed to save bank account: ' + (e.message || e));
+  }
+}
+
+async function deleteBankAccount(id) {
+  if (!confirm('Delete this bank account? All associated transactions will be affected.')) return;
+  try {
+    await window.erp.deleteBank(id);
+    await loadBanks();
+    renderBankBook();
+  } catch(e) {
+    alert('Failed to delete bank account: ' + (e.message || e));
+  }
+}
+
+async function renderBankBook() {
+  await loadBanks();
+  const filter    = document.getElementById('bankFilter').value;
+  const fromDate  = document.getElementById('bbFromDate').value;
+  const toDate    = document.getElementById('bbToDate').value;
+
+  // Render bank cards
+  const bankCards = document.getElementById('bankCards');
+  const addCard   = `<div class="bank-card" style="border:1px dashed rgba(34,211,238,0.3);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;min-height:90px;" onclick="openAddBankModal()">
+    <i data-lucide="plus-circle" style="width:20px;height:20px;color:var(--accent);"></i>
+    <span style="font-size:12px;color:var(--accent);font-weight:600;">Add Bank Account</span>
+  </div>`;
+  const totalBal  = _banksCache.reduce((s, b) => s + (parseFloat(b.current_balance) || 0), 0);
+  const cardHtml  = _banksCache.map(b => {
+    const bal = parseFloat(b.current_balance) || 0;
+    return `<div class="bank-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="bc-bank">${escHtml(b.bank_name || 'Bank')} · ${b.account_type || ''}</div>
+          <div class="bc-name">${escHtml(b.account_name)}</div>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn-danger-sm" style="background:rgba(34,211,238,0.1);color:var(--accent);border-color:rgba(34,211,238,0.2);" onclick="openAddBankModal(${b.id})">✏️</button>
+          <button class="btn-danger-sm" onclick="deleteBankAccount(${b.id})">🗑️</button>
+        </div>
+      </div>
+      <div class="bc-bal ${bal >= 0 ? 'cr' : 'dr'}">₹${fmt(bal)}</div>
+      <div class="bc-num">${b.account_number ? '****' + String(b.account_number).slice(-4) : ''} ${b.ifsc || ''}</div>
+      ${b.is_primary ? '<div style="margin-top:6px;"><span class="badge b-cleared">Primary</span></div>' : ''}
+    </div>`;
+  }).join('');
+  bankCards.innerHTML = cardHtml + addCard;
+  if (_banksCache.length) {
+    bankCards.innerHTML += `<div class="bank-card" style="background:linear-gradient(135deg,rgba(34,211,238,0.08),rgba(8,145,178,0.12));border:1px solid rgba(34,211,238,0.2);">
+      <div class="bc-bank">All Accounts · Total</div>
+      <div class="bc-name">Combined Balance</div>
+      <div class="bc-bal ${totalBal >= 0 ? 'cr' : 'dr'}">₹${fmt(totalBal)}</div>
+      <div class="bc-num">${_banksCache.length} account${_banksCache.length !== 1 ? 's' : ''}</div>
+    </div>`;
+  }
+
+  // Fetch transactions
+  const filters = {};
+  if (filter)   filters.bank_account_id = parseInt(filter);
+  if (fromDate) filters.from_date = fromDate;
+  if (toDate)   filters.to_date   = toDate;
+
+  let txns = [];
+  try {
+    const res = await window.erp.getTransactions(filters);
+    txns = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+    txns = txns.filter(t => t.type !== 'transfer');
+  } catch(e) {
+    console.error('getTransactions error', e);
+  }
+
+  // Running balance per account
+  const balMap = {};
+  _banksCache.forEach(b => { balMap[b.id] = parseFloat(b.opening_balance) || 0; });
+
+  const sorted = [...txns].sort((a, b) => a.txn_date.localeCompare(b.txn_date));
+  const body   = document.getElementById('bankBody');
+  document.getElementById('bankEmpty').style.display = sorted.length ? 'none' : 'block';
+  body.innerHTML = sorted.map(t => {
+    const bid = t.bank_account_id;
+    if (bid != null) {
+      balMap[bid] = (balMap[bid] || 0) + (t.type === 'credit' ? parseFloat(t.amount) : -parseFloat(t.amount));
+    }
+    const bal      = bid != null ? (balMap[bid] || 0) : 0;
+    const bankName = (_banksCache.find(b => b.id == bid) || {}).account_name || '—';
+    return `<tr>
+      <td>${t.txn_date}</td>
+      <td class="name-bold">${escHtml(t.description || '')}</td>
+      <td>${escHtml(bankName)}</td>
+      <td>${t.cheque_no || t.reference_no || '—'}</td>
+      <td class="amount dr">${t.type === 'debit'   ? '₹' + fmt(parseFloat(t.amount)) : '—'}</td>
+      <td class="amount cr">${t.type === 'credit'  ? '₹' + fmt(parseFloat(t.amount)) : '—'}</td>
+      <td class="amount ${bal >= 0 ? 'cr' : 'dr'}">₹${fmt(bal)}</td>
+      <td><span class="badge ${t.is_reconciled ? 'b-reconciled' : 'b-pending'}">${t.is_reconciled ? 'Reconciled' : 'Pending'}</span></td>
+      <td><button class="btn-danger-sm" onclick="deleteTxnFromBook(${t.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+async function deleteTxnFromBook(id) {
+  if (!confirm('Delete this transaction?')) return;
+  try {
+    await window.erp.deleteTransaction(id);
+    await loadBanks();
+    renderBankBook();
+  } catch(e) {
+    alert('Failed to delete: ' + (e.message || e));
+  }
+}
+
+function openBankTxnModal() {
+  document.getElementById('btDate').value  = today();
+  document.getElementById('btDesc').value  = '';
+  document.getElementById('btAmt').value   = '';
+  document.getElementById('btRef').value   = '';
+  document.getElementById('btNotes').value = '';
+  updateBTCategories();
+  document.getElementById('bankTxnModal').classList.add('open');
+}
+
+async function saveBankTxn() {
+  const desc    = document.getElementById('btDesc').value.trim();
+  const amt     = parseFloat(document.getElementById('btAmt').value) || 0;
+  const bankId  = document.getElementById('btAccount').value;
+  if (!desc || !amt || !bankId) { alert('Description, amount and account are required.'); return; }
+  const data = {
+    txn_date        : document.getElementById('btDate').value,
+    type            : document.getElementById('btType').value,
+    category        : document.getElementById('btCat').value,
+    description     : desc,
+    amount          : amt,
+    payment_mode    : document.getElementById('btMode').value,
+    bank_account_id : parseInt(bankId),
+    cheque_no       : document.getElementById('btRef').value,
+    reference_no    : document.getElementById('btRef').value,
+    notes           : document.getElementById('btNotes').value
+  };
+  try {
+    await window.erp.saveTransaction(data);
+    closeModal('bankTxnModal');
+    await loadBanks();
+    renderBankBook();
+  } catch(e) {
+    alert('Failed to save: ' + (e.message || e));
+  }
+}
+
+// ─── Inter-Bank Transfer ─────────────────────────────────────────────────────
+async function renderTransferTab() {
+  await loadBanks();
+  document.getElementById('trDate').value = today();
+
+  let transfers = [];
+  try {
+    const res = await window.erp.getTransactions({ type: 'transfer' });
+    transfers = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+  } catch(e) {
+    console.error('getTransactions(transfer) error', e);
+  }
+
+  const body = document.getElementById('transferBody');
+  document.getElementById('transferEmpty').style.display = transfers.length ? 'none' : 'block';
+  body.innerHTML = transfers.sort((a, b) => b.txn_date.localeCompare(a.txn_date)).map(t => {
+    const fromAcc = (_banksCache.find(b => b.id == t.from_account_id) || {}).account_name || ('ID:' + t.from_account_id);
+    const toAcc   = (_banksCache.find(b => b.id == t.to_account_id)   || {}).account_name || ('ID:' + t.to_account_id);
+    return `<tr>
+      <td>${t.txn_date}</td>
+      <td><span class="badge" style="background:rgba(168,85,247,0.1);color:var(--purple);">${escHtml(fromAcc)}</span></td>
+      <td><span class="badge" style="background:rgba(34,197,94,0.1);color:var(--success);">${escHtml(toAcc)}</span></td>
+      <td class="amount" style="color:var(--purple);">₹${fmt(parseFloat(t.amount))}</td>
+      <td>${t.payment_mode || '—'}</td>
+      <td>${t.reference_no || t.cheque_no || '—'}</td>
+      <td>${escHtml(t.description || '')}</td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function resetTransferForm(clearStatus) {
+  document.getElementById('trDate').value   = today();
+  document.getElementById('trAmount').value = '';
+  document.getElementById('trFrom').value   = '';
+  document.getElementById('trTo').value     = '';
+  document.getElementById('trDesc').value   = '';
+  document.getElementById('trRef').value    = '';
+  document.getElementById('trNotes').value  = '';
+  // Only the explicit Reset button (no arg) wipes the status line — a reset
+  // triggered by a successful save must keep the green confirmation visible.
+  if (clearStatus !== false) setTrStatus(null);
+}
+
+// Guards against the "I clicked Execute, nothing happened, so I clicked again
+// and got 5 duplicate transfers" problem: an in-flight latch plus a short
+// signature window that rejects an identical transfer fired twice in a row.
+let _trSubmitting = false;
+let _trLastSig = '';
+let _trLastSigAt = 0;
+
+function setTrStatus(kind, msg) {
+  const el = document.getElementById('trStatus');
+  if (!el) return;
+  if (!kind) { el.style.display = 'none'; return; }
+  const styles = {
+    ok:   'background:rgba(34,197,94,0.12);color:var(--success);border:1px solid rgba(34,197,94,0.3);',
+    err:  'background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);',
+    busy: 'background:rgba(168,85,247,0.10);color:var(--purple);border:1px solid rgba(168,85,247,0.3);',
+  };
+  el.setAttribute('style', 'margin-top:14px;border-radius:9px;padding:10px 13px;font-size:12.5px;font-weight:600;display:block;' + (styles[kind] || ''));
+  el.textContent = msg;
+}
+
+async function saveTransfer() {
+  const btn = document.getElementById('trExecBtn');
+  // Hard latch: ignore any click while a transfer is already being saved.
+  if (_trSubmitting) return;
+
+  const fromId = parseInt(document.getElementById('trFrom').value);
+  const toId   = parseInt(document.getElementById('trTo').value);
+  const amount = parseFloat(document.getElementById('trAmount').value) || 0;
+  const date   = document.getElementById('trDate').value;
+  if (!fromId || !toId)   { setTrStatus('err', 'Please select both From and To accounts.'); return; }
+  if (fromId === toId)    { setTrStatus('err', 'From and To accounts must be different.'); return; }
+  if (!(amount > 0))      { setTrStatus('err', 'Enter a transfer amount greater than zero.'); return; }
+  if (!date)              { setTrStatus('err', 'Please pick a transfer date.'); return; }
+
+  const fromAcc = (_banksCache.find(b => b.id === fromId) || {}).account_name || '';
+  const toAcc   = (_banksCache.find(b => b.id === toId)   || {}).account_name || '';
+  const desc    = document.getElementById('trDesc').value.trim() ||
+                  `Transfer from ${fromAcc} to ${toAcc}`;
+  const refNo   = document.getElementById('trRef').value;
+
+  // Duplicate guard: same from/to/amount/date submitted within 12s is almost
+  // certainly an impatient double-click, not two genuine identical transfers.
+  const sig = [fromId, toId, amount, date].join('|');
+  if (sig === _trLastSig && (Date.now() - _trLastSigAt) < 12000) {
+    setTrStatus('err', '⚠️ An identical transfer was just recorded. Check Recent Transfers below before sending it again.');
+    return;
+  }
+
+  const data = {
+    txn_date        : date,
+    type            : 'transfer',
+    category        : 'Transfer',
+    description     : desc,
+    amount          : amount,
+    payment_mode    : document.getElementById('trMode').value,
+    from_account_id : fromId,
+    to_account_id   : toId,
+    bank_account_id : fromId,
+    reference_no    : refNo,
+    cheque_no       : refNo,
+    notes           : document.getElementById('trNotes').value
+  };
+
+  _trSubmitting = true;
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Processing…'; }
+  setTrStatus('busy', '⏳ Recording transfer…');
+  try {
+    // The web bridge resolves with {success:false} on error instead of throwing,
+    // so check the result explicitly — otherwise a failed transfer still showed
+    // "executed successfully" and looked like nothing happened.
+    const res = await window.erp.saveTransaction(data);
+    if (res && res.success === false) throw new Error(res.error || 'Transfer was rejected by the server.');
+    _trLastSig = sig; _trLastSigAt = Date.now();
+    resetTransferForm();
+    await loadBanks();
+    await renderTransferTab();
+    setTrStatus('ok', `✅ Transfer of ₹${fmt(amount)} from ${fromAcc} to ${toAcc} recorded. See Recent Transfers below.`);
+    // Bring the freshly-added row into view so it's obvious it worked.
+    const list = document.getElementById('transferBody');
+    if (list && list.scrollIntoView) list.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch(e) {
+    setTrStatus('err', '❌ Could not record the transfer: ' + (e.message || e));
+  } finally {
+    _trSubmitting = false;
+    if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+  }
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+async function exportCFCSV() {
+  let allTxns = _allTxnsCache;
+  if (!allTxns.length) {
+    try {
+      const res = await window.erp.getTransactions({});
+      allTxns = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+    } catch(e) {}
+  }
+  let csv = 'Date,Description,Type,Category,Sub-Category,Bank Account,Amount,Payment Mode,Reference,Notes\n';
+  allTxns.filter(t => t.type !== 'transfer').forEach(t => {
+    const bankName = (_banksCache.find(b => b.id == t.bank_account_id) || {}).account_name || '';
+    csv += `"${t.txn_date}","${t.description || ''}","${t.type}","${t.category || ''}","${t.sub_category || ''}","${bankName}",${t.amount},"${t.payment_mode || ''}","${t.reference_no || ''}","${t.notes || ''}"\n`;
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' }));
+  a.download = 'CashFlow.csv';
+  a.click();
+}
+
+async function exportBankCSV() {
+  let txns = [];
+  try {
+    const res = await window.erp.getTransactions({});
+    txns = (Array.isArray(res) ? res : (res && res.data ? res.data : [])).filter(t => t.type !== 'transfer');
+  } catch(e) {}
+  let csv = 'Date,Description,Account,Debit,Credit,Reference,Reconciled\n';
+  txns.forEach(t => {
+    const bankName = (_banksCache.find(b => b.id == t.bank_account_id) || {}).account_name || '';
+    csv += `"${t.txn_date}","${t.description || ''}","${bankName}",${t.type==='debit'?t.amount:0},${t.type==='credit'?t.amount:0},"${t.reference_no || ''}","${t.is_reconciled ? 'Yes' : 'No'}"\n`;
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' }));
+  a.download = 'BankBook.csv';
+  a.click();
+}
+
+// ─── Forecast ────────────────────────────────────────────────────────────────
+async function renderForecast() {
+  const now = new Date();
+  let allTxns = _allTxnsCache;
+  if (!allTxns.length) {
+    try {
+      const res = await window.erp.getTransactions({});
+      allTxns = Array.isArray(res) ? res : (res && res.data ? res.data : []);
+    } catch(e) {}
+  }
+
+  // Avg of last 3 months
+  let avgIn = 0, avgOut = 0, months = 0;
+  for (let i = 1; i <= 3; i++) {
+    const d    = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const yr   = d.getFullYear(), mo = d.getMonth() + 1;
+    const from = `${yr}-${String(mo).padStart(2,'0')}-01`;
+    const to   = `${yr}-${String(mo).padStart(2,'0')}-${new Date(yr, mo, 0).getDate()}`;
+    let inf = 0, out = 0;
+    allTxns.filter(t => t.txn_date >= from && t.txn_date <= to && t.type !== 'transfer')
+      .forEach(t => {
+        if (t.type === 'credit') inf += parseFloat(t.amount) || 0;
+        else                     out += parseFloat(t.amount) || 0;
+      });
+    if (inf || out) { avgIn += inf; avgOut += out; months++; }
+  }
+  if (months) { avgIn /= months; avgOut /= months; }
+
+  // Expected inflows / outflows from pending data
+  let pendingInvoices = [], pendingExpenses = [];
+  try {
+    const ri = await window.erp.getInvoices({ status: 'partial' });
+    pendingInvoices = Array.isArray(ri) ? ri : (ri && ri.data ? ri.data : []);
+  } catch(e) { console.error('getInvoices error', e); }
+  try {
+    const re = await window.erp.getExpenses({ status: 'pending' });
+    pendingExpenses = Array.isArray(re) ? re : (re && re.data ? re.data : []);
+  } catch(e) { console.error('getExpenses error', e); }
+
+  // Build 3-month forecast
+  let lastBal = _banksCache.reduce((s, b) => s + (parseFloat(b.current_balance) || 0), 0);
+  const fData = [];
+  for (let i = 0; i < 3; i++) {
+    const d    = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const lbl  = d.toLocaleString('en-IN', { month:'short', year:'numeric' });
+    const yr   = d.getFullYear(), mo = d.getMonth() + 1;
+    const from = `${yr}-${String(mo).padStart(2,'0')}-01`;
+    const to   = `${yr}-${String(mo).padStart(2,'0')}-${new Date(yr, mo, 0).getDate()}`;
+
+    // Projected from pending invoices / expenses for this month
+    const projInFromInv = pendingInvoices
+      .filter(inv => (inv.due_date || '') >= from && (inv.due_date || '') <= to)
+      .reduce((s, inv) => s + (parseFloat(inv.balance_due) || parseFloat(inv.total_amount) || 0), 0);
+    const projOutFromExp = pendingExpenses
+      .filter(exp => (exp.due_date || exp.expense_date || '') >= from && (exp.due_date || exp.expense_date || '') <= to)
+      .reduce((s, exp) => s + (parseFloat(exp.balance_due) || parseFloat(exp.total_amount) || 0), 0);
+
+    const projIn  = Math.round(Math.max(avgIn  * (1 + i * 0.02), projInFromInv));
+    const projOut = Math.round(Math.max(avgOut * (1 + i * 0.01), projOutFromExp));
+    const net     = projIn - projOut;
+    lastBal      += net;
+    fData.push({ lbl, projIn, projOut, net, cumBal: lastBal });
+  }
+
+  // Chart
+  const ctx = document.getElementById('forecastChart');
+  if (window._fcC) window._fcC.destroy();
+  window._fcC = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: fData.map(f => f.lbl),
+      datasets: [
+        { label:'Forecast Inflow',     data:fData.map(f => f.projIn  / 1000), backgroundColor:'rgba(34,197,94,0.3)',  borderColor:'#22c55e', borderWidth:1, borderRadius:4 },
+        { label:'Forecast Outflow',    data:fData.map(f => f.projOut / 1000), backgroundColor:'rgba(239,68,68,0.3)',  borderColor:'#ef4444', borderWidth:1, borderRadius:4 },
+        { label:'Cumulative Balance',  data:fData.map(f => f.cumBal  / 1000), type:'line', borderColor:'#22d3ee', tension:0.4, pointRadius:4, fill:false, borderWidth:2, yAxisID:'y1' }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#94a3b8', font:{size:10} } } },
+      scales: {
+        x:  { ticks:{color:'#475569',font:{size:10}}, grid:{color:'rgba(255,255,255,0.03)'} },
+        y:  { ticks:{color:'#475569',font:{size:10},callback:v=>'₹'+v+'K'}, grid:{color:'rgba(255,255,255,0.05)'} },
+        y1: { position:'right', ticks:{color:'#22d3ee',font:{size:10},callback:v=>'₹'+v+'K'}, grid:{display:false} }
+      }
+    }
+  });
+
+  // Table
+  const wrap = document.getElementById('forecastTableWrap');
+  wrap.innerHTML = `<div class="forecast-grid">
+    <div class="fc-head">Month</div>
+    <div class="fc-head" style="text-align:right;">Forecast In</div>
+    <div class="fc-head" style="text-align:right;">Forecast Out</div>
+    <div class="fc-head" style="text-align:right;">Net</div>
+    <div class="fc-head" style="text-align:right;">Cumul. Balance</div>
+    <div class="fc-head" style="text-align:right;">Status</div>
+    ${fData.map(f => `
+      <div class="fc-cell">${f.lbl}</div>
+      <div class="fc-cell fc-pos"  style="text-align:right;">₹${fmt(f.projIn)}</div>
+      <div class="fc-cell" style="text-align:right;color:var(--danger);">₹${fmt(f.projOut)}</div>
+      <div class="fc-cell ${f.net     >= 0 ? 'fc-pos' : 'fc-neg'}" style="text-align:right;">${f.net >= 0 ? '+' : ''}₹${fmt(f.net)}</div>
+      <div class="fc-cell ${f.cumBal >= 0 ? 'fc-pos' : 'fc-neg'}" style="text-align:right;">₹${fmt(f.cumBal)}</div>
+      <div class="fc-cell" style="text-align:right;"><span class="badge ${f.cumBal >= 0 ? 'b-cleared' : 'b-pending'}">${f.cumBal >= 0 ? 'OK' : 'Risk'}</span></div>
+    `).join('')}
+  </div>`;
+
+  // Expected inflows
+  const inflowsEl = document.getElementById('forecastInflows');
+  if (pendingInvoices.length) {
+    inflowsEl.innerHTML = pendingInvoices.slice(0, 10).map(inv => `
+      <div class="recon-row">
+        <div>
+          <div class="name-bold" style="font-size:12px;">${escHtml(inv.invoice_no || inv.client_name || '')}</div>
+          <div class="sub-text">Due: ${inv.due_date || 'N/A'}</div>
+        </div>
+        <div class="amount cr">₹${fmt(parseFloat(inv.balance_due) || parseFloat(inv.total_amount) || 0)}</div>
+      </div>`).join('') +
+      (pendingInvoices.length > 10 ? `<div style="font-size:11px;color:var(--faint);padding:6px 0;">+${pendingInvoices.length - 10} more invoices</div>` : '');
+  } else {
+    inflowsEl.innerHTML = '<div style="color:var(--faint);font-size:12px;padding:10px 0;">No pending invoices.</div>';
+  }
+
+  // Expected outflows
+  const outflowsEl = document.getElementById('forecastOutflows');
+  if (pendingExpenses.length) {
+    outflowsEl.innerHTML = pendingExpenses.slice(0, 10).map(exp => `
+      <div class="recon-row">
+        <div>
+          <div class="name-bold" style="font-size:12px;">${escHtml(exp.description || exp.vendor_name || '')}</div>
+          <div class="sub-text">Due: ${exp.due_date || exp.expense_date || 'N/A'}</div>
+        </div>
+        <div class="amount dr">₹${fmt(parseFloat(exp.balance_due) || parseFloat(exp.total_amount) || 0)}</div>
+      </div>`).join('') +
+      (pendingExpenses.length > 10 ? `<div style="font-size:11px;color:var(--faint);padding:6px 0;">+${pendingExpenses.length - 10} more bills</div>` : '');
+  } else {
+    outflowsEl.innerHTML = '<div style="color:var(--faint);font-size:12px;padding:10px 0;">No pending bills.</div>';
+  }
+
+  // Payment alerts
+  const alerts   = document.getElementById('payAlerts');
+  const todayStr = today();
+  const alertItems = [];
+  pendingExpenses.forEach(exp => {
+    const due  = exp.due_date || exp.expense_date;
+    if (!due) return;
+    const diff = Math.round((new Date(due) - new Date(todayStr)) / (1000 * 60 * 60 * 24));
+    if (diff <= 10) alertItems.push({
+      label : exp.description || exp.vendor_name || 'Bill',
+      amt   : parseFloat(exp.balance_due) || parseFloat(exp.total_amount) || 0,
+      due, diff,
+      type  : diff < 0 ? 'danger' : diff <= 3 ? 'warn' : 'ok'
+    });
+  });
+  pendingInvoices.forEach(inv => {
+    const due  = inv.due_date;
+    if (!due) return;
+    const diff = Math.round((new Date(due) - new Date(todayStr)) / (1000 * 60 * 60 * 24));
+    if (diff <= 10) alertItems.push({
+      label : 'Collect: ' + (inv.client_name || inv.invoice_no || 'Invoice'),
+      amt   : parseFloat(inv.balance_due) || parseFloat(inv.total_amount) || 0,
+      due, diff,
+      type  : diff < 0 ? 'danger' : diff <= 3 ? 'warn' : 'ok'
+    });
+  });
+  if (!alertItems.length) {
+    alerts.innerHTML = '<div style="color:var(--success);font-size:12px;">✅ No urgent payment alerts in the next 10 days.</div>';
+    return;
+  }
+  alerts.innerHTML = alertItems.sort((a, b) => a.diff - b.diff).map(a => `
+    <div class="alert-banner ${a.type}" style="margin:0 0 8px;">
+      ${a.diff < 0 ? '❌ OVERDUE' : '⚠️'} <b>${escHtml(a.label)}</b> — ₹${fmt(a.amt)} due ${a.due}
+      (${Math.abs(a.diff)} days ${a.diff < 0 ? 'overdue' : 'left'})
+    </div>`).join('');
+}
+
+// ─── Reconciliation ───────────────────────────────────────────────────────────
+// ─── Statement CSV import + auto-match ───────────────────────────────────────
+function parseStatementCSV(text) {
+  // Robust-enough CSV parse: handles quoted fields with commas
+  const rows = [];
+  let cur = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"' && text[i+1] === '"') { field += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else field += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === ',') { cur.push(field); field = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (field !== '' || cur.length) { cur.push(field); rows.push(cur); cur = []; field = ''; }
+      if (ch === '\r' && text[i+1] === '\n') i++;
+    } else field += ch;
+  }
+  if (field !== '' || cur.length) { cur.push(field); rows.push(cur); }
+  return rows;
+}
+
+function normaliseStatementDate(s) {
+  s = (s || '').trim();
+  // Already ISO
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  // DD/MM/YYYY or DD-MM-YYYY (Indian bank format)
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (m) return m[3] + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0');
+  // DD/MM/YY
+  m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2})$/);
+  if (m) return '20' + m[3] + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0');
+  // DD MMM YYYY (e.g. 05 Apr 2026)
+  m = s.match(/^(\d{1,2})[\s\-]([A-Za-z]{3})[\s\-](\d{4})/);
+  if (m) {
+    const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+    const mm = months[m[2].toLowerCase()];
+    if (mm) return m[3] + '-' + mm + '-' + m[1].padStart(2,'0');
+  }
+  return null;
+}
+
+async function importStatement() {
+  const accId = document.getElementById('stmtBankSel').value;
+  const fileEl = document.getElementById('stmtFile');
+  const status = document.getElementById('stmtStatus');
+  if (!accId) { alert('Select which bank account this statement belongs to.'); return; }
+  if (!fileEl.files || !fileEl.files.length) { alert('Choose the statement CSV file first.'); return; }
+
+  status.textContent = 'Reading file…';
+  const text = await fileEl.files[0].text();
+  const rows = parseStatementCSV(text);
+  if (rows.length < 2) { status.textContent = ''; alert('The file looks empty — it needs a header row and at least one transaction.'); return; }
+
+  // Detect columns from header
+  const header = rows[0].map(h => h.toLowerCase().trim());
+  const findCol = (...names) => {
+    for (const n of names) {
+      const i = header.findIndex(h => h.includes(n));
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+  const cDate  = findCol('date');
+  const cDesc  = findCol('description', 'narration', 'particulars', 'remarks');
+  const cDebit = findCol('debit', 'withdrawal', 'dr');
+  const cCredit= findCol('credit', 'deposit', 'cr');
+  const cRef   = findCol('ref', 'cheque', 'chq', 'utr');
+  const cBal   = findCol('balance');
+
+  if (cDate < 0 || (cDebit < 0 && cCredit < 0)) {
+    status.textContent = '';
+    alert('Could not find the needed columns. The CSV header must contain "Date" and "Debit"/"Withdrawal" or "Credit"/"Deposit" columns.');
+    return;
+  }
+
+  const lines = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r.length < 2) continue;
+    const d = normaliseStatementDate(r[cDate]);
+    if (!d) continue;
+    const num = s => parseFloat(String(s||'').replace(/[",₹\s]/g, '')) || 0;
+    lines.push({
+      txn_date: d,
+      description: cDesc >= 0 ? (r[cDesc]||'').trim() : '',
+      ref_no: cRef >= 0 ? (r[cRef]||'').trim() : '',
+      debit:  cDebit  >= 0 ? num(r[cDebit])  : 0,
+      credit: cCredit >= 0 ? num(r[cCredit]) : 0,
+      balance: cBal >= 0 ? num(r[cBal]) : null,
+    });
+  }
+
+  if (!lines.length) { status.textContent = ''; alert('No valid transaction rows found in the file. Check the date format.'); return; }
+
+  status.textContent = 'Importing ' + lines.length + ' lines…';
+  const res = await window.erp.importBankStatement({ bank_account_id: parseInt(accId), lines });
+  if (res && res.success) {
+    status.textContent = `Imported ${res.data.imported} lines — ${res.data.auto_matched} auto-matched ✓`;
+    fileEl.value = '';
+    await renderStatementLines();
+    await renderReconTxns();
+  } else {
+    status.textContent = '';
+    alert('Import failed: ' + ((res && res.error) || 'unknown error'));
+  }
+}
+
+async function renderStatementLines() {
+  const accId = document.getElementById('stmtBankSel').value;
+  const wrap = document.getElementById('stmtLinesWrap');
+  const filters = {};
+  if (accId) filters.bank_account_id = parseInt(accId);
+  const res = await window.erp.getStatementLines(filters);
+  const lines = (res && res.data) || [];
+  if (!lines.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  document.getElementById('stmtLinesBody').innerHTML = lines.map(l => `<tr>
+    <td>${l.txn_date}</td>
+    <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(l.description||'')}</td>
+    <td class="amount dr">${l.debit ? '₹'+fmt(l.debit) : '—'}</td>
+    <td class="amount cr">${l.credit ? '₹'+fmt(l.credit) : '—'}</td>
+    <td>${l.matched_txn_id
+      ? `<span class="badge b-paid">${l.match_status==='auto'?'Auto':'Manual'} ✓ ${l.book_date||''}</span>`
+      : '<span class="badge b-pending">Unmatched</span>'}</td>
+    <td>${l.matched_txn_id
+      ? `<button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:10px;" onclick="unmatchLine(${l.id})">Unmatch</button>`
+      : ''}</td>
+  </tr>`).join('');
+}
+
+async function unmatchLine(id) {
+  await window.erp.unmatchStatementLine(id);
+  await renderStatementLines();
+  await renderReconTxns();
+}
+
+async function renderReconTxns() {
+  renderStatementLines().catch(()=>{});
+  const filter    = document.getElementById('reconBankFilter').value;
+  const fromDate  = document.getElementById('reconFromDate').value;
+  const toDate    = document.getElementById('reconToDate').value;
+
+  const filters = { };
+  if (filter)   filters.bank_account_id = parseInt(filter);
+  if (fromDate) filters.from_date = fromDate;
+  if (toDate)   filters.to_date   = toDate;
+
+  let txns = [];
+  try {
+    const res = await window.erp.getTransactions(filters);
+    txns = (Array.isArray(res) ? res : (res && res.data ? res.data : []))
+      .filter(t => t.type !== 'transfer' && !t.is_reconciled);
+  } catch(e) {
+    console.error('renderReconTxns error', e);
+  }
+
+  const body = document.getElementById('reconBody');
+  document.getElementById('reconEmpty').style.display = txns.length ? 'none' : 'block';
+  document.getElementById('reconSelectAll').checked = false;
+  body.innerHTML = txns.sort((a, b) => a.txn_date.localeCompare(b.txn_date)).map(t => {
+    const bankName = (_banksCache.find(b => b.id == t.bank_account_id) || {}).account_name || '—';
+    return `<tr>
+      <td><input type="checkbox" class="recon-chk" data-id="${t.id}" data-txn='${JSON.stringify({...t}).replace(/'/g,"&#39;")}'></td>
+      <td>${t.txn_date}</td>
+      <td>${escHtml(t.description || '')}</td>
+      <td>${escHtml(bankName)}</td>
+      <td class="amount dr">${t.type === 'debit'  ? '₹' + fmt(parseFloat(t.amount)) : '—'}</td>
+      <td class="amount cr">${t.type === 'credit' ? '₹' + fmt(parseFloat(t.amount)) : '—'}</td>
+      <td><span class="badge b-pending">Unreconciled</span></td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function toggleAllRecon(checked) {
+  document.querySelectorAll('.recon-chk').forEach(el => { el.checked = checked; });
+}
+
+async function reconcileSelected() {
+  const checked = document.querySelectorAll('.recon-chk:checked');
+  if (!checked.length) { alert('Select at least one transaction to reconcile.'); return; }
+  const todayStr = today();
+  let errors = 0;
+  for (const el of checked) {
+    const id = parseInt(el.dataset.id);
+    try {
+      // Fetch the full transaction then save with reconciled flag
+      const allRes = await window.erp.getTransactions({});
+      const allTxns = Array.isArray(allRes) ? allRes : (allRes && allRes.data ? allRes.data : []);
+      const txn = allTxns.find(t => t.id === id);
+      if (txn) {
+        await window.erp.saveTransaction({ ...txn, is_reconciled: 1, reconciled_date: todayStr });
+      }
+    } catch(e) {
+      console.error('reconcile error for id', id, e);
+      errors++;
+    }
+  }
+  if (errors) alert(`${errors} transactions failed to reconcile.`);
+  else        alert(`✅ ${checked.length} transaction(s) marked as reconciled.`);
+  await renderReconTxns();
+  // Refresh KPIs
+  await renderCF();
+}
+
+// ─── Recon Statement ──────────────────────────────────────────────────────────
+const reconData = { unpresented:[], uncleared:[], credits:[], debits:[] };
+
+function addReconRow(type) {
+  const domId = { unpresented:'rUnpresented', uncleared:'rUncleared', credits:'rCreditsNotBooks', debits:'rDebitsNotBooks' }[type];
+  const wrap  = document.getElementById(domId);
+  const rowId = 'recon-' + type + '-' + Date.now();
+  const div   = document.createElement('div');
+  div.id = rowId;
+  div.style.cssText = 'display:flex;gap:8px;align-items:center;padding:5px 0;';
+  div.innerHTML = `<input type="text" placeholder="Description" style="flex:1;font-size:11px;padding:5px 8px;">
+    <input type="number" placeholder="₹0" style="width:90px;font-size:11px;padding:5px 8px;text-align:right;" oninput="calcRecon()">
+    <button class="btn-danger-sm" onclick="document.getElementById('${rowId}').remove();calcRecon()">✕</button>`;
+  wrap.appendChild(div);
+  calcRecon();
+}
+
+function getReconRows(id) {
+  let total = 0;
+  document.querySelectorAll('#' + id + ' input[type="number"]').forEach(el => { total += +el.value || 0; });
+  return total;
+}
+
+function calcRecon() {
+  const bankBal = +document.getElementById('rBankBal').value || 0;
+  const bookBal = +document.getElementById('rBookBal').value || 0;
+  const unpres  = getReconRows('rUnpresented');
+  const unclear = getReconRows('rUncleared');
+  const credNB  = getReconRows('rCreditsNotBooks');
+  const debNB   = getReconRows('rDebitsNotBooks');
+  const adjBank = bankBal + unpres - unclear;
+  const adjBook = bookBal + credNB - debNB;
+  document.getElementById('rAdjBank').textContent = '₹' + fmt(adjBank);
+  document.getElementById('rAdjBook').textContent = '₹' + fmt(adjBook);
+  const diff = adjBank - adjBook;
+  document.getElementById('reconDiff').textContent  = (diff !== 0 ? (diff > 0 ? '+' : '-') : '') + '₹' + fmt(diff);
+  document.getElementById('reconDiff').className    = diff === 0 ? 'cr' : diff > 0 ? 'am' : 'dr';
+  document.getElementById('reconStatus').textContent = diff === 0
+    ? '✅ Books are balanced — Great job!'
+    : '⚠️ Difference of ₹' + fmt(diff) + ' needs investigation.';
+  document.getElementById('reconStatus').style.color = diff === 0 ? 'var(--success)' : 'var(--warn)';
+}
+
+// ─── Management PIN for cashflow overlay ─────────────────────────────────────
+let cfMgmtPin = null;
+
+function toggleCfMgmt() {
+  if (cfMgmtPin) {
+    cfMgmtPin = null;
+    document.getElementById('cfMgmtBtn').style.cssText = 'background:rgba(124,58,237,.12);color:#a78bfa;border:1px solid rgba(124,58,237,.25);';
+    document.getElementById('cfMgmtBtn').textContent = '🔒';
+    document.getElementById('cfMgmtBadge').style.display = 'none';
+    renderCF();
+  } else {
+    openCfPinModal();
+  }
+}
+
+function openCfPinModal() {
+  ['cfP1','cfP2','cfP3','cfP4'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cfPinErr').textContent = '';
+  document.getElementById('cfPinModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('cfP1').focus(), 80);
+}
+
+function closeCfPinModal() {
+  document.getElementById('cfPinModal').style.display = 'none';
+}
+
+function cfPinNext(el, nextId) { if (el.value && nextId) document.getElementById(nextId).focus(); }
+function cfPinBack(e, prevId, curId) {
+  if (e.key === 'Backspace' && !document.getElementById(curId).value && prevId)
+    document.getElementById(prevId).focus();
+}
+
+async function verifyCfPin() {
+  const pin = ['cfP1','cfP2','cfP3','cfP4'].map(id => document.getElementById(id).value).join('');
+  if (pin.length < 4) { document.getElementById('cfPinErr').textContent = 'Enter 4-digit PIN'; return; }
+  const r = await window.erp.verifyManagementPin(pin);
+  if (r.success && r.data.valid) {
+    cfMgmtPin = pin;
+    closeCfPinModal();
+    document.getElementById('cfMgmtBtn').style.cssText = 'background:rgba(124,58,237,.4);color:#e9d5ff;border:1px solid rgba(124,58,237,.6);';
+    document.getElementById('cfMgmtBtn').textContent = '🔓';
+    document.getElementById('cfMgmtBadge').style.display = '';
+    renderCF();
+  } else {
+    document.getElementById('cfPinErr').textContent = 'Incorrect PIN';
+    ['cfP1','cfP2','cfP3','cfP4'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('cfP1').focus();
+  }
+}
+
+// ─── XSS helper ──────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+// Live auto-refresh from the app shell — re-render whichever tab is open.
+window.refreshPage = function(){
+  var a = document.querySelector('.tab.active');
+  var m = a && (a.getAttribute('onclick') || '').match(/switchTab\('([^']+)'/);
+  switchTab(m ? m[1] : 'cashflow');
+};
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+// Shows a visible error instead of a dead page if the bridge never appears.
+(function boot(tries) {
+  if (window.erp) { init(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+
+<!-- Management Entry Quick-Widget -->
+<script src="vendor/mgmt-quick-entry.js"></script>
+<script>
+// On cashflow page: no pre-fill context, just open clean
+window._mgmtCtx = function() { return {}; };
+// Reload cashflow after a private entry is saved so outflows stay current
+window._mgmtSaved = function() { try { renderCF(); } catch(_) {} };
+</script>
+</body>
+</html>

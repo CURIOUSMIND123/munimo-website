@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Field Approvals</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;
+  --info:#3b82f6;--warn:#f59e0b;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px 24px;border-bottom:1px solid var(--border);}
+.kpi{background:var(--surface2);border-radius:10px;padding:14px 16px;border:1px solid var(--border);}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+.kpi-val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;}
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;gap:10px;flex-wrap:wrap;}
+.toolbar-left{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filter-sel{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--muted);outline:none;}
+.filter-sel option{background:var(--surface2);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.list{padding:0 24px 24px;display:flex;flex-direction:column;gap:10px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.card-title{font-size:14px;font-weight:700;color:var(--text);}
+.card-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block;white-space:nowrap;}
+.b-pending{background:rgba(245,158,11,0.14);color:var(--warn);}
+.b-approved{background:rgba(34,197,94,0.12);color:var(--success);}
+.b-rejected{background:rgba(239,68,68,0.12);color:var(--danger);}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px;margin-top:12px;font-size:13px;}
+.detail-grid .dl{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:0.4px;}
+.detail-grid .dv{color:var(--text);font-weight:600;}
+.att-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px;}
+.att-table th{text-align:left;color:var(--faint);font-weight:700;text-transform:uppercase;font-size:10px;padding:6px 8px;border-bottom:1px solid var(--border);}
+.att-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--muted);}
+.photo{max-width:220px;max-height:220px;border-radius:8px;margin-top:10px;display:block;border:1px solid var(--border);}
+.note-box{margin-top:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--danger);}
+.card-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.reject-row{display:flex;gap:8px;margin-top:10px;}
+.reject-row input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);outline:none;}
+.reject-row input:focus{border-color:var(--accent);}
+.empty{text-align:center;padding:54px 24px;color:var(--faint);}
+.empty .ei{font-size:34px;margin-bottom:10px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface3);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 10px 40px rgba(0,0,0,0.5);opacity:0;transition:opacity .2s;pointer-events:none;z-index:500;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="kpi-lbl">Pending Review</div><div class="kpi-val" id="kPending" style="color:var(--warn);">0</div></div>
+  <div class="kpi"><div class="kpi-lbl">Approved</div><div class="kpi-val" id="kApproved" style="color:var(--success);">0</div></div>
+  <div class="kpi"><div class="kpi-lbl">Rejected</div><div class="kpi-val" id="kRejected" style="color:var(--danger);">0</div></div>
+</div>
+
+<div class="toolbar">
+  <div class="toolbar-left">
+    <select class="filter-sel" id="statusFilter" onchange="loadSubmissions()">
+      <option value="pending">Pending</option>
+      <option value="approved">Approved</option>
+      <option value="rejected">Rejected</option>
+      <option value="">All</option>
+    </select>
+  </div>
+</div>
+
+<div class="list" id="subList"></div>
+<div class="empty" id="subEmpty" style="display:none;">
+  <div class="ei">📭</div>
+  <p>Nothing to review here. Entries the site managers submit from Munimo Field show up in this queue.</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const erpc = new Proxy({}, { get(_,k){ const t=window.erp||{}; const v=t[k]; if(typeof v!=='function') return v;
+    return async (...a)=>{ const r = await v.apply(t,a);
+      if (r && typeof r==='object' && !Array.isArray(r) && 'success' in r){ if(!r.success) throw new Error(r.error||'Operation failed'); return r.data; }
+      return r; }; } });
+
+  let allSubs = [];
+
+  const fmt = n => isNaN(n) ? '0' : Math.round(n||0).toLocaleString('en-IN');
+  function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+
+  async function init(){
+    await loadSubmissions();
+    lucide.createIcons();
+  }
+
+  async function loadSubmissions(){
+    const status = document.getElementById('statusFilter').value;
+    try { allSubs = await erpc.getFieldSubmissions(status ? { status } : {}) || []; } catch(e){ allSubs = []; }
+    renderSubs();
+    await loadCounts();
+  }
+
+  async function loadCounts(){
+    try {
+      const all = await erpc.getFieldSubmissions({}) || [];
+      document.getElementById('kPending').textContent  = fmt(all.filter(x=>x.status==='pending').length);
+      document.getElementById('kApproved').textContent = fmt(all.filter(x=>x.status==='approved').length);
+      document.getElementById('kRejected').textContent = fmt(all.filter(x=>x.status==='rejected').length);
+    } catch(e){ /* leave zeros */ }
+  }
+
+  function parsePayload(row){
+    try { return JSON.parse(row.payload) || {}; } catch(e){ return {}; }
+  }
+
+  function titleOf(row, p){
+    if (row.op === 'bulk-save-attendance') return 'Attendance';
+    if (row.op === 'save-expense') return 'Site Expense';
+    if (row.op === 'save-advance') return 'Advance';
+    if (row.op === 'save-labour-advance') return 'Wage Advance';
+    if (row.op === 'save-grn') return 'Material Received';
+    if (row.op === 'save-transaction') return (p && p.payload && p.payload.type === 'credit') ? 'Money In' : 'Money Out';
+    if (row.op === 'save-cash-head') return 'New Head';
+    return row.op;
+  }
+
+  function detailsHtml(row, parsed){
+    const p = parsed.payload;
+    if (row.op === 'bulk-save-attendance' && Array.isArray(p)){
+      const rows = p.map(r => `<tr><td>${esc(r.worker_id)}</td><td>${esc(r.status||(r.present?'P':'A'))}${r.status==='OT'?(' ('+esc(r.ot_hours||2)+'h)'):''}</td><td>₹${fmt(r.daily_wage)}</td></tr>`).join('');
+      return `<table class="att-table"><thead><tr><th>Worker ID</th><th>Status</th><th>Daily Wage</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+    if (row.op === 'save-expense'){
+      let photo = '';
+      if (parsed.photo) photo = `<img class="photo" src="${parsed.photo}" alt="Bill photo">`;
+      return `<div class="detail-grid">
+        <div><div class="dl">Vendor / Paid To</div><div class="dv">${esc(p.vendor_name)||'—'}</div></div>
+        <div><div class="dl">Category</div><div class="dv">${esc(p.category)||'—'}</div></div>
+        <div><div class="dl">Amount</div><div class="dv">₹${fmt(p.total_amount)}</div></div>
+        <div><div class="dl">Bill Date</div><div class="dv">${esc(p.bill_date)||'—'}</div></div>
+      </div>
+      <div class="detail-grid"><div style="grid-column:1/-1;"><div class="dl">Description</div><div class="dv">${esc(p.description)||'—'}</div></div></div>
+      ${photo}`;
+    }
+    if (row.op === 'save-advance'){
+      return `<div class="detail-grid">
+        <div><div class="dl">Worker</div><div class="dv">${esc(p.party_name)||'—'}</div></div>
+        <div><div class="dl">Amount</div><div class="dv">₹${fmt(p.amount)}</div></div>
+        <div><div class="dl">Date</div><div class="dv">${esc(p.advance_date)||'—'}</div></div>
+        <div><div class="dl">Purpose</div><div class="dv">${esc(p.purpose)||'—'}</div></div>
+      </div>`;
+    }
+    if (row.op === 'save-labour-advance'){
+      return `<div class="detail-grid">
+        <div><div class="dl">Worker ID</div><div class="dv">${esc(p.worker_id)||'—'}</div></div>
+        <div><div class="dl">Amount</div><div class="dv">₹${fmt(p.amount)}</div></div>
+        <div><div class="dl">Date</div><div class="dv">${esc(p.advance_date)||'—'}</div></div>
+        <div><div class="dl">Note</div><div class="dv">${esc(p.notes)||'—'}</div></div>
+      </div>
+      <p class="muted small" style="margin-top:8px">Auto-recovered from this worker's next wage payment (kharchi).</p>`;
+    }
+    if (row.op === 'save-grn'){
+      let photo = '';
+      if (parsed.photo) photo = `<img class="photo" src="${parsed.photo}" alt="Challan photo">`;
+      const items = Array.isArray(p.items) ? p.items : [];
+      const rows = items.map(it => `<tr><td>${esc(it.description)}</td><td>${esc(it.received_qty)}</td><td>${esc(it.unit)}</td></tr>`).join('');
+      return `<div class="detail-grid">
+        <div><div class="dl">Vendor</div><div class="dv">${esc(p.vendor_name)||'—'}</div></div>
+        <div><div class="dl">Challan / Bill No.</div><div class="dv">${esc(p.bill_no)||'—'}</div></div>
+        <div><div class="dl">Date</div><div class="dv">${esc(p.grn_date)||'—'}</div></div>
+      </div>
+      <table class="att-table"><thead><tr><th>Item</th><th>Qty</th><th>Unit</th></tr></thead><tbody>${rows}</tbody></table>
+      ${photo}`;
+    }
+    if (row.op === 'save-transaction'){
+      const dir = p.type === 'credit' ? 'Money In (receipt)' : 'Money Out (payment)';
+      return `<div class="detail-grid">
+        <div><div class="dl">Direction</div><div class="dv">${esc(dir)}</div></div>
+        <div><div class="dl">Head</div><div class="dv">${esc(p.category)||'—'}</div></div>
+        <div><div class="dl">Amount</div><div class="dv">₹${fmt(p.amount)}</div></div>
+        <div><div class="dl">Date</div><div class="dv">${esc(p.txn_date)||'—'}</div></div>
+        <div><div class="dl">Mode</div><div class="dv">${esc(p.payment_mode)||'—'}</div></div>
+        <div><div class="dl">Description</div><div class="dv">${esc(p.description)||'—'}</div></div>
+      </div>
+      <p class="muted small" style="margin-top:8px">Approving posts this to Cash Flow / the ledger.</p>`;
+    }
+    if (row.op === 'save-cash-head'){
+      return `<div class="detail-grid">
+        <div><div class="dl">Head name</div><div class="dv">${esc(p.name)||'—'}</div></div>
+        <div><div class="dl">Type</div><div class="dv">${p.kind === 'income' ? 'Money in — income (Cr)' : 'Money out — expense (Dr)'}</div></div>
+      </div>`;
+    }
+    return '';
+  }
+
+  function renderSubs(){
+    document.getElementById('subEmpty').style.display = allSubs.length ? 'none' : 'block';
+    document.getElementById('subList').innerHTML = allSubs.map(row => {
+      const parsed = parsePayload(row);
+      const badgeCls = row.status === 'pending' ? 'b-pending' : (row.status === 'approved' ? 'b-approved' : 'b-rejected');
+      const when = row.submitted_at ? String(row.submitted_at).replace('T',' ').slice(0,16) : '';
+      const actions = row.status === 'pending' ? `
+        <div class="card-actions">
+          <button class="btn btn-primary btn-sm" onclick="approveSub(${row.id})"><i data-lucide="check" style="width:12px;height:12px;"></i> Approve</button>
+        </div>
+        <div class="reject-row">
+          <input type="text" id="note-${row.id}" placeholder="Reason for rejection (optional)">
+          <button class="btn btn-danger btn-sm" onclick="rejectSub(${row.id})">Reject</button>
+        </div>` : '';
+      const reviewNote = row.status === 'rejected' && row.review_note ? `<div class="note-box">⚠ ${esc(row.review_note)}</div>` : '';
+      return `<div class="card">
+        <div class="card-top">
+          <div>
+            <div class="card-title">${esc(titleOf(row, parsed))} — ${esc(row.site_name)||'No site'}</div>
+            <div class="card-sub">Submitted by ${esc(row.submitted_by)||'field'} · ${esc(when)}</div>
+          </div>
+          <span class="badge ${badgeCls}">${esc(row.status)}</span>
+        </div>
+        ${detailsHtml(row, parsed)}
+        ${reviewNote}
+        ${actions}
+      </div>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  async function approveSub(id){
+    if(!confirm('Approve this entry? It will be posted into the books.')) return;
+    try {
+      await erpc.approveFieldSubmission({ id });
+      await loadSubmissions();
+      toast('Approved and posted');
+    } catch(e){ alert('Error: ' + e.message); }
+  }
+
+  async function rejectSub(id){
+    const noteEl = document.getElementById('note-' + id);
+    const note = noteEl ? noteEl.value.trim() : '';
+    if(!confirm('Reject this entry? It will not be posted.')) return;
+    try {
+      await erpc.rejectFieldSubmission({ id, note: note || null });
+      await loadSubmissions();
+      toast('Rejected');
+    } catch(e){ alert('Error: ' + e.message); }
+  }
+
+  window.loadSubmissions = loadSubmissions;
+  window.approveSub = approveSub;
+  window.rejectSub = rejectSub;
+  window.refreshPage = function(){ loadSubmissions(); };  // live auto-refresh: field submissions appear on their own
+
+  (function boot(tries){
+    if(window.erp){ init(); return; }
+    if(tries < 50){ setTimeout(()=>boot(tries+1), 100); return; }
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+    d.textContent='⚠️ Could not connect to the data engine. Please reopen the application.';
+    document.body.appendChild(d);
+  })(0);
+</script>
+</body>
+</html>

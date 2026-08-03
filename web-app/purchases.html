@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Purchase Orders & GRN</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;
+  --info:#3b82f6;--purple:#a855f7;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+
+.tabs{display:flex;gap:4px;padding:18px 24px 0;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;}
+.tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px 24px;border-bottom:1px solid var(--border);}
+.kpi{background:var(--surface2);border-radius:10px;padding:14px 16px;border:1px solid var(--border);}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+.kpi-val{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.kpi-sub{font-size:11px;color:var(--faint);margin-top:2px;}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;gap:10px;flex-wrap:wrap;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 14px;flex:1;max-width:300px;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%;}
+.search-box input::placeholder{color:var(--faint);}
+.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filter-sel{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--muted);outline:none;}
+.filter-sel option{background:var(--surface2);}
+
+.btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-info{background:rgba(59,130,246,0.12);color:var(--info);border:1px solid rgba(59,130,246,0.2);}
+.btn-info:hover{background:rgba(59,130,246,0.22);}
+.btn-success{background:rgba(34,197,94,0.12);color:var(--success);border:1px solid rgba(34,197,94,0.2);}
+.btn-success:hover{background:rgba(34,197,94,0.22);}
+.btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2);}
+.btn-danger:hover{background:rgba(239,68,68,0.22);}
+.btn-sm{padding:5px 9px;font-size:12px;}
+.btn-xs{padding:3px 7px;font-size:11px;}
+
+.tc{padding:0 24px 24px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:13px;color:var(--muted);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+.name-bold{font-weight:600;color:var(--text);}
+.sub-text{font-size:11px;color:var(--faint);}
+.mono{font-family:monospace;font-size:12px;}
+.code-badge{font-size:11px;font-weight:700;font-family:monospace;background:var(--surface3);color:var(--accent);padding:2px 7px;border-radius:5px;}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;}
+.action-btns{display:flex;gap:5px;flex-wrap:wrap;}
+
+/* STATUS BADGES */
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.b-draft{background:rgba(148,163,184,0.12);color:var(--muted);}
+.b-approved{background:rgba(59,130,246,0.12);color:var(--info);}
+.b-partial{background:rgba(16,185,129,0.12);color:var(--accent);}
+.b-received{background:rgba(34,197,94,0.12);color:var(--success);}
+.b-cancelled{background:rgba(239,68,68,0.12);color:var(--danger);}
+.b-rejected{background:rgba(239,68,68,0.12);color:var(--danger);}
+.b-pending{background:rgba(16,185,129,0.12);color:var(--accent);}
+.b-billed{background:rgba(34,197,94,0.12);color:var(--success);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:900px;max-height:93vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);}
+.modal-lg{max-width:1060px;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px;}
+.close-btn:hover{color:var(--text);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+input,select,textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:10px 14px;font-size:13px;color:var(--text);outline:none;
+  transition:border-color 0.2s;width:100%;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);background:rgba(16,185,129,0.04);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:70px;}
+.section-hdr{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:0.5px;text-transform:uppercase;padding:6px 0 2px;border-bottom:1px solid rgba(16,185,129,0.15);margin-bottom:2px;grid-column:1/-1;}
+
+/* LINE ITEMS TABLE */
+.items-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
+.items-tbl{width:100%;border-collapse:collapse;}
+.items-tbl th{font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.4px;padding:9px 10px;background:var(--surface2);text-align:left;white-space:nowrap;}
+.items-tbl td{padding:6px 8px;border-top:1px solid rgba(255,255,255,0.04);}
+.items-tbl input,.items-tbl select{padding:7px 10px;font-size:12px;border-radius:7px;}
+.items-tbl .amt-cell{font-size:12px;font-weight:700;color:var(--success);padding-right:10px;text-align:right;white-space:nowrap;}
+.items-add-row{display:flex;justify-content:flex-start;padding:10px 0 0;}
+
+/* TOTALS BOX */
+.totals-box{background:var(--surface2);border-radius:10px;padding:14px;margin-top:12px;min-width:260px;margin-left:auto;}
+.total-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--muted);}
+.total-row.grand{font-weight:800;font-size:15px;color:var(--text);border-top:1px solid var(--border);padding-top:10px;margin-top:6px;}
+
+/* PROGRESS BAR */
+.prog-wrap{background:var(--surface3);border-radius:20px;height:8px;overflow:hidden;flex:1;}
+.prog-fill{height:100%;border-radius:20px;transition:width 0.4s;}
+
+/* TRACKER CARD */
+.tracker-list{display:flex;flex-direction:column;gap:12px;padding:16px 24px 24px;}
+.tracker-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.tracker-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.tracker-meta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;}
+.tracker-meta-item{font-size:12px;color:var(--muted);}
+.tracker-meta-item span{color:var(--text);font-weight:600;}
+.tracker-progress{display:flex;align-items:center;gap:12px;}
+.prog-label{font-size:12px;color:var(--muted);white-space:nowrap;}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 24px;color:var(--faint);}
+.empty svg{margin-bottom:12px;opacity:0.4;}
+.empty p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+
+/* CONFIRM */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:300;display:none;align-items:center;justify-content:center;padding:16px;}
+.confirm-overlay.open{display:flex;}
+.confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,0.7);}
+.confirm-icon{width:44px;height:44px;background:rgba(16,185,129,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.confirm-title{font-size:15px;font-weight:700;margin-bottom:8px;}
+.confirm-msg{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.confirm-btns{display:flex;gap:10px;justify-content:flex-end;}
+
+/* VIEW MODAL */
+.view-section{margin-bottom:18px;}
+.view-section-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;}
+.view-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.view-field{font-size:13px;}
+.view-field-lbl{font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;}
+.view-field-val{color:var(--text);font-weight:500;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;z-index:500;display:none;gap:8px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.toast.show{display:flex;}
+.toast.t-success{border-color:rgba(34,197,94,0.3);color:var(--success);}
+.toast.t-error{border-color:rgba(239,68,68,0.3);color:var(--danger);}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+</style>
+</head>
+<body>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="po">
+    <i data-lucide="clipboard-list" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:5px;"></i>Purchase Orders
+  </div>
+  <div class="tab" data-tab="grn">
+    <i data-lucide="package-check" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:5px;"></i>GRN
+  </div>
+  <div class="tab" data-tab="tracker">
+    <i data-lucide="bar-chart-2" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:5px;"></i>PO Status Tracker
+  </div>
+</div>
+
+<!-- ════════════ PURCHASE ORDERS TAB ════════════ -->
+<div id="tab-po">
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-lbl">Total POs</div>
+      <div class="kpi-val" id="kpoTotal" style="color:var(--accent);">0</div>
+      <div class="kpi-sub">All purchase orders</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Draft</div>
+      <div class="kpi-val" id="kpoDraft" style="color:var(--muted);">0</div>
+      <div class="kpi-sub">Pending approval</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Approved</div>
+      <div class="kpi-val" id="kpoApproved" style="color:var(--info);">0</div>
+      <div class="kpi-sub">Ready for delivery</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Total PO Value</div>
+      <div class="kpi-val" id="kpoValue" style="color:var(--success);">₹0</div>
+      <div class="kpi-sub">Across all POs</div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+      <input type="text" id="poSearch" placeholder="Search POs..." oninput="renderPOs()">
+    </div>
+    <div class="toolbar-right">
+      <select id="poStatusFilter" class="filter-sel" onchange="renderPOs()">
+        <option value="">All Status</option>
+        <option value="draft">Draft</option>
+        <option value="approved">Approved</option>
+        <option value="partial">Partial</option>
+        <option value="received">Received</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <select id="poSiteFilter" class="filter-sel" onchange="renderPOs()">
+        <option value="">All Sites</option>
+      </select>
+      <button class="btn btn-primary" onclick="openPOModal()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> New PO
+      </button>
+    </div>
+  </div>
+  <div class="tc">
+    <table>
+      <thead>
+        <tr>
+          <th>PO No</th>
+          <th>Vendor</th>
+          <th>Site</th>
+          <th>PO Date</th>
+          <th>Delivery Date</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="poBody"></tbody>
+    </table>
+    <div class="empty" id="poEmpty" style="display:none;">
+      <i data-lucide="clipboard-list" style="width:48px;height:48px;"></i>
+      <p>No purchase orders found.<br>Create your first PO to get started.</p>
+      <button class="btn btn-primary" onclick="openPOModal()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> New PO
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ GRN TAB ════════════ -->
+<div id="tab-grn" style="display:none;">
+  <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);">
+    <div class="kpi">
+      <div class="kpi-lbl">Total GRNs</div>
+      <div class="kpi-val" id="kgrnTotal" style="color:var(--accent);">0</div>
+      <div class="kpi-sub">Goods receipt notes</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Pending Bill</div>
+      <div class="kpi-val" id="kgrnPending" style="color:var(--accent);">0</div>
+      <div class="kpi-sub">No bill number yet</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Total Received Value</div>
+      <div class="kpi-val" id="kgrnValue" style="color:var(--success);">₹0</div>
+      <div class="kpi-sub">All GRN amounts</div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+      <input type="text" id="grnSearch" placeholder="Search GRNs..." oninput="renderGRNs()">
+    </div>
+    <div class="toolbar-right">
+      <select id="grnSiteFilter" class="filter-sel" onchange="renderGRNs()">
+        <option value="">All Sites</option>
+      </select>
+      <button class="btn btn-primary" onclick="openGRNModal()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> New GRN
+      </button>
+    </div>
+  </div>
+  <div class="tc">
+    <table>
+      <thead>
+        <tr>
+          <th>GRN No</th>
+          <th>PO No</th>
+          <th>Vendor</th>
+          <th>Site</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Bill No</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="grnBody"></tbody>
+    </table>
+    <div class="empty" id="grnEmpty" style="display:none;">
+      <i data-lucide="package-check" style="width:48px;height:48px;"></i>
+      <p>No GRNs found.<br>Create a GRN when goods are received against a PO.</p>
+      <button class="btn btn-primary" onclick="openGRNModal()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i> New GRN
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ TRACKER TAB ════════════ -->
+<div id="tab-tracker" style="display:none;">
+  <div class="toolbar" style="border-bottom:1px solid var(--border);">
+    <div style="font-size:13px;font-weight:600;color:var(--text);">PO Fulfilment Status</div>
+    <div class="toolbar-right">
+      <select id="trackerSiteFilter" class="filter-sel" onchange="renderTracker()">
+        <option value="">All Sites</option>
+      </select>
+    </div>
+  </div>
+  <div class="tracker-list" id="trackerList"></div>
+  <div class="empty" id="trackerEmpty" style="display:none;">
+    <i data-lucide="bar-chart-2" style="width:48px;height:48px;"></i>
+    <p>No approved POs to track.</p>
+  </div>
+</div>
+
+<!-- ════════════ PO MODAL ════════════ -->
+<div class="modal-overlay" id="poModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="poModalTitle">New Purchase Order</div>
+      <button class="close-btn" onclick="closePOModal()">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fPoId">
+      <div class="form-grid">
+        <div class="section-hdr">Order Details</div>
+        <div class="form-group">
+          <label>PO Number</label>
+          <input type="text" id="fPoNo" placeholder="Auto-generated" readonly style="color:var(--faint);">
+        </div>
+        <div class="form-group">
+          <label>PO Date *</label>
+          <input type="date" id="fPoDate">
+        </div>
+        <div class="form-group">
+          <label style="display:flex;justify-content:space-between;align-items:center;">
+            Vendor *
+            <button type="button" class="btn btn-outline" style="padding:2px 8px;font-size:10px;font-weight:700;border-radius:6px;" onclick="openQuickVendorModal()" title="Add new vendor without leaving this form">+ Quick Add</button>
+          </label>
+          <select id="fPoVendor" onchange="onVendorChange()">
+            <option value="">-- Select Vendor --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;justify-content:space-between;align-items:center;">
+            Site *
+            <button type="button" class="btn btn-outline" style="padding:2px 8px;font-size:10px;font-weight:700;border-radius:6px;" onclick="openQuickSiteModal()" title="Add new site without leaving this form">+ Quick Add</button>
+          </label>
+          <select id="fPoSite">
+            <option value="">-- Select Site --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Delivery Date</label>
+          <input type="date" id="fPoDelivery">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="fPoStatus">
+            <option value="draft">Draft</option>
+            <option value="approved">Approved</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Terms & Conditions</label>
+          <textarea id="fPoTerms" placeholder="Payment terms, delivery conditions..." rows="2"></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <input type="text" id="fPoNotes" placeholder="Internal notes">
+        </div>
+
+        <!-- LINE ITEMS -->
+        <div class="section-hdr">
+          Line Items
+          <button type="button" class="btn btn-outline btn-xs" onclick="addPOItem()" style="margin-left:auto;float:right;margin-top:-2px;">
+            <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Row
+          </button>
+        </div>
+      </div>
+
+      <div class="items-table-wrap">
+        <table class="items-tbl">
+          <thead>
+            <tr>
+              <th style="width:32%;">Description</th>
+              <th style="width:9%;">Qty</th>
+              <th style="width:8%;">Unit</th>
+              <th style="width:12%;">Rate (₹)</th>
+              <th style="width:12%;">Amount (₹)</th>
+              <th style="width:4%;"></th>
+            </tr>
+          </thead>
+          <tbody id="poItemsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- TOTALS -->
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+        <div class="totals-box" style="min-width:280px;">
+          <div class="total-row"><span>Subtotal</span><span id="poSubtotalDisp">₹0</span></div>
+          <div class="total-row" style="align-items:center;gap:8px;">
+            <span>GST</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <select id="fPoGstRate" onchange="recalcPO()" style="padding:4px 8px;font-size:12px;width:80px;">
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="12" selected>12%</option>
+                <option value="18">18%</option>
+                <option value="28">28%</option>
+              </select>
+              <span id="poGstDisp" style="color:var(--accent);">₹0</span>
+            </div>
+          </div>
+          <div class="total-row grand"><span>Total</span><span id="poTotalDisp" style="color:var(--success);">₹0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closePOModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePO()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i>
+        <span id="poSaveLabel">Save PO</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ GRN MODAL ════════════ -->
+<div class="modal-overlay" id="grnModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">New Goods Receipt Note</div>
+      <button class="close-btn" onclick="closeGRNModal()">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="section-hdr">GRN Details</div>
+        <div class="form-group">
+          <label>GRN Number</label>
+          <input type="text" id="fGrnNo" placeholder="Auto-generated" readonly style="color:var(--faint);">
+        </div>
+        <div class="form-group">
+          <label>GRN Date *</label>
+          <input type="date" id="fGrnDate">
+        </div>
+        <div class="form-group full">
+          <label>Select PO *</label>
+          <select id="fGrnPO" onchange="onGRNPOChange()">
+            <option value="">-- Select Approved PO --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Vendor</label>
+          <input type="text" id="fGrnVendor" readonly style="color:var(--faint);">
+        </div>
+        <div class="form-group">
+          <label>Site</label>
+          <input type="text" id="fGrnSite" readonly style="color:var(--faint);">
+        </div>
+        <div class="form-group">
+          <label>Bill No (Vendor Invoice)</label>
+          <input type="text" id="fGrnBillNo" placeholder="Vendor bill/invoice number">
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <input type="text" id="fGrnNotes" placeholder="Any remarks about this delivery">
+        </div>
+
+        <div class="section-hdr">Received Items</div>
+      </div>
+
+      <div class="items-table-wrap">
+        <table class="items-tbl">
+          <thead>
+            <tr>
+              <th style="width:22%;">Description</th>
+              <th style="width:18%;">Inventory Item</th>
+              <th style="width:8%;">Ordered</th>
+              <th style="width:8%;">Received</th>
+              <th style="width:8%;">Rejected</th>
+              <th style="width:6%;">Unit</th>
+              <th style="width:9%;">Rate (₹)</th>
+              <th style="width:11%;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="grnItemsBody"></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+        <div class="totals-box" style="min-width:240px;">
+          <div class="total-row grand"><span>Total Received Value</span><span id="grnTotalDisp" style="color:var(--success);">₹0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeGRNModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGRN()">
+        <i data-lucide="save" style="width:14px;height:14px;"></i> Save GRN
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ VIEW PO MODAL ════════════ -->
+<div class="modal-overlay" id="viewPOModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">Purchase Order Details</div>
+      <button class="close-btn" onclick="document.getElementById('viewPOModal').classList.remove('open')">
+        <i data-lucide="x" style="width:18px;height:18px;"></i>
+      </button>
+    </div>
+    <div class="modal-body" id="viewPOBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('viewPOModal').classList.remove('open')">Close</button>
+      <button class="btn btn-info" onclick="printCurrentViewDoc()"><i data-lucide="printer" style="width:14px;height:14px;"></i> Print / Save PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">
+      <i data-lucide="alert-triangle" style="width:20px;height:20px;color:var(--accent);"></i>
+    </div>
+    <div class="confirm-title" id="confirmTitle">Confirm Action</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-primary" id="confirmOkBtn" onclick="doConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ADD VENDOR MODAL -->
+<div class="modal-overlay" id="quickVendorModal" style="z-index:400;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="modal-title">⚡ Quick Add Vendor</div>
+      <button class="close-btn" onclick="closeQuickModal('quickVendorModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:14px;"><label>Vendor Name *</label><input type="text" id="qvName" placeholder="Company or person name"></div>
+      <div class="form-group" style="margin-bottom:14px;"><label>GSTIN</label><input type="text" id="qvGstin" placeholder="GSTIN (optional)" maxlength="15"></div>
+      <div class="form-group" style="margin-bottom:14px;"><label>Phone</label><input type="text" id="qvPhone" placeholder="Mobile number (optional)"></div>
+      <div class="form-group"><label>City</label><input type="text" id="qvCity" placeholder="City (optional)"></div>
+      <div style="margin-top:12px;font-size:11px;color:var(--faint);">Full details can be added later in the Vendors module.</div>
+    </div>
+    <div class="confirm-btns" style="padding:0 20px 20px;">
+      <button class="btn btn-outline" onclick="closeQuickModal('quickVendorModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQuickVendor()">💾 Save & Select</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ADD SITE MODAL -->
+<div class="modal-overlay" id="quickSiteModal" style="z-index:400;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="modal-title">🏗️ Quick Add Site</div>
+      <button class="close-btn" onclick="closeQuickModal('quickSiteModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:14px;"><label>Site / Project Name *</label><input type="text" id="qsName" placeholder="Project name"></div>
+      <div class="form-group"><label>Location</label><input type="text" id="qsLocation" placeholder="City / area (optional)"></div>
+      <div style="margin-top:12px;font-size:11px;color:var(--faint);">Contract value, dates and manager can be added later in the Sites module.</div>
+    </div>
+    <div class="confirm-btns" style="padding:0 20px 20px;">
+      <button class="btn btn-outline" onclick="closeQuickModal('quickSiteModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQuickSite()">💾 Save & Select</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---- compatibility shim: unwrap {success,data,error} from IPC so this page can use raw results ----
+  const erpc = new Proxy({}, { get(_,k){ const t=window.erp||{}; const v=t[k]; if(typeof v!=='function') return v;
+    return async (...a)=>{ const r = await v.apply(t,a);
+      if (r && typeof r==='object' && !Array.isArray(r) && 'success' in r){ if(!r.success) throw new Error(r.error||'Operation failed'); return r.data; }
+      return r; }; } });
+let allPOs = [];
+let allGRNs = [];
+let allVendors = [];
+let allSites = [];
+let confirmAction = null;
+let currentViewPO = null;
+// The view modal (#viewPOModal) is shared by viewPO() and viewGRN(); this tracks
+// which kind is currently shown so the footer's Print button prints the right
+// document instead of always printing the last-viewed PO.
+let currentViewKind = 'po';   // 'po' | 'grn'
+let currentViewGRNId = null;
+let lastPO = {};
+
+function printCurrentViewDoc() {
+  if (currentViewKind === 'grn') { printGRN(currentViewGRNId); return; }
+  printCurrentPO();
+}
+try { lastPO = JSON.parse(localStorage.getItem('po_lastUsed') || '{}'); } catch(_) {}
+function saveLastPO(d) {
+  lastPO = { vendor_id: d.vendor_id, site_id: d.site_id, gst_rate: d.gst_rate };
+  try { localStorage.setItem('po_lastUsed', JSON.stringify(lastPO)); } catch(_) {}
+}
+
+const fmt = n => isNaN(n) ? '0' : Math.round(n||0).toLocaleString('en-IN');
+function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── INIT ──────────────────────────────────────────────
+let allInvItems = [];
+
+async function init() {
+  try {
+    allVendors = await erpc.getVendors() || [];
+  } catch(e) { allVendors = []; }
+  try {
+    allSites = await erpc.getSites() || [];
+  } catch(e) { allSites = []; }
+  try {
+    allInvItems = await erpc.getInventoryItems({ status: 'active' }) || [];
+  } catch(e) { allInvItems = []; }
+  populateSiteFilters();
+  await loadPOs();
+  await loadGRNs();
+  lucide.createIcons();
+}
+
+async function loadPOs() {
+  try {
+    allPOs = await erpc.getPurchaseOrders({}) || [];
+  } catch(e) { allPOs = []; }
+  renderPOs();
+  renderTracker();
+}
+
+async function loadGRNs() {
+  try {
+    allGRNs = await erpc.getGRN({}) || [];
+  } catch(e) { allGRNs = []; }
+  renderGRNs();
+}
+
+function populateSiteFilters() {
+  const opts = allSites.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  ['poSiteFilter','grnSiteFilter','trackerSiteFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '<option value="">All Sites</option>' + opts;
+  });
+}
+
+// ── TABS ──────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    ['po','grn','tracker'].forEach(x => {
+      document.getElementById('tab-' + x).style.display = x === tab ? 'block' : 'none';
+    });
+    if (tab === 'tracker') renderTracker();
+    lucide.createIcons();
+  });
+});
+
+// ── PO RENDER ─────────────────────────────────────────
+function renderPOs() {
+  const search = document.getElementById('poSearch').value.toLowerCase().trim();
+  const status = document.getElementById('poStatusFilter').value;
+  const site   = document.getElementById('poSiteFilter').value;
+
+  const fil = allPOs.filter(p => {
+    const ms = !status || p.status === status;
+    const msi = !site   || String(p.site_id) === site;
+    const mq  = !search ||
+      (p.po_no||'').toLowerCase().includes(search) ||
+      (p.vendor_name||'').toLowerCase().includes(search) ||
+      (p.site_name||'').toLowerCase().includes(search);
+    return ms && msi && mq;
+  });
+
+  // KPI
+  document.getElementById('kpoTotal').textContent = allPOs.length;
+  document.getElementById('kpoDraft').textContent = allPOs.filter(p => p.status === 'draft').length;
+  document.getElementById('kpoApproved').textContent = allPOs.filter(p => p.status === 'approved').length;
+  const val = allPOs.reduce((s,p) => s + (p.total_amount||0), 0);
+  document.getElementById('kpoValue').textContent = '₹' + fmt(val);
+
+  const tbody = document.getElementById('poBody');
+  const empty = document.getElementById('poEmpty');
+
+  if (!fil.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    lucide.createIcons();
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = fil.map(p => `
+    <tr>
+      <td><span class="code-badge">${esc(p.po_no||'—')}</span></td>
+      <td><div class="name-bold">${esc(p.vendor_name||'—')}</div></td>
+      <td><div class="sub-text">${esc(p.site_name||'—')}</div></td>
+      <td>${esc(p.po_date||'—')}</td>
+      <td>${esc(p.delivery_date||'—')}</td>
+      <td class="amount" style="color:var(--success);">₹${fmt(p.total_amount)}</td>
+      <td><span class="badge b-${p.status||'draft'}">${statusLabel(p.status)}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-outline btn-sm" onclick="viewPO(${p.id})" title="View">
+            <i data-lucide="eye" style="width:13px;height:13px;"></i>
+          </button>
+          ${p.status === 'draft' ? `
+          <button class="btn btn-outline btn-sm" onclick="editPO(${p.id})" title="Edit">
+            <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="btn btn-info btn-sm" onclick="askApprovePO(${p.id},'${jsArg(p.po_no)}')" title="Approve">
+            <i data-lucide="check-circle" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="askRejectPO(${p.id},'${jsArg(p.po_no)}')" title="Reject">
+            <i data-lucide="x" style="width:13px;height:13px;"></i>
+          </button>` : ''}
+          ${p.status === 'approved' || p.status === 'partial' ? `
+          <button class="btn btn-success btn-sm" onclick="openGRNForPO(${p.id})" title="Create GRN">
+            <i data-lucide="package-check" style="width:13px;height:13px;"></i>
+          </button>` : ''}
+          ${p.status !== 'cancelled' && p.status !== 'received' ? `
+          <button class="btn btn-danger btn-sm" onclick="askCancelPO(${p.id},'${jsArg(p.po_no)}')" title="Cancel">
+            <i data-lucide="x-circle" style="width:13px;height:13px;"></i>
+          </button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  lucide.createIcons();
+}
+
+function statusLabel(s) {
+  return {draft:'Draft',approved:'Approved',partial:'Partial',received:'Received',cancelled:'Cancelled',rejected:'Rejected',pending:'Pending',billed:'Billed'}[s] || s || '—';
+}
+
+// ── GRN RENDER ────────────────────────────────────────
+function renderGRNs() {
+  const search = document.getElementById('grnSearch').value.toLowerCase().trim();
+  const site   = document.getElementById('grnSiteFilter').value;
+
+  const fil = allGRNs.filter(g => {
+    const msi = !site || String(g.site_id) === site;
+    const mq  = !search ||
+      (g.grn_no||'').toLowerCase().includes(search) ||
+      (g.vendor_name||'').toLowerCase().includes(search) ||
+      (g.po_no||'').toLowerCase().includes(search);
+    return msi && mq;
+  });
+
+  document.getElementById('kgrnTotal').textContent = allGRNs.length;
+  document.getElementById('kgrnPending').textContent = allGRNs.filter(g => !g.bill_no).length;
+  document.getElementById('kgrnValue').textContent = '₹' + fmt(allGRNs.reduce((s,g) => s+(g.total_amount||0), 0));
+
+  const tbody = document.getElementById('grnBody');
+  const empty = document.getElementById('grnEmpty');
+
+  if (!fil.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    lucide.createIcons();
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = fil.map(g => `
+    <tr>
+      <td><span class="code-badge">${esc(g.grn_no||'—')}</span></td>
+      <td><span class="mono">${esc(g.po_no||'—')}</span></td>
+      <td><div class="name-bold">${esc(g.vendor_name||'—')}</div></td>
+      <td><div class="sub-text">${esc(g.site_name||'—')}</div></td>
+      <td>${esc(g.grn_date||'—')}</td>
+      <td class="amount" style="color:var(--success);">₹${fmt(g.total_amount)}</td>
+      <td><span class="mono">${esc(g.bill_no||'—')}</span></td>
+      <td><span class="badge ${g.bill_no?'b-billed':'b-pending'}">${g.bill_no?'Billed':'Pending'}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-outline btn-sm" onclick="viewGRN(${g.id})" title="View">
+            <i data-lucide="eye" style="width:13px;height:13px;"></i>
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="printGRN(${g.id})" title="Print GRN">
+            <i data-lucide="printer" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  lucide.createIcons();
+}
+
+// ── TRACKER RENDER ────────────────────────────────────
+function renderTracker() {
+  const site = document.getElementById('trackerSiteFilter').value;
+  const pos = allPOs.filter(p =>
+    (p.status === 'approved' || p.status === 'partial' || p.status === 'received') &&
+    (!site || String(p.site_id) === site)
+  );
+
+  const list = document.getElementById('trackerList');
+  const empty = document.getElementById('trackerEmpty');
+
+  // trackerEmpty is a SIBLING of trackerList (not a child) so that rendering
+  // cards via list.innerHTML can never destroy it — doing so used to delete the
+  // node and make the next render throw on a null element.
+  if (!pos.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    lucide.createIcons();
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = pos.map(p => {
+    const relGRNs = allGRNs.filter(g => g.po_id === p.id);
+    const billedAmt = relGRNs.reduce((s,g) => s+(g.total_amount||0), 0);
+    const pct = p.total_amount > 0 ? Math.min(100, Math.round(billedAmt / p.total_amount * 100)) : 0;
+    const color = pct >= 100 ? 'var(--success)' : pct > 0 ? 'var(--accent)' : 'var(--faint)';
+    return `
+      <div class="tracker-card">
+        <div class="tracker-top">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="code-badge">${esc(p.po_no||'—')}</span>
+            <span class="name-bold">${esc(p.vendor_name||'—')}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="badge b-${p.status||'draft'}">${statusLabel(p.status)}</span>
+            <span style="font-size:13px;font-weight:700;color:${color};">${pct}% fulfilled</span>
+          </div>
+        </div>
+        <div class="tracker-meta">
+          <div class="tracker-meta-item">Site: <span>${esc(p.site_name||'—')}</span></div>
+          <div class="tracker-meta-item">PO Date: <span>${esc(p.po_date||'—')}</span></div>
+          <div class="tracker-meta-item">Delivery: <span>${esc(p.delivery_date||'—')}</span></div>
+          <div class="tracker-meta-item">PO Total: <span style="color:var(--text);">₹${fmt(p.total_amount)}</span></div>
+          <div class="tracker-meta-item">Received: <span style="color:var(--success);">₹${fmt(billedAmt)}</span></div>
+          <div class="tracker-meta-item">GRNs: <span>${relGRNs.length}</span></div>
+        </div>
+        <div class="tracker-progress">
+          <span class="prog-label">₹0</span>
+          <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${color};"></div></div>
+          <span class="prog-label">₹${fmt(p.total_amount)}</span>
+        </div>
+      </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+// ── PO MODAL ──────────────────────────────────────────
+function openPOModal(po = null) {
+  const modal = document.getElementById('poModal');
+  document.getElementById('fPoId').value = '';
+  document.getElementById('fPoNo').value = '';
+  document.getElementById('fPoDate').value = today();
+  document.getElementById('fPoDelivery').value = '';
+  document.getElementById('fPoTerms').value = '';
+  document.getElementById('fPoNotes').value = '';
+  document.getElementById('fPoGstRate').value = '12';
+  document.getElementById('fPoStatus').value = 'draft';
+  document.getElementById('poModalTitle').textContent = 'New Purchase Order';
+  document.getElementById('poSaveLabel').textContent = 'Save PO';
+
+  // Populate vendor dropdown
+  const vSel = document.getElementById('fPoVendor');
+  vSel.innerHTML = '<option value="">-- Select Vendor --</option>' +
+    allVendors.map(v => `<option value="${v.id}" data-name="${esc(v.name)}">${esc(v.name)}</option>`).join('');
+
+  // Populate site dropdown
+  const sSel = document.getElementById('fPoSite');
+  sSel.innerHTML = '<option value="">-- Select Site --</option>' +
+    allSites.map(s => `<option value="${s.id}" data-name="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+
+  if (po) {
+    document.getElementById('poModalTitle').textContent = 'Edit Purchase Order';
+    document.getElementById('poSaveLabel').textContent = 'Update PO';
+    document.getElementById('fPoId').value = po.id || '';
+    document.getElementById('fPoNo').value = po.po_no || '';
+    document.getElementById('fPoDate').value = po.po_date || today();
+    document.getElementById('fPoDelivery').value = po.delivery_date || '';
+    document.getElementById('fPoTerms').value = po.terms || '';
+    document.getElementById('fPoNotes').value = po.notes || '';
+    document.getElementById('fPoStatus').value = po.status || 'draft';
+    vSel.value = po.vendor_id || '';
+    sSel.value = po.site_id || '';
+    // Set GST rate
+    const gstAmt = po.gst_amount || 0;
+    const sub = po.subtotal || 0;
+    if (sub > 0) {
+      const rate = Math.round(gstAmt / sub * 100);
+      const opt = document.querySelector(`#fPoGstRate option[value="${rate}"]`);
+      if (opt) document.getElementById('fPoGstRate').value = rate;
+    }
+    // Render items
+    poItems = (po.items || []).map(i => ({...i}));
+    renderPOItems();
+  } else {
+    poItems = [];
+    addPOItem();
+    if (lastPO.vendor_id) vSel.value = lastPO.vendor_id;
+    if (lastPO.site_id) sSel.value = lastPO.site_id;
+    if (lastPO.gst_rate) document.getElementById('fPoGstRate').value = lastPO.gst_rate;
+  }
+
+  modal.classList.add('open');
+  lucide.createIcons();
+}
+
+function closePOModal() {
+  document.getElementById('poModal').classList.remove('open');
+}
+
+let poItems = [];
+
+function addPOItem() {
+  poItems.push({ description: '', qty: '', unit: 'nos', rate: '', amount: 0 });
+  renderPOItems();
+}
+
+function removePOItem(idx) {
+  poItems.splice(idx, 1);
+  renderPOItems();
+}
+
+function renderPOItems() {
+  const tbody = document.getElementById('poItemsBody');
+  tbody.innerHTML = poItems.map((item, i) => `
+    <tr>
+      <td><input type="text" value="${esc(item.description)}" placeholder="Item description" oninput="poItems[${i}].description=this.value"></td>
+      <td><input type="number" value="${item.qty||''}" placeholder="0" min="0" oninput="poItems[${i}].qty=+this.value;calcPOItem(${i})"></td>
+      <td>
+        <select onchange="poItems[${i}].unit=this.value" style="padding:7px 6px;font-size:12px;">
+          ${['nos','kg','ton','bag','sqft','sqm','rft','ltr','cum','mt','set'].map(u => `<option ${item.unit===u?'selected':''}>${u}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="number" value="${item.rate||''}" placeholder="0" min="0" oninput="poItems[${i}].rate=+this.value;calcPOItem(${i})"></td>
+      <td class="amt-cell">₹${fmt(item.amount)}</td>
+      <td>
+        <button type="button" class="btn btn-danger btn-xs" onclick="removePOItem(${i})" ${poItems.length===1?'disabled':''}>
+          <i data-lucide="minus" style="width:11px;height:11px;"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+  lucide.createIcons();
+  recalcPO();
+}
+
+function calcPOItem(i) {
+  poItems[i].amount = (poItems[i].qty || 0) * (poItems[i].rate || 0);
+  renderPOItems();
+}
+
+function recalcPO() {
+  const subtotal = poItems.reduce((s,it) => s + (it.amount||0), 0);
+  const gstRate = +document.getElementById('fPoGstRate').value || 0;
+  const gst = subtotal * gstRate / 100;
+  const total = subtotal + gst;
+  document.getElementById('poSubtotalDisp').textContent = '₹' + fmt(subtotal);
+  document.getElementById('poGstDisp').textContent = '₹' + fmt(gst);
+  document.getElementById('poTotalDisp').textContent = '₹' + fmt(total);
+}
+
+function onVendorChange() {}
+
+// ── QUICK ADD (create vendor/site without leaving the PO form) ──
+function closeQuickModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openQuickVendorModal() {
+  ['qvName','qvGstin','qvPhone','qvCity'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('quickVendorModal').classList.add('open');
+  setTimeout(() => document.getElementById('qvName').focus(), 100);
+}
+async function saveQuickVendor() {
+  const name = document.getElementById('qvName').value.trim();
+  if (!name) { showToast('Vendor name is required', 'error'); return; }
+  const gstin = document.getElementById('qvGstin').value.trim().toUpperCase();
+  if (gstin && gstin.length !== 15) { showToast('GSTIN must be 15 characters (or leave blank)', 'error'); return; }
+  try {
+    const newId = await erpc.saveVendor({
+      name, gstin: gstin || null,
+      phone: document.getElementById('qvPhone').value.trim() || null,
+      city:  document.getElementById('qvCity').value.trim() || null,
+      status: 'active'
+    });
+    allVendors = await erpc.getVendors() || [];
+    const vSel = document.getElementById('fPoVendor');
+    vSel.innerHTML = '<option value="">-- Select Vendor --</option>' +
+      allVendors.map(v => `<option value="${v.id}" data-name="${esc(v.name)}">${esc(v.name)}</option>`).join('');
+    vSel.value = newId;
+    closeQuickModal('quickVendorModal');
+    showToast('Vendor added', 'success');
+  } catch(e) { showToast('Error: ' + (e.message || e), 'error'); }
+}
+
+function openQuickSiteModal() {
+  ['qsName','qsLocation'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('quickSiteModal').classList.add('open');
+  setTimeout(() => document.getElementById('qsName').focus(), 100);
+}
+async function saveQuickSite() {
+  const name = document.getElementById('qsName').value.trim();
+  if (!name) { showToast('Site name is required', 'error'); return; }
+  try {
+    const newId = await erpc.saveSite({
+      name, location: document.getElementById('qsLocation').value.trim() || null,
+      start_date: new Date().toISOString().split('T')[0],
+      status: 'active'
+    });
+    allSites = await erpc.getSites() || [];
+    populateSiteFilters();
+    const sSel = document.getElementById('fPoSite');
+    sSel.innerHTML = '<option value="">-- Select Site --</option>' +
+      allSites.map(s => `<option value="${s.id}" data-name="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+    sSel.value = newId;
+    closeQuickModal('quickSiteModal');
+    showToast('Site added', 'success');
+  } catch(e) { showToast('Error: ' + (e.message || e), 'error'); }
+}
+
+async function savePO() {
+  const vendorEl = document.getElementById('fPoVendor');
+  const siteEl   = document.getElementById('fPoSite');
+  const date     = document.getElementById('fPoDate').value;
+  if (!vendorEl.value || !siteEl.value || !date) {
+    showToast('Vendor, Site and Date are required', 'error'); return;
+  }
+  const validItems = poItems.filter(it => it.description && it.qty > 0 && it.rate > 0);
+  if (!validItems.length) {
+    showToast('Add at least one valid line item', 'error'); return;
+  }
+
+  const subtotal = validItems.reduce((s,it) => s+(it.amount||0), 0);
+  const gstRate = +document.getElementById('fPoGstRate').value || 0;
+  const gst = subtotal * gstRate / 100;
+
+  const data = {
+    id: document.getElementById('fPoId').value || undefined,
+    vendor_id: +vendorEl.value,
+    vendor_name: vendorEl.options[vendorEl.selectedIndex].dataset.name,
+    site_id: +siteEl.value,
+    site_name: siteEl.options[siteEl.selectedIndex].dataset.name,
+    po_date: date,
+    delivery_date: document.getElementById('fPoDelivery').value || null,
+    items: validItems,
+    subtotal: Math.round(subtotal),
+    gst_amount: Math.round(gst),
+    total_amount: Math.round(subtotal + gst),
+    terms: document.getElementById('fPoTerms').value.trim(),
+    notes: document.getElementById('fPoNotes').value.trim(),
+    status: document.getElementById('fPoStatus').value,
+  };
+
+  try {
+    await erpc.savePurchaseOrder(data);
+    showToast(data.id ? 'PO updated successfully' : 'PO created successfully', 'success');
+    if (!data.id) saveLastPO({ vendor_id: data.vendor_id, site_id: data.site_id, gst_rate: document.getElementById('fPoGstRate').value });
+    closePOModal();
+    await loadPOs();
+  } catch(e) {
+    showToast('Error saving PO: ' + (e.message || e), 'error');
+  }
+}
+
+function editPO(id) {
+  const po = allPOs.find(p => p.id === id);
+  if (po) openPOModal(po);
+}
+
+async function viewPO(id) {
+  const po = allPOs.find(p => p.id === id);
+  if (!po) return;
+  currentViewKind = 'po';
+  currentViewPO = { ...po };
+  let items = po.items || [];
+  try {
+    const fetched = await erpc.getPOItems(id);
+    if (fetched && fetched.length) items = fetched;
+  } catch(e) {}
+  currentViewPO.items = items;
+
+  document.getElementById('viewPOBody').innerHTML = `
+    <div class="view-section">
+      <div class="view-section-title">Order Info</div>
+      <div class="view-grid">
+        <div class="view-field"><div class="view-field-lbl">PO Number</div><div class="view-field-val">${esc(po.po_no||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">Status</div><div class="view-field-val"><span class="badge b-${po.status||'draft'}">${statusLabel(po.status)}</span></div></div>
+        <div class="view-field"><div class="view-field-lbl">Vendor</div><div class="view-field-val">${esc(po.vendor_name||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">Site</div><div class="view-field-val">${esc(po.site_name||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">PO Date</div><div class="view-field-val">${esc(po.po_date||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">Delivery Date</div><div class="view-field-val">${esc(po.delivery_date||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">Terms</div><div class="view-field-val">${esc(po.terms||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">Notes</div><div class="view-field-val">${esc(po.notes||'—')}</div></div>
+      </div>
+    </div>
+    <div class="view-section">
+      <div class="view-section-title">Line Items</div>
+      <div class="items-table-wrap">
+        <table class="items-tbl">
+          <thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Rate</th><th style="text-align:right;padding-right:12px;">Amount</th></tr></thead>
+          <tbody>
+            ${items.map(it => `<tr>
+              <td>${esc(it.description)}</td>
+              <td>${esc(it.qty)}</td>
+              <td>${esc(it.unit)}</td>
+              <td>₹${fmt(it.rate)}</td>
+              <td class="amt-cell">₹${fmt(it.amount)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+        <div class="totals-box" style="min-width:260px;">
+          <div class="total-row"><span>Subtotal</span><span>₹${fmt(po.subtotal)}</span></div>
+          <div class="total-row"><span>GST</span><span style="color:var(--accent);">₹${fmt(po.gst_amount)}</span></div>
+          <div class="total-row grand"><span>Total</span><span style="color:var(--success);">₹${fmt(po.total_amount)}</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('viewPOModal').classList.add('open');
+  lucide.createIcons();
+}
+
+function printCurrentPO() {
+  const po = currentViewPO;
+  if (!po) return;
+  const items = po.items || [];
+  const rows = items.map(it => `
+    <tr>
+      <td>${esc(it.description||'')}</td>
+      <td style="text-align:center;">${esc(it.qty)}</td>
+      <td style="text-align:center;">${esc(it.unit||'LS')}</td>
+      <td style="text-align:right;">₹${fmt(it.rate)}</td>
+      <td style="text-align:right;">₹${fmt(it.amount)}</td>
+    </tr>`).join('');
+
+  const html = `<html><head><title>Purchase Order ${esc(po.po_no||'')}</title><style>
+    body{font-family:'Segoe UI',sans-serif;padding:32px;max-width:760px;margin:auto;color:#1e293b;}
+    .h{display:flex;justify-content:space-between;border-bottom:3px solid #10b981;padding-bottom:16px;margin-bottom:20px;}
+    .co{font-size:20px;font-weight:800;}.cs{font-size:11px;color:#64748b;margin-top:2px;}
+    .pt{font-size:24px;font-weight:900;}.pn{font-size:13px;color:#64748b;}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+    .mb{background:#f8fafc;border-radius:8px;padding:12px;}.ml{font-size:10px;text-transform:uppercase;color:#94a3b8;margin-bottom:3px;}.mv{font-size:13px;font-weight:600;}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    th{background:#f1f5f9;font-size:11px;padding:8px 12px;text-align:left;text-transform:uppercase;color:#475569;}
+    td{font-size:13px;padding:8px 12px;border-bottom:1px solid #f1f5f9;}
+    .tot{max-width:300px;margin-left:auto;}
+    .tr-r{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#475569;}
+    .tr-r.grand{font-weight:800;font-size:15px;color:#1e293b;border-top:2px solid #1e293b;padding-top:8px;margin-top:4px;}
+    .footer{margin-top:32px;border-top:1px solid #e2e8f0;padding-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+    .sig{text-align:center;}.sig-line{border-top:1px solid #94a3b8;margin-top:40px;padding-top:8px;font-size:11px;color:#64748b;}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#e0f2fe;color:#0369a1;}
+    @media print{body{padding:0;}.no-print{display:none;}}
+  </style></head><body>
+    <div class="h">
+      <div><div class="co">Purchase Order</div><div class="cs">Official Purchase Order — Do Not Alter</div></div>
+      <div style="text-align:right;">
+        <div class="pt">${esc(po.po_no||'—')}</div>
+        <div class="pn">Date: ${esc(po.po_date||'—')}</div>
+        <div style="margin-top:4px;"><span class="badge">${esc((po.status||'draft').toUpperCase())}</span></div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="mb"><div class="ml">Vendor</div><div class="mv">${esc(po.vendor_name||'—')}</div></div>
+      <div class="mb"><div class="ml">Site / Project</div><div class="mv">${esc(po.site_name||'—')}</div></div>
+      <div class="mb"><div class="ml">PO Date</div><div class="mv">${esc(po.po_date||'—')}</div></div>
+      <div class="mb"><div class="ml">Expected Delivery</div><div class="mv">${esc(po.delivery_date||'—')}</div></div>
+      ${po.terms ? `<div class="mb" style="grid-column:1/-1;"><div class="ml">Terms</div><div class="mv">${esc(po.terms)}</div></div>` : ''}
+    </div>
+    <table>
+      <thead><tr><th>Description</th><th style="text-align:center;">Qty</th><th style="text-align:center;">Unit</th><th style="text-align:right;">Rate (₹)</th><th style="text-align:right;">Amount (₹)</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="tot">
+      <div class="tr-r"><span>Subtotal</span><span>₹${fmt(po.subtotal)}</span></div>
+      <div class="tr-r"><span>GST</span><span style="color:#059669;">₹${fmt(po.gst_amount)}</span></div>
+      <div class="tr-r grand"><span>Total Amount</span><span style="color:#16a34a;">₹${fmt(po.total_amount)}</span></div>
+    </div>
+    ${po.notes ? `<div style="margin-top:16px;background:#f8fafc;border-radius:8px;padding:12px;font-size:13px;color:#475569;"><strong>Notes:</strong> ${esc(po.notes)}</div>` : ''}
+    <div class="footer">
+      <div class="sig"><div class="sig-line">Authorised Signatory</div></div>
+      <div class="sig"><div class="sig-line">Vendor Acknowledgement</div></div>
+    </div>
+    <script>window.print();<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=820,height=1000');
+  if (w) { w.document.write(html); w.document.close(); }
+}
+
+// A Goods Receipt Note is the document the site store-keeper signs when
+// material lands on site, and the copy accounts uses to 3-way match PO ↔ GRN ↔
+// vendor bill. It must be printable (and signable) — material receiving is the
+// single biggest leakage point on a construction site, so this carries an
+// explicit "received / inspected / site engineer" sign-off block.
+function printGRN(id) {
+  const g = (allGRNs || []).find(x => x.id === id);
+  if (!g) return;
+  const items = g.items || [];
+  const rows = items.map(it => `
+    <tr>
+      <td>${esc(it.description||'')}</td>
+      <td style="text-align:center;">${esc(it.ordered_qty != null ? it.ordered_qty : '—')}</td>
+      <td style="text-align:center;color:#16a34a;font-weight:600;">${esc(it.received_qty)}</td>
+      <td style="text-align:center;color:#dc2626;">${esc(it.rejected_qty||0)}</td>
+      <td style="text-align:center;">${esc(it.unit||'')}</td>
+      <td style="text-align:right;">₹${fmt(it.rate)}</td>
+      <td style="text-align:right;">₹${fmt(it.amount)}</td>
+    </tr>`).join('');
+
+  const html = `<html><head><title>Goods Receipt Note ${esc(g.grn_no||'')}</title><style>
+    body{font-family:'Segoe UI',sans-serif;padding:32px;max-width:760px;margin:auto;color:#1e293b;}
+    .h{display:flex;justify-content:space-between;border-bottom:3px solid #10b981;padding-bottom:16px;margin-bottom:20px;}
+    .co{font-size:20px;font-weight:800;}.cs{font-size:11px;color:#64748b;margin-top:2px;}
+    .pt{font-size:24px;font-weight:900;}.pn{font-size:13px;color:#64748b;}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+    .mb{background:#f8fafc;border-radius:8px;padding:12px;}.ml{font-size:10px;text-transform:uppercase;color:#94a3b8;margin-bottom:3px;}.mv{font-size:13px;font-weight:600;}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    th{background:#f1f5f9;font-size:11px;padding:8px 12px;text-align:left;text-transform:uppercase;color:#475569;}
+    td{font-size:13px;padding:8px 12px;border-bottom:1px solid #f1f5f9;}
+    .tot{max-width:300px;margin-left:auto;}
+    .tr-r{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#475569;}
+    .tr-r.grand{font-weight:800;font-size:15px;color:#1e293b;border-top:2px solid #1e293b;padding-top:8px;margin-top:4px;}
+    .footer{margin-top:40px;border-top:1px solid #e2e8f0;padding-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;}
+    .sig{text-align:center;}.sig-line{border-top:1px solid #94a3b8;margin-top:48px;padding-top:8px;font-size:11px;color:#64748b;}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#dcfce7;color:#15803d;}
+    @media print{body{padding:0;}.no-print{display:none;}}
+  </style></head><body>
+    <div class="h">
+      <div><div class="co">Goods Receipt Note</div><div class="cs">Material Inward — Inspection &amp; Receiving Record</div></div>
+      <div style="text-align:right;">
+        <div class="pt">${esc(g.grn_no||'—')}</div>
+        <div class="pn">Date: ${esc(g.grn_date||'—')}</div>
+        <div style="margin-top:4px;"><span class="badge">${g.bill_no ? 'BILLED' : 'PENDING BILL'}</span></div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="mb"><div class="ml">Vendor / Supplier</div><div class="mv">${esc(g.vendor_name||'—')}</div></div>
+      <div class="mb"><div class="ml">Site / Project</div><div class="mv">${esc(g.site_name||'—')}</div></div>
+      <div class="mb"><div class="ml">Against PO</div><div class="mv">${esc(g.po_no||'— (direct receipt)')}</div></div>
+      <div class="mb"><div class="ml">Vendor Bill No</div><div class="mv">${esc(g.bill_no||'— (not yet billed)')}</div></div>
+      ${g.notes ? `<div class="mb" style="grid-column:1/-1;"><div class="ml">Notes</div><div class="mv">${esc(g.notes)}</div></div>` : ''}
+    </div>
+    <table>
+      <thead><tr><th>Description</th><th style="text-align:center;">Ordered</th><th style="text-align:center;">Received</th><th style="text-align:center;">Rejected</th><th style="text-align:center;">Unit</th><th style="text-align:right;">Rate (₹)</th><th style="text-align:right;">Amount (₹)</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="tot">
+      <div class="tr-r grand"><span>Total Received Value</span><span style="color:#16a34a;">₹${fmt(g.total_amount)}</span></div>
+    </div>
+    <div class="footer">
+      <div class="sig"><div class="sig-line">Received By (Store In-charge)</div></div>
+      <div class="sig"><div class="sig-line">Inspected / Quality Checked</div></div>
+      <div class="sig"><div class="sig-line">Site Engineer</div></div>
+    </div>
+    <script>window.print();<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=820,height=1000');
+  if (w) { w.document.write(html); w.document.close(); }
+}
+
+function askApprovePO(id, poNo) {
+  confirmAction = async () => {
+    try {
+      await erpc.approvePO(id);
+      showToast(`PO ${poNo} approved`, 'success');
+      await loadPOs();
+    } catch(e) { showToast('Error approving PO: ' + (e.message||e), 'error'); }
+  };
+  document.getElementById('confirmTitle').textContent = 'Approve Purchase Order';
+  document.getElementById('confirmMsg').textContent = `Approve PO ${poNo}? This will allow GRNs to be created against it.`;
+  document.getElementById('confirmOkBtn').className = 'btn btn-info';
+  document.getElementById('confirmOkBtn').innerHTML = '<i data-lucide="check-circle" style="width:14px;height:14px;"></i> Approve';
+  document.getElementById('confirmOverlay').classList.add('open');
+  lucide.createIcons();
+}
+
+function askRejectPO(id, poNo) {
+  confirmAction = async () => {
+    try {
+      await erpc.rejectPO({ id, reason: 'Rejected from PO list' });
+      showToast(`PO ${poNo} rejected`, 'success');
+      await loadPOs();
+    } catch(e) { showToast('Error rejecting PO: ' + (e.message||e), 'error'); }
+  };
+  document.getElementById('confirmTitle').textContent = 'Reject Purchase Order';
+  document.getElementById('confirmMsg').textContent = `Reject PO ${poNo}? It will be marked rejected and cannot be used for GRNs.`;
+  document.getElementById('confirmOkBtn').className = 'btn btn-danger';
+  document.getElementById('confirmOkBtn').innerHTML = '<i data-lucide="x" style="width:14px;height:14px;"></i> Reject';
+  document.getElementById('confirmOverlay').classList.add('open');
+  lucide.createIcons();
+}
+
+function askCancelPO(id, poNo) {
+  confirmAction = async () => {
+    try {
+      const po = allPOs.find(p => p.id === id);
+      if (po) {
+        await erpc.savePurchaseOrder({...po, status:'cancelled'});
+        showToast(`PO ${poNo} cancelled`, 'success');
+        await loadPOs();
+      }
+    } catch(e) { showToast('Error cancelling PO: ' + (e.message||e), 'error'); }
+  };
+  document.getElementById('confirmTitle').textContent = 'Cancel Purchase Order';
+  document.getElementById('confirmMsg').textContent = `Cancel PO ${poNo}? This cannot be undone.`;
+  document.getElementById('confirmOkBtn').className = 'btn btn-danger';
+  document.getElementById('confirmOkBtn').innerHTML = '<i data-lucide="x-circle" style="width:14px;height:14px;"></i> Cancel PO';
+  document.getElementById('confirmOverlay').classList.add('open');
+  lucide.createIcons();
+}
+
+function closeConfirm() {
+  confirmAction = null;
+  document.getElementById('confirmOverlay').classList.remove('open');
+}
+
+async function doConfirm() {
+  if (confirmAction) await confirmAction();
+  closeConfirm();
+}
+
+// ── GRN MODAL ─────────────────────────────────────────
+let grnItems = [];
+
+function openGRNModal(prePoId = null) {
+  grnItems = [];
+  document.getElementById('fGrnNo').value = '';
+  document.getElementById('fGrnDate').value = today();
+  document.getElementById('fGrnBillNo').value = '';
+  document.getElementById('fGrnNotes').value = '';
+  document.getElementById('fGrnVendor').value = '';
+  document.getElementById('fGrnSite').value = '';
+  document.getElementById('grnItemsBody').innerHTML = '';
+  document.getElementById('grnTotalDisp').textContent = '₹0';
+
+  const pSel = document.getElementById('fGrnPO');
+  const approvedPOs = allPOs.filter(p => p.status === 'approved' || p.status === 'partial');
+  pSel.innerHTML = '<option value="">-- Select Approved PO --</option>' +
+    approvedPOs.map(p => `<option value="${p.id}" ${prePoId===p.id?'selected':''}>${esc(p.po_no)} — ${esc(p.vendor_name)}</option>`).join('');
+
+  if (prePoId) {
+    pSel.value = prePoId;
+    onGRNPOChange();
+  }
+
+  document.getElementById('grnModal').classList.add('open');
+  lucide.createIcons();
+}
+
+function openGRNForPO(poId) {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab')[1].classList.add('active');
+  ['po','grn','tracker'].forEach(x => {
+    document.getElementById('tab-' + x).style.display = x === 'grn' ? 'block' : 'none';
+  });
+  openGRNModal(poId);
+}
+
+function closeGRNModal() {
+  document.getElementById('grnModal').classList.remove('open');
+}
+
+async function onGRNPOChange() {
+  const poId = +document.getElementById('fGrnPO').value;
+  if (!poId) { grnItems = []; renderGRNItems(); return; }
+
+  const po = allPOs.find(p => p.id === poId);
+  if (!po) return;
+
+  document.getElementById('fGrnVendor').value = po.vendor_name || '';
+  document.getElementById('fGrnSite').value = po.site_name || '';
+
+  let items = po.items || [];
+  try {
+    const fetched = await erpc.getPOItems(poId);
+    if (fetched && fetched.length) items = fetched;
+  } catch(e) {}
+
+  grnItems = items.map(it => {
+    // Best-effort auto-link to an inventory item by exact (case-insensitive) name.
+    const match = allInvItems.find(m => (m.name||'').toLowerCase() === (it.description||'').toLowerCase());
+    return {
+      description: it.description,
+      item_id: match ? match.id : null,
+      ordered_qty: it.qty || 0,
+      received_qty: it.qty || 0,
+      rejected_qty: 0,
+      unit: it.unit || 'nos',
+      rate: it.rate || 0,
+      amount: (it.qty || 0) * (it.rate || 0),
+    };
+  });
+  renderGRNItems();
+}
+
+function renderGRNItems() {
+  const tbody = document.getElementById('grnItemsBody');
+  const itemOpts = (sel) => '<option value="">— None —</option>' +
+    allInvItems.map(m => `<option value="${m.id}" ${sel == m.id ? 'selected' : ''}>${esc(m.name)} (${esc(m.item_code)})</option>`).join('');
+  tbody.innerHTML = grnItems.map((item, i) => `
+    <tr>
+      <td><input type="text" value="${esc(item.description)}" oninput="grnItems[${i}].description=this.value" style="font-size:12px;"></td>
+      <td><select onchange="grnItems[${i}].item_id=this.value||null" style="font-size:12px;" title="Link to stock — receiving posts a stock-IN">${itemOpts(item.item_id)}</select></td>
+      <td style="text-align:center;font-size:12px;color:var(--faint);padding:8px 6px;">${item.ordered_qty}</td>
+      <td><input type="number" value="${item.received_qty}" min="0" oninput="grnItems[${i}].received_qty=+this.value;calcGRNItem(${i})"></td>
+      <td><input type="number" value="${item.rejected_qty}" min="0" oninput="grnItems[${i}].rejected_qty=+this.value"></td>
+      <td style="font-size:12px;color:var(--faint);padding:8px 6px;">${esc(item.unit)}</td>
+      <td><input type="number" value="${item.rate}" min="0" oninput="grnItems[${i}].rate=+this.value;calcGRNItem(${i})"></td>
+      <td class="amt-cell">₹${fmt(item.amount)}</td>
+    </tr>
+  `).join('');
+  calcGRNTotal();
+  lucide.createIcons();
+}
+
+function calcGRNItem(i) {
+  grnItems[i].amount = (grnItems[i].received_qty || 0) * (grnItems[i].rate || 0);
+  renderGRNItems();
+}
+
+function calcGRNTotal() {
+  const total = grnItems.reduce((s,it) => s + (it.amount||0), 0);
+  document.getElementById('grnTotalDisp').textContent = '₹' + fmt(total);
+}
+
+async function saveGRN() {
+  const poId = +document.getElementById('fGrnPO').value;
+  const date  = document.getElementById('fGrnDate').value;
+  if (!poId || !date) {
+    showToast('Please select a PO and date', 'error'); return;
+  }
+  const po = allPOs.find(p => p.id === poId);
+
+  const data = {
+    po_id: poId,
+    vendor_id: po ? po.vendor_id : null,
+    vendor_name: document.getElementById('fGrnVendor').value,
+    site_id: po ? po.site_id : null,
+    site_name: document.getElementById('fGrnSite').value,
+    grn_date: date,
+    bill_no: document.getElementById('fGrnBillNo').value.trim() || null,
+    total_amount: grnItems.reduce((s,it) => s+(it.amount||0), 0),
+    notes: document.getElementById('fGrnNotes').value.trim(),
+    items: grnItems,
+  };
+
+  try {
+    await erpc.saveGRN(data);
+    showToast('GRN saved successfully', 'success');
+    closeGRNModal();
+    await loadGRNs();
+    await loadPOs();
+    renderTracker();
+  } catch(e) {
+    showToast('Error saving GRN: ' + (e.message||e), 'error');
+  }
+}
+
+function viewGRN(id) {
+  const g = allGRNs.find(x => x.id === id);
+  if (!g) return;
+  currentViewKind = 'grn';
+  currentViewGRNId = id;
+  const items = g.items || [];
+  document.getElementById('viewPOBody').innerHTML = `
+    <div class="view-section">
+      <div class="view-section-title">GRN Info</div>
+      <div class="view-grid">
+        <div class="view-field"><div class="view-field-lbl">GRN Number</div><div class="view-field-val">${esc(g.grn_no||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">PO Number</div><div class="view-field-val">${esc(g.po_no||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">Vendor</div><div class="view-field-val">${esc(g.vendor_name||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">Site</div><div class="view-field-val">${esc(g.site_name||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">GRN Date</div><div class="view-field-val">${esc(g.grn_date||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">Bill No</div><div class="view-field-val">${esc(g.bill_no||'—')}</div></div>
+        <div class="view-field"><div class="view-field-lbl">Notes</div><div class="view-field-val">${esc(g.notes||'—')}</div></div>
+      </div>
+    </div>
+    <div class="view-section">
+      <div class="view-section-title">Items Received</div>
+      <div class="items-table-wrap">
+        <table class="items-tbl">
+          <thead><tr><th>Description</th><th>Ordered</th><th>Received</th><th>Rejected</th><th>Unit</th><th>Rate</th><th style="text-align:right;padding-right:12px;">Amount</th></tr></thead>
+          <tbody>
+            ${items.map(it => `<tr>
+              <td>${esc(it.description)}</td>
+              <td>${esc(it.ordered_qty)}</td>
+              <td style="color:var(--success);font-weight:600;">${esc(it.received_qty)}</td>
+              <td style="color:var(--danger);">${esc(it.rejected_qty||0)}</td>
+              <td>${esc(it.unit)}</td>
+              <td>₹${fmt(it.rate)}</td>
+              <td class="amt-cell">₹${fmt(it.amount)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+        <div class="totals-box" style="min-width:240px;">
+          <div class="total-row grand"><span>Total</span><span style="color:var(--success);">₹${fmt(g.total_amount)}</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('viewPOModal').classList.add('open');
+  lucide.createIcons();
+}
+
+// ── UTILS ─────────────────────────────────────────────
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.className = 'toast show t-' + type;
+  el.innerHTML = `<i data-lucide="${type==='success'?'check-circle-2':'alert-circle'}" style="width:16px;height:16px;flex-shrink:0;"></i>${esc(msg)}`;
+  lucide.createIcons();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 3500);
+}
+
+// Backdrop close
+['poModal','grnModal','viewPOModal','confirmOverlay'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', e => {
+    if (e.target === el) {
+      if (id === 'confirmOverlay') closeConfirm();
+      else el.classList.remove('open');
+    }
+  });
+});
+
+window.refreshPage = function(){ init(); };  // live auto-refresh from the app shell
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+// Shows a visible error instead of a dead page if the bridge never appears.
+(function boot(tries) {
+  if (window.erp) { init(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+
+<!-- Management Entry Quick-Widget -->
+<script src="vendor/mgmt-quick-entry.js"></script>
+<script>
+// Pre-fill widget from the currently open PO form context
+window._mgmtCtx = function() {
+  const vendorSel = document.getElementById('fPoVendor');
+  const vendorName = vendorSel && vendorSel.options[vendorSel.selectedIndex] ? vendorSel.options[vendorSel.selectedIndex].text : '';
+  return { party: vendorName || '', amount: '', ref_no: document.getElementById('fPoNo') ? document.getElementById('fPoNo').value : '' };
+};
+</script>
+</body>
+</html>

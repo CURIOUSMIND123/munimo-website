@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-data.js"></script>
+<script src="demo-backend.js"></script>
+<script src="erp-web.js"></script>
+<script src="table-sort.js"></script>
+<script src="dialog-fix.js"></script>
+<meta charset="UTF-8">
+<title>Vendor Bills & Expenses</title>
+<script src="vendor/lucide.min.js"></script>
+<script>window.lucide=window.lucide||{createIcons:function(){}};</script>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243147;--surface3:#2d3f57;
+  --border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--faint:#475569;
+  --accent:#10b981;--accent2:#059669;--success:#22c55e;--danger:#ef4444;
+  --info:#3b82f6;--purple:#a855f7;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+.tabs{display:flex;gap:4px;padding:18px 24px 0;border-bottom:1px solid var(--border);background:var(--surface);}
+.tab{padding:10px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px 24px;border-bottom:1px solid var(--border);}
+.kpi-mini{background:var(--surface2);border-radius:10px;padding:14px;border:1px solid var(--border);}
+.kpi-mini-lbl{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.3px;}
+.kpi-mini-val{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;}
+.kpi-mini-sub{font-size:11px;color:var(--faint);margin-top:2px;}
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;gap:10px;flex-wrap:wrap;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 14px;flex:1;max-width:280px;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%;}
+.search-box input::placeholder{color:var(--faint);}
+.toolbar-right{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+.btn-primary:hover{opacity:0.88;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+.btn-ocr{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;}
+.btn-ocr:hover{opacity:0.88;}
+.btn-success{background:rgba(34,197,94,0.12);color:var(--success);border:1px solid rgba(34,197,94,0.2);}
+.btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+/* TABLE */
+.tc{padding:0 24px 24px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+tbody td{font-size:13px;color:var(--muted);padding:11px 12px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+tbody tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+.name-bold{font-weight:600;color:var(--text);}
+.sub-text{font-size:11px;color:var(--faint);}
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;}
+.b-paid{background:rgba(34,197,94,0.12);color:var(--success);}
+.b-pending{background:rgba(16,185,129,0.12);color:var(--accent);}
+.b-approved{background:rgba(59,130,246,0.12);color:var(--info);}
+.b-rejected{background:rgba(239,68,68,0.12);color:var(--danger);}
+.b-partial{background:rgba(168,85,247,0.12);color:var(--purple);}
+.b-overdue{background:rgba(239,68,68,0.12);color:var(--danger);}
+.b-draft{background:rgba(148,163,184,0.1);color:var(--muted);}
+.b-ocr{background:rgba(124,58,237,0.15);color:#a78bfa;}
+.amount{font-weight:700;font-variant-numeric:tabular-nums;}
+.dr{color:var(--danger);}
+.action-btns{display:flex;gap:5px;}
+/* CAT COLORS */
+.cat-material{background:rgba(16,185,129,0.1);color:var(--accent);}
+.cat-labour{background:rgba(59,130,246,0.1);color:var(--info);}
+.cat-equipment{background:rgba(34,197,94,0.1);color:var(--success);}
+.cat-transport{background:rgba(168,85,247,0.1);color:var(--purple);}
+.cat-admin{background:rgba(148,163,184,0.1);color:var(--muted);}
+.cat-utility{background:rgba(239,68,68,0.1);color:var(--danger);}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:760px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.6);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:6px;}
+.close-btn:hover{color:var(--text);}
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text);outline:none;transition:border-color 0.2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:60px;}
+.sec-div{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:0.5px;text-transform:uppercase;padding:10px 0 4px;border-bottom:1px solid rgba(16,185,129,0.15);grid-column:1/-1;margin-top:4px;}
+/* ITEMS TABLE */
+.items-table{width:100%;border-collapse:collapse;margin-top:6px;}
+.items-table th{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.5px;padding:7px 8px;border-bottom:1px solid var(--border);text-align:left;}
+.items-table td{padding:5px 4px;}
+.items-table td input{padding:7px 8px;font-size:12px;}
+.add-item-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px dashed rgba(16,185,129,0.3);background:rgba(16,185,129,0.04);color:var(--accent);margin-top:8px;transition:all 0.15s;}
+.add-item-btn:hover{background:rgba(16,185,129,0.1);}
+/* OCR AREA */
+.ocr-zone{
+  border:2px dashed rgba(124,58,237,0.4);border-radius:12px;
+  padding:28px;text-align:center;cursor:pointer;
+  background:rgba(124,58,237,0.04);transition:all 0.2s;
+  position:relative;
+}
+.ocr-zone:hover{border-color:#7c3aed;background:rgba(124,58,237,0.08);}
+.ocr-zone.dragover{border-color:#7c3aed;background:rgba(124,58,237,0.12);}
+.ocr-icon{font-size:40px;margin-bottom:10px;}
+.ocr-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.ocr-sub{font-size:12px;color:var(--muted);}
+.ocr-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+/* OCR PROGRESS */
+.ocr-progress{display:none;margin-top:14px;}
+.ocr-progress.show{display:block;}
+.prog-bar-wrap{background:var(--surface3);border-radius:20px;height:8px;overflow:hidden;margin-bottom:8px;}
+.prog-bar{height:100%;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:20px;transition:width 0.3s;width:0%;}
+.prog-text{font-size:12px;color:var(--muted);text-align:center;}
+/* OCR RESULT */
+.ocr-result{background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:10px;padding:14px;margin-top:14px;display:none;}
+.ocr-result.show{display:block;}
+.ocr-result-title{font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ocr-field{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;}
+.ocr-field:last-child{border-bottom:none;}
+.ocr-field-label{color:var(--muted);font-weight:600;}
+.ocr-field-val{color:var(--text);font-weight:600;}
+.ocr-apply-btn{margin-top:10px;width:100%;background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);color:#a78bfa;font-weight:700;font-size:13px;padding:9px;border-radius:9px;cursor:pointer;transition:all 0.15s;}
+.ocr-apply-btn:hover{background:rgba(124,58,237,0.25);}
+/* PREVIEW */
+.img-preview{max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);margin-top:10px;display:none;}
+.img-preview.show{display:block;}
+/* TAX ROW */
+.tax-summary{background:var(--surface2);border-radius:10px;padding:14px;margin-top:10px;}
+.tax-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;color:var(--muted);}
+.tax-row.total{font-weight:800;font-size:14px;color:var(--text);border-top:1px solid var(--border);padding-top:10px;margin-top:4px;}
+/* PETTY CASH */
+.petty-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px 24px;border-bottom:1px solid var(--border);}
+.petty-card{background:var(--surface2);border-radius:10px;padding:16px;border:1px solid var(--border);}
+.petty-card-lbl{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;}
+.petty-card-val{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+/* EMPTY */
+.empty{text-align:center;padding:48px 24px;color:var(--faint);}
+.empty .eicon{font-size:48px;margin-bottom:10px;}
+.empty p{font-size:13px;color:var(--muted);margin-bottom:14px;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--faint);border-radius:10px;}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('bills')">📦 Vendor Bills</div>
+  <div class="tab" onclick="switchTab('po')">📋 Purchase Orders</div>
+  <div class="tab" onclick="switchTab('pending')">⏳ Pending Payments</div>
+  <div class="tab" onclick="switchTab('debitnotes')">↪️ Debit Notes</div>
+</div>
+
+<!-- ════════ VENDOR BILLS ════════ -->
+<div id="tab-bills">
+  <div class="kpi-row">
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Total Bills This Month</div><div class="kpi-mini-val dr" id="kTotalBills">₹0</div><div class="kpi-mini-sub">All vendor bills</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Paid</div><div class="kpi-mini-val" style="color:var(--success);" id="kBillsPaid">₹0</div><div class="kpi-mini-sub">Payments made</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Pending Payment</div><div class="kpi-mini-val" style="color:var(--accent);" id="kBillsPending">₹0</div><div class="kpi-mini-sub">Yet to pay</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Overdue Bills</div><div class="kpi-mini-val dr" id="kBillsOverdue">₹0</div><div class="kpi-mini-sub">Past due date</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+      <input type="text" placeholder="Search bills..." id="billSearch" oninput="renderBills()">
+    </div>
+    <div class="toolbar-right">
+      <select id="billStatus" onchange="renderBills()" style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:13px;color:var(--muted);outline:none;">
+        <option value="">All Status</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="paid">Paid</option>
+        <option value="partial">Partial</option>
+        <option value="overdue">Overdue</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <button class="btn btn-outline" onclick="exportBillsCSV()"><i data-lucide="download" style="width:14px;height:14px;"></i> Export</button>
+      <button class="btn btn-primary" onclick="openBillModal()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add Bill</button>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Bill No</th><th>PO No</th><th>Vendor</th><th>Category</th><th>Site</th><th>Date</th><th>Due</th>
+      <th>Subtotal</th><th>GST</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th>
+    </tr></thead>
+    <tbody id="billBody"></tbody></table>
+    <div class="empty" id="billEmpty" style="display:none;">
+      <div class="eicon">📦</div>
+      <p>No vendor bills yet. Add a bill to get started.</p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn btn-primary" onclick="openBillModal()">+ Add Manually</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PURCHASE ORDERS ════════ -->
+<div id="tab-po" style="display:none;">
+  <div class="kpi-row">
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Total POs</div><div class="kpi-mini-val" style="color:var(--info);" id="kPoTotal">0</div><div class="kpi-mini-sub">All purchase orders</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-lbl">PO Value</div><div class="kpi-mini-val dr" id="kPoValue">₹0</div><div class="kpi-mini-sub">Total order value</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Open / Draft</div><div class="kpi-mini-val" style="color:var(--accent);" id="kPoOpen">0</div><div class="kpi-mini-sub">Pending fulfilment</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Approved</div><div class="kpi-mini-val" style="color:var(--success);" id="kPoApproved">0</div><div class="kpi-mini-sub">Approved orders</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+      <input type="text" placeholder="Search POs..." id="poSearch" oninput="renderPOs()">
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-outline" onclick="exportPOsCSV()"><i data-lucide="download" style="width:14px;height:14px;"></i> Export</button>
+      <button class="btn btn-primary" onclick="openPOModal()"><i data-lucide="plus" style="width:14px;height:14px;"></i> New PO</button>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>PO No</th><th>Vendor</th><th>Site</th><th>PO Date</th><th>Delivery Date</th>
+      <th>Subtotal</th><th>GST</th><th>Total</th><th>Status</th><th>Actions</th>
+    </tr></thead>
+    <tbody id="poBody"></tbody></table>
+    <div class="empty" id="poEmpty" style="display:none;">
+      <div class="eicon">📋</div>
+      <p>No purchase orders yet.</p>
+      <button class="btn btn-primary" onclick="openPOModal()">+ Create PO</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ OCR SCANNER ════════ -->
+<div id="tab-ocr" style="display:none;">
+  <div style="padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1000px;">
+
+    <!-- LEFT: Upload & Scan -->
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">📷 Scan or Upload Vendor Invoice</div>
+      <div class="ocr-zone" id="ocrZone"
+        ondragover="event.preventDefault();this.classList.add('dragover')"
+        ondragleave="this.classList.remove('dragover')"
+        ondrop="handleDrop(event)">
+        <input type="file" class="ocr-input" id="ocrFileInput" accept="image/*,application/pdf" onchange="handleOCRFile(this.files[0])">
+        <div class="ocr-icon">📄</div>
+        <div class="ocr-title">Drop invoice image here</div>
+        <div class="ocr-sub">or click to browse · JPG, PNG, PDF supported</div>
+      </div>
+
+      <img id="imgPreview" class="img-preview" alt="Invoice preview">
+
+      <div class="ocr-progress" id="ocrProgress">
+        <div class="prog-bar-wrap"><div class="prog-bar" id="progBar"></div></div>
+        <div class="prog-text" id="progText">Initialising OCR engine...</div>
+      </div>
+
+      <div class="ocr-result" id="ocrResult">
+        <div class="ocr-result-title">🤖 OCR Extracted Data — Review & Confirm</div>
+        <div class="ocr-field"><span class="ocr-field-label">Vendor Name</span><span class="ocr-field-val" id="ocr-vendor">—</span></div>
+        <div class="ocr-field"><span class="ocr-field-label">Bill / Invoice No.</span><span class="ocr-field-val" id="ocr-billno">—</span></div>
+        <div class="ocr-field"><span class="ocr-field-label">Date</span><span class="ocr-field-val" id="ocr-date">—</span></div>
+        <div class="ocr-field"><span class="ocr-field-label">Amount (Subtotal)</span><span class="ocr-field-val" id="ocr-amount">—</span></div>
+        <div class="ocr-field"><span class="ocr-field-label">GST Amount</span><span class="ocr-field-val" id="ocr-gst">—</span></div>
+        <div class="ocr-field"><span class="ocr-field-label">Total Amount</span><span class="ocr-field-val" id="ocr-total" style="color:var(--success);font-size:14px;">—</span></div>
+        <div class="ocr-field"><span class="ocr-field-label">GSTIN (Vendor)</span><span class="ocr-field-val" id="ocr-gstin">—</span></div>
+        <button class="ocr-apply-btn" onclick="applyOCRData()">✅ Apply Data to Bill Form →</button>
+      </div>
+
+      <div style="margin-top:16px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:14px;">
+        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px;">💡 OCR Tips for Best Results</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+          ✅ Use clear, well-lit photo of the bill<br>
+          ✅ Keep the bill flat, avoid shadows<br>
+          ✅ Printed bills work better than handwritten<br>
+          ✅ Make sure all text is in focus<br>
+          ⚠️ Always verify extracted data before saving
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Manual Bill Form (pre-filled by OCR) -->
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;">📝 Bill Details — Edit & Save</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="form-group"><label>Vendor Name *</label><input type="text" id="ocr-f-vendor" placeholder="Vendor / supplier name"></div>
+        <div class="form-group"><label>Bill Number</label><input type="text" id="ocr-f-billno" placeholder="Bill / invoice number"></div>
+        <div class="form-group"><label>Bill Date</label><input type="date" id="ocr-f-date"></div>
+        <div class="form-group"><label>Category</label>
+          <select id="ocr-f-cat">
+            <option>Materials</option><option>Labour</option><option>Equipment</option>
+            <option>Transport</option><option>Fuel</option><option>Utility</option><option>Admin</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Description</label><input type="text" id="ocr-f-desc" placeholder="What was purchased/paid for?"></div>
+        <div class="form-group"><label>Subtotal Amount (₹)</label><input type="number" id="ocr-f-sub" placeholder="0" oninput="calcOCRTotal()"></div>
+        <div class="form-group"><label>GST Amount (₹)</label><input type="number" id="ocr-f-gst" placeholder="0" oninput="calcOCRTotal()"></div>
+        <div class="form-group"><label>Total Amount (₹)</label><input type="number" id="ocr-f-total" placeholder="0" style="color:var(--success);font-weight:700;"></div>
+        <div class="form-group"><label>Vendor GSTIN</label><input type="text" id="ocr-f-gstin" placeholder="Vendor GSTIN"></div>
+        <div class="form-group"><label>Site</label>
+          <select id="ocr-f-site"><option value="">-- Select Site --</option></select>
+        </div>
+        <div class="form-group"><label>Payment Status</label>
+          <select id="ocr-f-status"><option value="pending">pending</option><option value="paid">paid</option><option value="approved">approved</option></select>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;" onclick="saveOCRBill()">
+          <i data-lucide="save" style="width:15px;height:15px;"></i> Save Bill to Records
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PENDING PAYMENTS ════════ -->
+<div id="tab-pending" style="display:none;">
+  <div class="kpi-row">
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Total Outstanding</div><div class="kpi-mini-val dr" id="kPendTotal">₹0</div><div class="kpi-mini-sub">All unpaid balances</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Overdue</div><div class="kpi-mini-val dr" id="kPendOverdue">₹0</div><div class="kpi-mini-sub">Past due date</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Due This Week</div><div class="kpi-mini-val" style="color:var(--accent);" id="kPendWeek">₹0</div><div class="kpi-mini-sub">Next 7 days</div></div>
+    <div class="kpi-mini"><div class="kpi-mini-lbl">Bills Pending</div><div class="kpi-mini-val" style="color:var(--info);" id="kPendCount">0</div><div class="kpi-mini-sub">Count of bills</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+      <input type="text" placeholder="Search pending..." id="pendSearch" oninput="renderPending()">
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-outline" onclick="exportPendingCSV()"><i data-lucide="download" style="width:14px;height:14px;"></i> Export</button>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>Bill No</th><th>Vendor</th><th>Category</th><th>Bill Date</th><th>Due Date</th>
+      <th>Total</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th>
+    </tr></thead>
+    <tbody id="pendBody"></tbody></table>
+    <div class="empty" id="pendEmpty" style="display:none;">
+      <div class="eicon">✅</div>
+      <p>No pending payments. All bills are settled!</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ DEBIT NOTES TAB ════════ -->
+<div id="tab-debitnotes" style="display:none;">
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" style="width:15px;height:15px;color:var(--faint);flex-shrink:0;"></i>
+      <input type="text" placeholder="Search debit notes..." id="dnSearch" oninput="renderDebitNotes()">
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-primary" onclick="openDNModal()"><i data-lucide="plus" style="width:14px;height:14px;"></i> New Debit Note</button>
+    </div>
+  </div>
+  <div class="tc">
+    <table><thead><tr>
+      <th>DN No.</th><th>Date</th><th>Vendor</th><th>Linked Bill</th><th>Reason</th>
+      <th>Subtotal</th><th>GST</th><th>Total</th><th>Status</th><th>Actions</th>
+    </tr></thead>
+    <tbody id="dnBody"></tbody></table>
+    <div class="empty" id="dnEmpty" style="display:none;">
+      <div class="eicon">↪️</div>
+      <p>No debit notes yet. Raise one against a vendor bill for a purchase return, billing error or rate deduction.</p>
+      <button class="btn btn-primary" onclick="openDNModal()">+ New Debit Note</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DEBIT NOTE MODAL ═══════════════ -->
+<div class="modal-overlay" id="dnModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="dnModalTitle">↪️ New Debit Note</div>
+      <button class="close-btn" onclick="closeModal('dnModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="dnId">
+      <div class="form-grid">
+        <div class="form-group"><label>Date *</label><input type="date" id="dnDate"></div>
+        <div class="form-group"><label>Link to Bill (optional)</label>
+          <select id="dnBill" onchange="onDNBillChange()"><option value="">-- Not linked to a specific bill --</option></select>
+        </div>
+        <div class="form-group full"><label>Vendor / Party Name *</label><input type="text" id="dnParty" placeholder="Vendor name"></div>
+        <input type="hidden" id="dnPartyId">
+        <div class="form-group"><label>Reason</label>
+          <select id="dnReason">
+            <option>Purchase Return</option><option>Billing Error</option><option>Rate Difference</option>
+            <option>Quality Deduction</option><option>Shortage / Damage</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Outstanding on Linked Bill</label><input type="text" id="dnAvailable" disabled placeholder="—"></div>
+        <div class="form-group"><label>Subtotal (₹) *</label><input type="number" id="dnSubtotal" placeholder="0" oninput="calcDNTotal()"></div>
+        <div class="form-group"><label>GST Amount (₹)</label><input type="number" id="dnGst" placeholder="0" oninput="calcDNTotal()"></div>
+        <div class="form-group full"><label>Total Amount</label><input type="text" id="dnTotal" disabled style="font-weight:700;"></div>
+        <div class="form-group full"><label>Notes</label><textarea id="dnNotes" placeholder="Optional notes"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('dnModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDebitNote()"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Debit Note</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ BILL MODAL ═══════════════ -->
+<div class="modal-overlay" id="billModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="billModalTitle">📦 Add Vendor Bill</div>
+      <button class="close-btn" onclick="closeModal('billModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="sec-div">Bill Details</div>
+        <div class="form-group">
+          <label style="display:flex;justify-content:space-between;align-items:center;">
+            Vendor *
+            <button type="button" class="btn btn-outline" style="padding:2px 8px;font-size:10px;font-weight:700;border-radius:6px;" onclick="openQuickVendorModal('eVendor')" title="Add new vendor without leaving this form">
+              + Quick Add
+            </button>
+          </label>
+          <select id="eVendor" onchange="onVendorChange()">
+            <option value="">-- Select Vendor --</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Bill Number</label><input type="text" id="eBillNo" placeholder="Bill / invoice number"></div>
+        <div class="form-group"><label>Vendor GSTIN</label><input type="text" id="eVGstin" placeholder="Auto-filled from vendor"></div>
+        <div class="form-group">
+          <label style="display:flex;justify-content:space-between;align-items:center;">
+            Site
+            <button type="button" class="btn btn-outline" style="padding:2px 8px;font-size:10px;font-weight:700;border-radius:6px;" onclick="openQuickSiteModal('eSite')" title="Add new site without leaving this form">
+              + Quick Add
+            </button>
+          </label>
+          <select id="eSite" onchange="onSiteChange()">
+            <option value="">-- Select Site --</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Against Purchase Order <span style="font-size:10px;color:var(--muted);">(optional)</span></label>
+          <select id="ePO" onchange="onBillPOChange()">
+            <option value="">-- No PO / direct bill --</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Bill Date *</label><input type="date" id="eBillDate" onchange="checkTdsThreshold()"></div>
+        <div class="form-group"><label>Due Date</label><input type="date" id="eDueDate"></div>
+        <div class="form-group"><label>Category *</label>
+          <select id="eCategory" onchange="deriveBillTax()">
+            <option>Materials</option><option>Labour</option><option>Equipment</option>
+            <option>Transport</option><option>Fuel</option><option>Utility</option><option>Admin</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Description</label><input type="text" id="eDescription" placeholder="What was purchased or paid for?"></div>
+
+        <div class="sec-div">Line Items</div>
+        <div class="form-group full">
+          <table class="items-table">
+            <thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th>Amount</th><th></th></tr></thead>
+            <tbody id="eItemsBody"></tbody>
+          </table>
+          <button class="add-item-btn" onclick="addExpItem()"><i data-lucide="plus" style="width:13px;height:13px;"></i> Add Item</button>
+        </div>
+
+        <div class="sec-div">Taxes (worked out for you)</div>
+        <!-- Plain-English summary of everything the ERP decided in the background.
+             A non-accountant reads this; they never have to choose GST type / ITC /
+             RCM / TDS. The actual controls live under "Adjust" for the rare override. -->
+        <div class="form-group full">
+          <div id="eTaxExplain" style="font-size:12px;line-height:1.65;padding:12px 14px;border-radius:10px;background:var(--surface3,#243147);border:1px solid var(--border);color:var(--muted);">
+            Pick a vendor and add line items — we’ll work out the GST, input credit, reverse charge and TDS automatically.
+          </div>
+        </div>
+        <div class="form-group full" id="eTdsStatusWrap" style="display:none;margin-top:-4px;">
+          <div id="eTdsStatus" style="font-size:11px;padding:6px 10px;border-radius:6px;line-height:1.5;"></div>
+        </div>
+
+        <div class="form-group full">
+          <div class="tax-summary">
+            <div class="tax-row"><span>Subtotal</span><span id="eTaxSub">₹0</span></div>
+            <div class="tax-row"><span id="eTaxCgstLbl">CGST (6%)</span><span id="eTaxCgst">₹0</span></div>
+            <div class="tax-row"><span id="eTaxSgstLbl">SGST (6%)</span><span id="eTaxSgst">₹0</span></div>
+            <div class="tax-row"><span id="eTaxIgstLbl">IGST (12%)</span><span id="eTaxIgst">₹0</span></div>
+            <div class="tax-row"><span>TDS Deduction</span><span id="eTaxTds" style="color:var(--danger);">-₹0</span></div>
+            <div class="tax-row total"><span>Total Payable</span><span id="eTaxTotal" style="color:var(--success);">₹0</span></div>
+          </div>
+        </div>
+
+        <!-- Advanced: every value here is auto-set. Only open to override a rare case. -->
+        <details class="form-group full" id="eTaxAdvanced" style="margin-top:2px;">
+          <summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--muted);padding:6px 0;">⚙︎ Adjust taxes manually (optional)</summary>
+          <div class="form-grid" style="margin-top:8px;">
+            <div class="form-group"><label>GST Type</label>
+              <select id="eGstType" onchange="manualTaxOverride()">
+                <option value="none">None</option>
+                <option value="intra">Intra-state (CGST+SGST)</option>
+                <option value="inter">Inter-state (IGST)</option>
+              </select>
+            </div>
+            <div class="form-group"><label>GST Rate %</label>
+              <select id="eGstRate" onchange="manualTaxOverride()">
+                <option value="0">0%</option><option value="5">5%</option>
+                <option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option>
+              </select>
+            </div>
+            <div class="form-group"><label>TDS Rate %</label>
+              <select id="eTdsRate" onchange="manualTaxOverride()">
+                <option value="0">0%</option><option value="1">1%</option>
+                <option value="2" selected>2%</option><option value="5">5%</option><option value="10">10%</option>
+              </select>
+            </div>
+            <div class="form-group"><label>ITC Eligible (claim input credit)</label>
+              <select id="eItc" onchange="manualTaxOverride()">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Reverse Charge (RCM)</label>
+              <select id="eRcm" onchange="manualTaxOverride()">
+                <option value="0">No (vendor charges GST)</option>
+                <option value="1">Yes — RCM (pay GST directly)</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
+        <div class="form-group"><label>Status</label>
+          <select id="eStatus">
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+
+        <div class="sec-div">Notes</div>
+        <div class="form-group full"><label>Notes</label><textarea id="eNotes" placeholder="Optional notes"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('billModal')">Cancel</button>
+      <button class="btn btn-primary" id="saveBillBtn" onclick="saveBill()"><i data-lucide="save" style="width:14px;height:14px;"></i> Save Bill</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PO MODAL ═══════════════ -->
+<div class="modal-overlay" id="poModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="poModalTitle">📋 New Purchase Order</div>
+      <button class="close-btn" onclick="closeModal('poModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="sec-div">PO Details</div>
+        <div class="form-group"><label>PO Number *</label><input type="text" id="poNo" placeholder="PO-2024-001"></div>
+        <div class="form-group">
+          <label style="display:flex;justify-content:space-between;align-items:center;">
+            Vendor *
+            <button type="button" class="btn btn-outline" style="padding:2px 8px;font-size:10px;font-weight:700;border-radius:6px;" onclick="openQuickVendorModal('poVendor')" title="Add new vendor without leaving this form">
+              + Quick Add
+            </button>
+          </label>
+          <select id="poVendor" onchange="onPOVendorChange()">
+            <option value="">-- Select Vendor --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display:flex;justify-content:space-between;align-items:center;">
+            Site
+            <button type="button" class="btn btn-outline" style="padding:2px 8px;font-size:10px;font-weight:700;border-radius:6px;" onclick="openQuickSiteModal('poSite')" title="Add new site without leaving this form">
+              + Quick Add
+            </button>
+          </label>
+          <select id="poSite" onchange="onPOSiteChange()">
+            <option value="">-- Select Site --</option>
+          </select>
+        </div>
+        <div class="form-group"><label>PO Date *</label><input type="date" id="poDate"></div>
+        <div class="form-group"><label>Expected Delivery</label><input type="date" id="poDelivery"></div>
+        <div class="form-group"><label>Status</label>
+          <select id="poStatus">
+            <option value="draft">Draft</option>
+            <option value="approved">Approved</option>
+            <option value="sent">Sent</option>
+            <option value="received">Received</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div class="sec-div">Line Items</div>
+        <div class="form-group full">
+          <table class="items-table">
+            <thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Rate (₹)</th><th>Amount</th><th></th></tr></thead>
+            <tbody id="poItemsBody"></tbody>
+          </table>
+          <button class="add-item-btn" onclick="addPOItem()"><i data-lucide="plus" style="width:13px;height:13px;"></i> Add Item</button>
+        </div>
+
+        <div class="form-group full">
+          <div class="tax-summary">
+            <div class="tax-row"><span>Subtotal</span><span id="poTaxSub">₹0</span></div>
+            <div class="tax-row"><span>GST (estimated)</span><span id="poTaxGst">₹0</span></div>
+            <div class="tax-row total"><span>Total</span><span id="poTaxTotal" style="color:var(--success);">₹0</span></div>
+          </div>
+        </div>
+
+        <div class="sec-div">Additional Info</div>
+        <div class="form-group"><label>GST Rate % (overall)</label>
+          <select id="poGstRate" onchange="calcPOTotals()">
+            <option value="0">0%</option><option value="5">5%</option>
+            <option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Notes / Terms</label><textarea id="poNotes" placeholder="Payment terms, delivery instructions..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('poModal')">Cancel</button>
+      <button class="btn btn-primary" id="savePOBtn" onclick="savePO()"><i data-lucide="save" style="width:14px;height:14px;"></i> Save PO</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAY BILL MODAL -->
+<div class="modal-overlay" id="payBillModal" style="z-index:300;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">💳 Record Payment</div>
+      <button class="close-btn" onclick="closeModal('payBillModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Bill</label><input type="text" id="pbBill" readonly style="background:var(--surface3);"></div>
+        <div class="form-group"><label>Balance Due</label><input type="text" id="pbBal" readonly style="background:var(--surface3);color:var(--accent);font-weight:700;"></div>
+        <div class="form-group"><label>Payment Date *</label><input type="date" id="pbDate"></div>
+        <div class="form-group"><label>Amount Paying (₹) *</label><input type="number" id="pbAmt" placeholder="0"></div>
+        <div class="form-group"><label>Payment Mode</label>
+          <select id="pbMode" onchange="onPbModeChange()">
+            <option>Bank Transfer</option><option>Cheque</option><option>Cash</option><option>UPI</option>
+          </select>
+        </div>
+        <div class="form-group" id="pbBankWrap"><label>Paid From (Bank Account)</label>
+          <select id="pbBank"></select>
+        </div>
+        <div class="form-group"><label>TDS Deducted (₹)</label><input type="number" id="pbTds" value="0" placeholder="0"></div>
+        <div class="form-group full"><label>Notes</label><input type="text" id="pbNotes" placeholder="Reference / cheque no."></div>
+      </div>
+      <div id="pbHistoryWrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+        <label style="display:block;margin-bottom:8px;">Payment History</label>
+        <div id="pbHistory" style="font-size:12px;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('payBillModal')">Cancel</button>
+      <button class="btn btn-success" onclick="confirmBillPay()">✅ Record Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ QUICK VENDOR MODAL ════ -->
+<div class="modal-overlay" id="quickVendorModal" style="z-index:350;">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header">
+      <div class="modal-title">⚡ Quick Add Vendor</div>
+      <button class="close-btn" onclick="closeModal('quickVendorModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Add a vendor quickly while entering a bill. You can fill in more details later from the Vendors module.</p>
+      <div class="form-grid">
+        <div class="form-group full"><label>Vendor Name *</label><input type="text" id="qvName" placeholder="Company or person name"></div>
+        <div class="form-group"><label>Category</label>
+          <select id="qvCat">
+            <option value="material">Material Supplier</option>
+            <option value="labour">Labour Contractor</option>
+            <option value="equipment">Equipment / Hire</option>
+            <option value="service">Service Provider</option>
+            <option value="transport">Transport</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="qvPhone" placeholder="Mobile number"></div>
+        <div class="form-group"><label>GSTIN</label><input type="text" id="qvGstin" placeholder="GSTIN (optional)"></div>
+        <div class="form-group"><label>PAN</label><input type="text" id="qvPan" placeholder="PAN (optional)"></div>
+        <div class="form-group"><label>City</label><input type="text" id="qvCity" placeholder="City"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('quickVendorModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQuickVendor()"><i data-lucide="save" style="width:14px;height:14px;"></i> Add Vendor & Select</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ QUICK SITE MODAL ════ -->
+<div class="modal-overlay" id="quickSiteModal" style="z-index:350;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <div class="modal-title">🏗️ Quick Add Site</div>
+      <button class="close-btn" onclick="closeModal('quickSiteModal')"><i data-lucide="x" style="width:18px;height:18px;"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Add a site quickly. Contract value, dates and manager can be added later from the Sites module.</p>
+      <div class="form-group" style="margin-bottom:14px;"><label>Site / Project Name *</label><input type="text" id="qsName" placeholder="Project name"></div>
+      <div class="form-group"><label>Location</label><input type="text" id="qsLocation" placeholder="City / area (optional)"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('quickSiteModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQuickSite()"><i data-lucide="save" style="width:14px;height:14px;"></i> Add Site & Select</button>
+    </div>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+
+// ── state
+let allExpenses   = [];
+let allPOs        = [];
+let vendorsList   = [];
+let sitesList     = [];
+let debitNotes    = [];
+let editExpId     = null;
+let editPOId      = null;
+let payExpenseId  = null;
+let banksList     = [];   // active bank accounts (for "paid from" on vendor payments)
+let expItems      = [];
+let poItems       = [];
+let ocrData       = {};
+
+const fmt = n => Math.round(n || 0).toLocaleString('en-IN');
+function esc(s){return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+const today = () => new Date().toISOString().split('T')[0];
+
+// Company profile (for GST state comparison) + a flag that tracks whether the
+// user has manually overridden the auto-derived taxes for the current bill.
+let companyInfo = {};
+let taxManual   = false;
+const GST_STATE_CODES = {
+  'Jammu and Kashmir':'01','Himachal Pradesh':'02','Punjab':'03','Chandigarh':'04','Uttarakhand':'05',
+  'Haryana':'06','Delhi':'07','Rajasthan':'08','Uttar Pradesh':'09','Bihar':'10','Sikkim':'11',
+  'Arunachal Pradesh':'12','Nagaland':'13','Manipur':'14','Mizoram':'15','Tripura':'16','Meghalaya':'17',
+  'Assam':'18','West Bengal':'19','Jharkhand':'20','Odisha':'21','Chhattisgarh':'22','Madhya Pradesh':'23',
+  'Gujarat':'24','Daman and Diu':'25','Dadra and Nagar Haveli':'26','Maharashtra':'27','Karnataka':'29',
+  'Goa':'30','Lakshadweep':'31','Kerala':'32','Tamil Nadu':'33','Puducherry':'34','Andaman and Nicobar Islands':'35',
+  'Telangana':'36','Andhra Pradesh':'37','Ladakh':'38','Other Territory':'97'
+};
+
+// Rubber banding — remember last used expense settings
+let lastExp = {};
+try { lastExp = JSON.parse(localStorage.getItem('exp_lastUsed') || '{}'); } catch(_) {}
+function saveLastExp(d) {
+  lastExp = { vendor_id: d.vendor_id, category: d.category, gst_type: d.gst_type,
+              gst_rate: d.gst_rate, tds_rate: d.tds_rate, site_id: d.site_id };
+  try { localStorage.setItem('exp_lastUsed', JSON.stringify(lastExp)); } catch(_) {}
+}
+
+// ─── TAB SWITCH
+function switchTab(t) {
+  const tabs = ['bills','po','ocr','pending','debitnotes'];
+  tabs.forEach(x => {
+    document.getElementById('tab-' + x).style.display = x === t ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', tabs[i] === t);
+  });
+  if (t === 'bills')      renderBills();
+  if (t === 'po')         renderPOs();
+  if (t === 'pending')    renderPending();
+  if (t === 'ocr')        populateOCRSiteDropdown();
+  if (t === 'debitnotes') loadAndRenderDebitNotes();
+  lucide.createIcons();
+}
+
+// ─── Debit Notes: SQLite-backed
+async function loadAndRenderDebitNotes(){
+  try {
+    const res = await window.erp.getDebitNotes();
+    debitNotes = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+  } catch(e){ debitNotes = []; }
+  if(!allExpenses.length){
+    try { const r = await window.erp.getExpenses({}); allExpenses = (r&&r.data)||[]; } catch(e){}
+  }
+  renderDebitNotes();
+}
+
+function renderDebitNotes(){
+  const body = document.getElementById('dnBody');
+  const q = (document.getElementById('dnSearch').value||'').toLowerCase();
+  const list = debitNotes.filter(dn =>
+    !q || (dn.dn_no||'').toLowerCase().includes(q) || (dn.party_name||'').toLowerCase().includes(q));
+  document.getElementById('dnEmpty').style.display = debitNotes.length ? 'none' : 'block';
+  body.innerHTML = list.map(dn => {
+    const bill = dn.bill_id ? allExpenses.find(b=>b.id===dn.bill_id) : null;
+    return `
+    <tr>
+      <td><div class="name-bold">${esc(dn.dn_no)}</div></td>
+      <td>${dn.dn_date||'—'}</td>
+      <td>${esc(dn.party_name||'—')}</td>
+      <td>${bill ? esc(bill.bill_no||('Bill #'+bill.id)) : (dn.original_bill_no ? esc(dn.original_bill_no) : '<span class="sub-text">Not linked</span>')}</td>
+      <td>${esc(dn.reason||'—')}</td>
+      <td class="amount">₹${fmt(dn.subtotal)}</td>
+      <td class="amount">₹${fmt(dn.gst_amount)}</td>
+      <td class="amount dr">₹${fmt(dn.total_amount)}</td>
+      <td><span class="badge ${dn.adjusted?'b-paid':'b-pending'}">${dn.adjusted?'Applied':'Unapplied'}</span></td>
+      <td><div class="action-btns">
+        <button class="btn btn-outline btn-sm" title="Edit" onclick="openDNModal(${dn.id})"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
+        <button class="btn btn-danger btn-sm" title="Delete" onclick="deleteDebitNote(${dn.id},'${jsArg(dn.dn_no)}')"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+async function openDNModal(id=null){
+  if(!allExpenses.length){
+    try { const r = await window.erp.getExpenses({}); allExpenses = (r&&r.data)||[]; } catch(e){}
+  }
+  const sel = document.getElementById('dnBill');
+  sel.innerHTML = '<option value="">-- Not linked to a specific bill --</option>' +
+    allExpenses.filter(b=>b.status!=='cancelled').map(b=>
+      `<option value="${b.id}" data-vendor="${esc(b.vendor_name||'')}" data-vendorid="${b.vendor_id||''}" data-balance="${b.balance_amount||0}">${esc(b.bill_no||('Bill #'+b.id))} — ${esc(b.vendor_name||'')} (Bal ₹${fmt(b.balance_amount)})</option>`
+    ).join('');
+
+  document.getElementById('dnId').value = id || '';
+  document.getElementById('dnModalTitle').textContent = id ? '↪️ Edit Debit Note' : '↪️ New Debit Note';
+  if(id){
+    const dn = debitNotes.find(d=>d.id===id);
+    if(dn){
+      document.getElementById('dnDate').value    = dn.dn_date||'';
+      document.getElementById('dnBill').value    = dn.bill_id||'';
+      document.getElementById('dnParty').value   = dn.party_name||'';
+      document.getElementById('dnPartyId').value = dn.party_id||'';
+      document.getElementById('dnReason').value  = dn.reason||'Purchase Return';
+      document.getElementById('dnSubtotal').value= dn.subtotal||0;
+      document.getElementById('dnGst').value     = dn.gst_amount||0;
+      document.getElementById('dnNotes').value   = dn.notes||'';
+    }
+  } else {
+    document.getElementById('dnDate').value     = new Date().toISOString().slice(0,10);
+    document.getElementById('dnBill').value     = '';
+    document.getElementById('dnParty').value    = '';
+    document.getElementById('dnPartyId').value  = '';
+    document.getElementById('dnReason').value   = 'Purchase Return';
+    document.getElementById('dnSubtotal').value = '';
+    document.getElementById('dnGst').value      = '';
+    document.getElementById('dnNotes').value    = '';
+  }
+  onDNBillChange();
+  calcDNTotal();
+  document.getElementById('dnModal').classList.add('open');
+}
+
+function onDNBillChange(){
+  const sel = document.getElementById('dnBill');
+  const opt = sel.selectedOptions[0];
+  const avail = document.getElementById('dnAvailable');
+  if(opt && opt.value){
+    document.getElementById('dnParty').value   = opt.dataset.vendor || '';
+    document.getElementById('dnPartyId').value = opt.dataset.vendorid || '';
+    avail.value = '₹' + fmt(+opt.dataset.balance || 0);
+  } else {
+    avail.value = '—';
+  }
+}
+
+function calcDNTotal(){
+  const sub = +document.getElementById('dnSubtotal').value || 0;
+  const gst = +document.getElementById('dnGst').value || 0;
+  document.getElementById('dnTotal').value = '₹' + fmt(sub + gst);
+}
+
+async function saveDebitNote(){
+  const party = document.getElementById('dnParty').value.trim();
+  if(!party){ alert('Vendor / party name is required.'); return; }
+  const date = document.getElementById('dnDate').value;
+  if(!date){ alert('Date is required.'); return; }
+  const sub = +document.getElementById('dnSubtotal').value || 0;
+  const gst = +document.getElementById('dnGst').value || 0;
+  if(sub + gst <= 0){ alert('Debit note amount must be greater than zero.'); return; }
+  const idVal = document.getElementById('dnId').value;
+  const billSel = document.getElementById('dnBill');
+  const billOpt = billSel.selectedOptions[0];
+  const data = {
+    dn_date: date,
+    dn_type: 'vendor',
+    party_id: document.getElementById('dnPartyId').value || null,
+    party_name: party,
+    bill_id: billSel.value || null,
+    original_bill_no: (billOpt && billOpt.value) ? billOpt.textContent.split(' — ')[0] : null,
+    original_bill_date: null,
+    reason: document.getElementById('dnReason').value,
+    subtotal: sub,
+    gst_amount: gst,
+    total_amount: sub + gst,
+    notes: document.getElementById('dnNotes').value.trim() || null
+  };
+  if(idVal) data.id = +idVal;
+  try {
+    const res = await window.erp.saveDebitNote(data);
+    if(!res || !res.success){ alert('Error: '+(res&&res.error||'Save failed')); return; }
+    closeModal('dnModal');
+    loadAndRenderDebitNotes();
+    renderBills();
+  } catch(e){ alert('Error saving debit note: '+e.message); }
+}
+
+async function deleteDebitNote(id, dnNo){
+  if(!confirm(`Delete debit note "${dnNo}"? This will restore the linked bill's balance.`)) return;
+  try {
+    const res = await window.erp.deleteDebitNote(id);
+    if(!res || !res.success){ alert('Error: '+(res&&res.error||'Delete failed')); return; }
+    loadAndRenderDebitNotes();
+    renderBills();
+  } catch(e){ alert('Error: '+e.message); }
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── LOAD DROPDOWNS
+async function loadDropdowns() {
+  try {
+    const [vRes, sRes, cRes, pRes, bRes] = await Promise.all([
+      window.erp.getVendors(),
+      window.erp.getSites(),
+      window.erp.getCompany(),
+      window.erp.getPurchaseOrders(),
+      window.erp.getBanks()
+    ]);
+    vendorsList = (vRes && vRes.data) ? vRes.data : (Array.isArray(vRes) ? vRes : []);
+    sitesList   = (sRes && sRes.data) ? sRes.data : (Array.isArray(sRes) ? sRes : []);
+    companyInfo = (cRes && cRes.data) ? cRes.data : (cRes || {});
+    allPOs      = (pRes && pRes.data) ? pRes.data : (Array.isArray(pRes) ? pRes : []);
+    banksList   = (bRes && bRes.data) ? bRes.data : (Array.isArray(bRes) ? bRes : []);
+  } catch (e) {
+    console.error('loadDropdowns error', e);
+    vendorsList = [];
+    sitesList   = [];
+  }
+}
+
+function buildVendorOptions(selectedId) {
+  return '<option value="">-- Select Vendor --</option>' +
+    vendorsList.map(v =>
+      `<option value="${v.id}" ${v.id == selectedId ? 'selected' : ''}>${v.name}</option>`
+    ).join('');
+}
+
+function buildSiteOptions(selectedId) {
+  return '<option value="">-- Select Site --</option>' +
+    sitesList.map(s =>
+      `<option value="${s.id}" ${s.id == selectedId ? 'selected' : ''}>${esc(s.name)}</option>`
+    ).join('');
+}
+
+// Scoped to the currently selected vendor — a PO belongs to one vendor, so
+// listing every PO regardless of vendor invited mismatched bill/PO pairs.
+// The previously-selected PO (selectedId) is always kept in the list even if
+// it does not match the current vendor, so loading an existing bill never
+// breaks.
+function buildPOOptions(selectedId) {
+  const vendorEl = document.getElementById('eVendor');
+  const vendorId = vendorEl ? vendorEl.value : '';
+  const list = (allPOs || []).filter(p =>
+    !vendorId || String(p.vendor_id || '') === String(vendorId) || String(p.id) === String(selectedId)
+  );
+  return '<option value="">-- No PO / direct bill --</option>' +
+    list.map(p => {
+      const label = esc(p.po_no || ('PO#' + p.id)) + (p.vendor_name ? ' — ' + esc(p.vendor_name) : '');
+      return `<option value="${p.id}" ${p.id == selectedId ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+}
+
+// Billing against a PO: pull the vendor and site from it so the bill matches.
+function onBillPOChange() {
+  const po = (allPOs || []).find(p => p.id == document.getElementById('ePO').value);
+  if (!po) return;
+  if (po.vendor_id) { document.getElementById('eVendor').value = po.vendor_id; onVendorChange(); }
+  if (po.site_id)   { document.getElementById('eSite').value = po.site_id; }
+}
+
+function populateOCRSiteDropdown() {
+  const el = document.getElementById('ocr-f-site');
+  if (el) el.innerHTML = buildSiteOptions('');
+}
+
+// ─── QUICK VENDOR ADD
+let quickVendorTarget = 'eVendor';
+function openQuickVendorModal(targetId) {
+  quickVendorTarget = targetId || 'eVendor';
+  ['qvName','qvPhone','qvGstin','qvPan','qvCity'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('qvCat').value = 'material';
+  document.getElementById('quickVendorModal').classList.add('open');
+  setTimeout(() => document.getElementById('qvName').focus(), 100);
+}
+
+async function saveQuickVendor() {
+  const name = document.getElementById('qvName').value.trim();
+  if (!name) { alert('Vendor name is required.'); return; }
+  const data = {
+    name,
+    category: document.getElementById('qvCat').value,
+    phone:    document.getElementById('qvPhone').value.trim() || null,
+    gstin:    document.getElementById('qvGstin').value.trim() || null,
+    pan:      document.getElementById('qvPan').value.trim() || null,
+    city:     document.getElementById('qvCity').value.trim() || null,
+    status:   'active',
+  };
+  try {
+    const r = await window.erp.saveVendor(data);
+    if (!r || !r.success) { alert('Error saving vendor: ' + (r && r.error || '')); return; }
+    await loadDropdowns();
+    // Refresh vendor selects in bill and PO modals, auto-select the new vendor in the form that opened this
+    ['eVendor','poVendor'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (sel) sel.innerHTML = buildVendorOptions(id === quickVendorTarget ? r.data : sel.value);
+    });
+    closeModal('quickVendorModal');
+    if (quickVendorTarget === 'eVendor') onVendorChange();
+    if (quickVendorTarget === 'poVendor') onPOVendorChange();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ─── QUICK SITE ADD
+let quickSiteTarget = 'eSite';
+function openQuickSiteModal(targetId) {
+  quickSiteTarget = targetId || 'eSite';
+  ['qsName','qsLocation'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('quickSiteModal').classList.add('open');
+  setTimeout(() => document.getElementById('qsName').focus(), 100);
+}
+
+async function saveQuickSite() {
+  const name = document.getElementById('qsName').value.trim();
+  if (!name) { alert('Site name is required.'); return; }
+  try {
+    const r = await window.erp.saveSite({
+      name,
+      location: document.getElementById('qsLocation').value.trim() || null,
+      start_date: new Date().toISOString().split('T')[0],
+      status: 'active',
+    });
+    if (!r || !r.success) { alert('Error saving site: ' + (r && r.error || '')); return; }
+    await loadDropdowns();
+    ['eSite','poSite','ocr-f-site'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (sel) sel.innerHTML = buildSiteOptions(id === quickSiteTarget ? r.data : sel.value);
+    });
+    closeModal('quickSiteModal');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ─── EXPENSE ITEMS
+function renderExpItems() {
+  document.getElementById('eItemsBody').innerHTML = expItems.map((it, i) => `
+    <tr>
+      <td><input type="text" value="${it.description || ''}" placeholder="Item description"
+          oninput="expItems[${i}].description=this.value"></td>
+      <td><input type="number" value="${it.qty || 1}" min="0" style="width:70px;"
+          oninput="expItems[${i}].qty=+this.value;calcExpTotals()"></td>
+      <td><input type="text" value="${it.unit || 'pcs'}" style="width:60px;"
+          oninput="expItems[${i}].unit=this.value"></td>
+      <td><input type="number" value="${it.rate || 0}" min="0" style="width:90px;"
+          oninput="expItems[${i}].rate=+this.value;calcExpTotals()"></td>
+      <td class="amount" style="width:90px;">₹${fmt((it.qty||1)*(it.rate||0))}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeExpItem(${i})">
+        <i data-lucide="trash-2" style="width:12px;height:12px;"></i></button></td>
+    </tr>`).join('');
+  lucide.createIcons();
+  calcExpTotals();
+}
+
+function addExpItem() {
+  expItems.push({ description: '', qty: 1, unit: 'pcs', rate: 0 });
+  renderExpItems();
+}
+
+function removeExpItem(i) {
+  expItems.splice(i, 1);
+  renderExpItems();
+}
+
+function calcExpTotals(skipTdsCheck) {
+  const sub = expItems.reduce((s, it) => s + (it.qty || 1) * (it.rate || 0), 0);
+  const gstType = document.getElementById('eGstType').value;  // 'intra'/'inter'/'none'
+  const gRate   = +document.getElementById('eGstRate').value;
+  const tRate   = +document.getElementById('eTdsRate').value;
+  const cg = gstType === 'intra' ? sub * gRate / 200 : 0;
+  const sg = gstType === 'intra' ? sub * gRate / 200 : 0;
+  const ig = gstType === 'inter' ? sub * gRate / 100 : 0;
+  const tds  = sub * tRate / 100;
+  const total = sub + cg + sg + ig;
+
+  document.getElementById('eTaxSub').textContent    = '₹' + fmt(sub);
+  document.getElementById('eTaxCgstLbl').textContent = `CGST (${gRate/2}%)`;
+  document.getElementById('eTaxSgstLbl').textContent = `SGST (${gRate/2}%)`;
+  document.getElementById('eTaxIgstLbl').textContent = `IGST (${gRate}%)`;
+  document.getElementById('eTaxCgst').textContent   = gstType === 'intra' ? '₹' + fmt(cg) : '—';
+  document.getElementById('eTaxSgst').textContent   = gstType === 'intra' ? '₹' + fmt(sg) : '—';
+  document.getElementById('eTaxIgst').textContent   = gstType === 'inter' ? '₹' + fmt(ig) : '—';
+  document.getElementById('eTaxTds').textContent    = '-₹' + fmt(tds);
+  document.getElementById('eTaxTotal').textContent  = '₹' + fmt(total);
+  renderTaxExplain();
+  // Re-evaluate TDS thresholds whenever totals change (unless called from within the check itself)
+  if (!skipTdsCheck) checkTdsThreshold();
+}
+
+// ─── BILL MODAL
+function openBillModal(id) {
+  editExpId = id || null;
+  expItems = [];
+  document.getElementById('billModalTitle').textContent = id ? '📦 Edit Vendor Bill' : '📦 Add Vendor Bill';
+  // Rubber banding — use last vendor/category/site/GST for new bills
+  document.getElementById('eVendor').innerHTML   = buildVendorOptions(id ? '' : (lastExp.vendor_id || ''));
+  document.getElementById('eSite').innerHTML     = buildSiteOptions(id ? '' : (lastExp.site_id || ''));
+  document.getElementById('ePO').innerHTML       = buildPOOptions('');
+  document.getElementById('eBillNo').value       = '';
+  document.getElementById('eVGstin').value       = '';
+  document.getElementById('eBillDate').value     = today();
+  const due = new Date(); due.setDate(due.getDate() + 15);
+  document.getElementById('eDueDate').value      = due.toISOString().split('T')[0];
+  document.getElementById('eCategory').value     = id ? 'Materials' : (lastExp.category || 'Materials');
+  document.getElementById('eDescription').value  = '';
+  document.getElementById('eGstType').value      = id ? 'none' : (lastExp.gst_type || 'none');
+  document.getElementById('eGstRate').value      = id ? '12'   : (lastExp.gst_rate  || '12');
+  document.getElementById('eTdsRate').value      = id ? '2'    : (lastExp.tds_rate  || '2');
+  document.getElementById('eItc').value          = '1';
+  document.getElementById('eRcm').value          = '0';
+  document.getElementById('eStatus').value       = 'pending';
+  document.getElementById('eNotes').value        = '';
+
+  document.getElementById('eTdsStatusWrap').style.display = 'none';
+  const adv = document.getElementById('eTaxAdvanced'); if (adv) adv.open = false;
+  if (id) {
+    taxManual = true;   // an existing bill keeps its saved tax classification
+    loadBillForEdit(id);
+  } else {
+    taxManual = false;  // new bill: fully automatic
+    expItems = [{ description: '', qty: 1, unit: 'pcs', rate: 0 }];
+    renderExpItems();
+    deriveBillTax();    // auto GST type / ITC / RCM + TDS + plain-English summary
+  }
+  document.getElementById('billModal').classList.add('open');
+}
+
+async function loadBillForEdit(id) {
+  try {
+    const res = await window.erp.getExpense(id);
+    const b = (res && res.data) ? res.data : res;
+    if (!b) return;
+    document.getElementById('eVendor').innerHTML   = buildVendorOptions(b.vendor_id);
+    document.getElementById('eSite').innerHTML     = buildSiteOptions(b.site_id);
+    document.getElementById('ePO').innerHTML       = buildPOOptions(b.po_id || '');
+    document.getElementById('eBillNo').value       = b.bill_no || '';
+    document.getElementById('eVGstin').value       = b.vendor_gstin || '';
+    document.getElementById('eBillDate').value     = b.bill_date || '';
+    document.getElementById('eDueDate').value      = b.due_date || '';
+    document.getElementById('eCategory').value     = b.category || 'Materials';
+    document.getElementById('eDescription').value  = b.description || '';
+    document.getElementById('eGstType').value      =
+      b.igst_amount > 0 ? 'inter' : (b.cgst_amount > 0 ? 'intra' : 'none');
+    document.getElementById('eGstRate').value      = b.gst_rate || '0';
+    document.getElementById('eTdsRate').value      = b.tds_rate || '0';
+    document.getElementById('eItc').value          = b.itc_eligible ? '1' : '0';
+    document.getElementById('eRcm').value          = b.rcm_applicable ? '1' : '0';
+    document.getElementById('eStatus').value       = b.status || 'pending';
+    document.getElementById('eNotes').value        = b.notes || '';
+    expItems = (b.items && b.items.length)
+      ? b.items.map(it => ({ description: it.description, qty: it.qty, unit: it.unit, rate: it.rate }))
+      : [{ description: '', qty: 1, unit: 'pcs', rate: 0 }];
+    renderExpItems();
+    renderTaxExplain();   // show the saved classification in plain English
+    checkTdsThreshold();
+  } catch(e) {
+    console.error('loadBillForEdit error', e);
+    expItems = [{ description: '', qty: 1, unit: 'pcs', rate: 0 }];
+    renderExpItems();
+  }
+}
+
+function onVendorChange() {
+  const sel = document.getElementById('eVendor');
+  const v = vendorsList.find(v => v.id == sel.value);
+  if (v && v.gstin) document.getElementById('eVGstin').value = v.gstin;
+  // PO list is scoped to the vendor — a PO picked for the previous vendor no
+  // longer applies, so it is dropped rather than silently kept.
+  const poEl = document.getElementById('ePO');
+  const poId = poEl.value;
+  const po = (allPOs || []).find(p => p.id == poId);
+  const keepPO = po && String(po.vendor_id || '') === String(sel.value);
+  poEl.innerHTML = buildPOOptions(keepPO ? poId : '');
+  // A fresh vendor choice returns the bill to fully-automatic tax mode.
+  taxManual = false;
+  const adv = document.getElementById('eTaxAdvanced'); if (adv) adv.open = false;
+  deriveBillTax();
+}
+
+// ─── AUTO-DERIVE TAXES (the mission: the user never picks GST type / ITC / RCM)
+// Works out GST type (intra vs inter from your state vs the vendor's), input-tax
+// credit, and reverse charge purely from the vendor record — then explains it in
+// plain English. TDS is handled by checkTdsThreshold() (called via calcExpTotals).
+function deriveBillTax() {
+  const vSel = document.getElementById('eVendor');
+  const v = vendorsList.find(x => x.id == (vSel && vSel.value));
+  if (v && !taxManual) {
+    const gstTypeEl = document.getElementById('eGstType');
+    const itcEl     = document.getElementById('eItc');
+    const rcmEl     = document.getElementById('eRcm');
+    const hasGstin  = !!(v.gstin && v.gstin.trim().length >= 2);
+    if (hasGstin) {
+      // Registered vendor: GST applies. Intra vs inter from state codes.
+      const supplierCode = String(companyInfo.state_code || GST_STATE_CODES[(companyInfo.state||'').trim()] || '').padStart(2,'0');
+      const vendorCode   = v.gstin.trim().slice(0,2);
+      if (supplierCode && supplierCode !== '00') gstTypeEl.value = (supplierCode === vendorCode) ? 'intra' : 'inter';
+      else gstTypeEl.value = 'intra';
+      itcEl.value = '1';   // input credit available on registered-vendor GST
+      rcmEl.value = '0';
+    } else {
+      // Unregistered vendor: charges no GST, so nothing to split or claim.
+      gstTypeEl.value = 'none';
+      itcEl.value = '0';
+      rcmEl.value = '0';
+    }
+  }
+  calcExpTotals();      // recompute totals + run the TDS threshold check
+  renderTaxExplain();
+}
+
+// User opened "Adjust" and changed something — respect it from now on.
+function manualTaxOverride() {
+  taxManual = true;
+  calcExpTotals();
+  renderTaxExplain();
+}
+
+// Plain-English summary of what the ERP decided. No jargon required to read it.
+function renderTaxExplain() {
+  const box = document.getElementById('eTaxExplain');
+  if (!box) return;
+  const vSel = document.getElementById('eVendor');
+  const v = vendorsList.find(x => x.id == (vSel && vSel.value));
+  if (!v) { box.innerHTML = 'Pick a vendor and add line items — we’ll work out GST, input credit, reverse charge and TDS automatically.'; return; }
+  const sub     = expItems.reduce((s, it) => s + (it.qty || 1) * (it.rate || 0), 0);
+  const gstType = document.getElementById('eGstType').value;
+  const gRate   = +document.getElementById('eGstRate').value;
+  const itc     = document.getElementById('eItc').value === '1';
+  const rcm     = document.getElementById('eRcm').value === '1';
+  const gstAmt  = (gstType === 'none') ? 0 : sub * gRate / 100;
+  const parts = [];
+  if (gstType === 'none') {
+    parts.push(`<b>${esc(v.name)}</b> isn’t GST-registered, so no GST is added to this bill.`);
+    if (!rcm) parts.push(`If this is a transport, legal or security service it may need reverse charge — use “Adjust” if so.`);
+  } else {
+    parts.push(gstType === 'intra'
+      ? `Same-state vendor → <b>GST ${gRate}% = ₹${fmt(gstAmt)}</b> (split CGST + SGST).`
+      : `Other-state vendor → <b>IGST ${gRate}% = ₹${fmt(gstAmt)}</b>.`);
+    if (itc) parts.push(`You’ll claim this ₹${fmt(gstAmt)} back as input credit, so it isn’t a real cost.`);
+  }
+  if (rcm) parts.push(`<b>Reverse charge:</b> you deposit this GST to the government directly, not to the vendor.`);
+  const tds = sub * (+document.getElementById('eTdsRate').value) / 100;
+  const payable = (rcm ? sub : sub + gstAmt) - tds;
+  if (tds > 0) parts.push(`TDS ₹${fmt(tds)} is withheld (see note below).`);
+  parts.push(`<b style="color:var(--success);">You’ll pay the vendor ₹${fmt(payable)}.</b>`);
+  box.innerHTML = parts.join(' ');
+}
+
+let _tdsCheckTimer = null;
+async function checkTdsThreshold() {
+  clearTimeout(_tdsCheckTimer);
+  _tdsCheckTimer = setTimeout(async () => {
+    const vendorId = document.getElementById('eVendor').value;
+    const billDate = document.getElementById('eBillDate').value || new Date().toISOString().split('T')[0];
+    const sub = expItems.reduce((s, it) => s + (it.qty || 1) * (it.rate || 0), 0);
+    const statusWrap = document.getElementById('eTdsStatusWrap');
+    const statusEl   = document.getElementById('eTdsStatus');
+    if (!vendorId) { statusWrap.style.display = 'none'; return; }
+    try {
+      const res = await window.erp.getVendorTdsStatus({ vendorId, billDate, billSubtotal: sub, billId: editExpId || null });
+      const d = (res && res.data) ? res.data : res;
+      if (!d || !d.info) { statusWrap.style.display = 'none'; return; }
+      statusWrap.style.display = 'block';
+      if (d.applies) {
+        statusEl.style.background = '#fef3c7';
+        statusEl.style.color      = '#92400e';
+        statusEl.style.border     = '1px solid #fcd34d';
+        statusEl.textContent = '⚠ TDS required — ' + d.info;
+        // Auto-set the dropdown to the required rate (unless the user overrode it).
+        if (!taxManual) {
+          const rateEl = document.getElementById('eTdsRate');
+          const rateStr = String(d.rate);
+          if ([...rateEl.options].some(o => o.value === rateStr)) rateEl.value = rateStr;
+          calcExpTotals(true);
+        }
+      } else {
+        statusEl.style.background = '#f0fdf4';
+        statusEl.style.color      = '#166534';
+        statusEl.style.border     = '1px solid #86efac';
+        statusEl.textContent = '✓ ' + d.info;
+        // If vendor has TDS configured but threshold not crossed, set rate to 0.
+        const v = vendorsList.find(v => v.id == vendorId);
+        if (!taxManual && v && v.tds_applicable) {
+          document.getElementById('eTdsRate').value = '0';
+          calcExpTotals(true);
+        }
+      }
+      renderTaxExplain();   // payable line now reflects the resolved TDS
+    } catch(e) {
+      statusWrap.style.display = 'none';
+    }
+  }, 300);
+}
+
+function onSiteChange() {
+  const sel = document.getElementById('eSite');
+  // site name is resolved on save from sitesList
+}
+
+async function saveBill() {
+  const vendorEl = document.getElementById('eVendor');
+  const siteEl   = document.getElementById('eSite');
+  const vendorId = vendorEl.value;
+  const vendorName = vendorEl.options[vendorEl.selectedIndex]
+    ? vendorEl.options[vendorEl.selectedIndex].text : '';
+  if (!vendorId) { alert('Please select a vendor.'); return; }
+  if (!expItems.length) { alert('Add at least one line item.'); return; }
+
+  const siteId   = siteEl.value;
+  const siteName = siteEl.options[siteEl.selectedIndex]
+    ? siteEl.options[siteEl.selectedIndex].text : '';
+
+  const sub = expItems.reduce((s, it) => s + (it.qty || 1) * (it.rate || 0), 0);
+  const gstType = document.getElementById('eGstType').value;
+  const gRate   = +document.getElementById('eGstRate').value;
+  const tRate   = +document.getElementById('eTdsRate').value;
+  const cg = gstType === 'intra' ? sub * gRate / 200 : 0;
+  const sg = gstType === 'intra' ? sub * gRate / 200 : 0;
+  const ig = gstType === 'inter' ? sub * gRate / 100 : 0;
+  const totalGst = cg + sg + ig;
+  const tds      = sub * tRate / 100;
+  const rcm      = document.getElementById('eRcm').value === '1' ? 1 : 0;
+  // Under Reverse Charge, the vendor does NOT charge you GST — you deposit it to
+  // the govt directly. So the amount PAYABLE TO THE VENDOR excludes GST. (The GST
+  // is still recorded in the cgst/sgst/igst columns for return reporting.)
+  const total    = rcm ? sub : (sub + totalGst);
+
+  const data = {
+    ...(editExpId ? { id: editExpId } : {}),
+    bill_no:       document.getElementById('eBillNo').value.trim(),
+    vendor_id:     vendorId,
+    vendor_name:   vendorName,
+    vendor_gstin:  document.getElementById('eVGstin').value.trim(),
+    site_id:       siteId || null,
+    site_name:     siteId ? siteName : '',
+    po_id:         document.getElementById('ePO').value || null,
+    bill_date:     document.getElementById('eBillDate').value,
+    due_date:      document.getElementById('eDueDate').value,
+    category:      document.getElementById('eCategory').value,
+    description:   document.getElementById('eDescription').value.trim(),
+    items:         expItems,
+    gst_rate:      gRate,
+    cgst_amount:   Math.round(cg),
+    sgst_amount:   Math.round(sg),
+    igst_amount:   Math.round(ig),
+    total_gst:     Math.round(totalGst),
+    subtotal:      Math.round(sub),
+    tds_rate:      tRate,
+    tds_amount:    Math.round(tds),
+    total_amount:  Math.round(total),
+    itc_eligible:    document.getElementById('eItc').value === '1' ? 1 : 0,
+    rcm_applicable:  rcm,
+    status:          document.getElementById('eStatus').value,
+    notes:         document.getElementById('eNotes').value.trim()
+  };
+
+  const btn = document.getElementById('saveBillBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const res = await window.erp.saveExpense(data);
+    if (res && res.success === false) throw new Error(res.error || 'Save failed');
+    saveLastExp({ vendor_id: data.vendor_id, category: data.category,
+      gst_type: document.getElementById('eGstType').value,
+      gst_rate: data.gst_rate, tds_rate: data.tds_rate, site_id: data.site_id });
+    closeModal('billModal');
+    await renderBills();
+  } catch(e) {
+    console.error('saveBill error', e);
+    alert('Error saving bill: ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="save" style="width:14px;height:14px;"></i> Save Bill';
+    lucide.createIcons();
+  }
+}
+
+// ─── RENDER BILLS
+async function renderBills() {
+  try {
+    const search = (document.getElementById('billSearch') || {value:''}).value.toLowerCase();
+    const status = (document.getElementById('billStatus') || {value:''}).value;
+    const filters = {};
+    if (status) filters.status = status;
+    if (search) filters.search = search;
+    const res = await window.erp.getExpenses(filters);
+    allExpenses = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+  } catch(e) {
+    console.error('renderBills error', e);
+    allExpenses = [];
+  }
+
+  // KPI calc
+  const now   = new Date();
+  const month = now.getMonth();
+  const year  = now.getFullYear();
+  let kTotal = 0, kPaid = 0, kPend = 0, kOver = 0;
+  const weekAhead = new Date(now); weekAhead.setDate(weekAhead.getDate() + 7);
+
+  allExpenses.forEach(b => {
+    const billDate = b.bill_date ? new Date(b.bill_date) : null;
+    if (billDate && billDate.getMonth() === month && billDate.getFullYear() === year) {
+      kTotal += b.total_amount || 0;
+      kPaid  += b.paid_amount  || 0;
+    }
+    const bal = b.balance_amount || 0;
+    if (bal > 0) kPend += bal;
+    if (b.status === 'overdue') kOver += bal;
+  });
+
+  document.getElementById('kTotalBills').textContent   = '₹' + fmt(kTotal);
+  document.getElementById('kBillsPaid').textContent    = '₹' + fmt(kPaid);
+  document.getElementById('kBillsPending').textContent = '₹' + fmt(kPend);
+  document.getElementById('kBillsOverdue').textContent = '₹' + fmt(kOver);
+
+  const body  = document.getElementById('billBody');
+  const empty = document.getElementById('billEmpty');
+  empty.style.display = allExpenses.length ? 'none' : 'block';
+
+  body.innerHTML = allExpenses.map(b => {
+    const cat = b.category || '';
+    const catClass = cat === 'Materials' ? 'cat-material'
+      : cat === 'Labour'    ? 'cat-labour'
+      : cat === 'Equipment' ? 'cat-equipment'
+      : cat === 'Transport' ? 'cat-transport'
+      : cat === 'Utility'   ? 'cat-utility' : 'cat-admin';
+    const st = b.status || 'pending';
+    const bal = b.balance_amount || 0;
+    return `<tr>
+      <td><div class="name-bold">${esc(b.bill_no || '—')}</div></td>
+      <td><div class="sub-text">${esc(b.po_no || '—')}</div></td>
+      <td><div class="name-bold">${esc(b.vendor_name || '—')}</div><div class="sub-text">${esc(b.description || '')}</div></td>
+      <td><span class="badge ${catClass}">${esc(cat)}</span></td>
+      <td><div class="sub-text">${esc(b.site_name || '—')}</div></td>
+      <td>${b.bill_date || '—'}</td>
+      <td>${b.due_date || '—'}</td>
+      <td class="amount">₹${fmt(b.subtotal)}</td>
+      <td class="amount" style="color:var(--accent);">₹${fmt(b.total_gst)}</td>
+      <td class="amount dr">₹${fmt(b.total_amount)}</td>
+      <td class="amount" style="color:var(--success);">₹${fmt(b.paid_amount)}</td>
+      <td class="amount" style="color:${bal > 0 ? 'var(--accent)' : 'var(--success)'};">₹${fmt(bal)}</td>
+      <td><span class="badge b-${st}">${st}</span></td>
+      <td><div class="action-btns">
+        ${st !== 'paid' ? `<button class="btn btn-success btn-sm" title="Record Payment" onclick="openPayBill(${b.id},'${jsArg(b.vendor_name||'')}',${b.balance_amount||0})"><i data-lucide="credit-card" style="width:12px;height:12px;"></i></button>` : ''}
+        <button class="btn btn-outline btn-sm" title="Edit" onclick="openBillModal(${b.id})"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
+        <button class="btn btn-danger btn-sm" title="Delete" onclick="deleteBill(${b.id})"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+async function deleteBill(id) {
+  if (!confirm('Delete this bill? This cannot be undone.')) return;
+  try {
+    await window.erp.deleteExpense(id);
+    await renderBills();
+  } catch(e) {
+    alert('Error deleting bill: ' + (e.message || e));
+  }
+}
+
+function exportBillsCSV() {
+  let csv = 'Vendor,Bill No,Category,Site,Date,Due,Subtotal,GST,Total,Paid,Balance,Status\n';
+  allExpenses.forEach(b => {
+    csv += `"${b.vendor_name||''}","${b.bill_no||''}","${b.category||''}","${b.site_name||''}","${b.bill_date||''}","${b.due_date||''}",${b.subtotal||0},${b.total_gst||0},${b.total_amount||0},${b.paid_amount||0},${b.balance_amount||0},"${b.status||''}"\n`;
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'VendorBills.csv';
+  a.click();
+}
+
+// ─── PAY BILL MODAL
+async function openPayBill(id, vendorName, balance) {
+  payExpenseId = id;
+  document.getElementById('pbBill').value = vendorName || ('Bill #' + id);
+  document.getElementById('pbBal').value  = '₹' + fmt(balance);
+  document.getElementById('pbDate').value = today();
+  document.getElementById('pbNotes').value = '';
+  // Prefill the TDS to withhold from this bill (its computed TDS, less any
+  // already withheld on earlier payments) so the accountant deducts the right
+  // amount, and set the cash to pay as the balance net of that TDS — together
+  // they settle the bill. Vendor is paid (cash) + we owe the govt (TDS).
+  let outstandingTds = 0;
+  try {
+    const r = await window.erp.getExpense(id);
+    if (r && r.success && r.data) {
+      const exp = r.data;
+      const priorTds = (exp.payments || []).reduce((s, p) => s + (p.tds_deducted || 0), 0);
+      outstandingTds = Math.max(0, Math.round((exp.tds_amount || 0) - priorTds));
+      outstandingTds = Math.min(outstandingTds, Math.round(balance)); // never exceed what is left
+    }
+  } catch (e) {}
+  document.getElementById('pbTds').value = outstandingTds;
+  document.getElementById('pbAmt').value = Math.max(0, Math.round(balance) - outstandingTds);
+  const bankSel = document.getElementById('pbBank');
+  bankSel.innerHTML = banksList.length
+    ? banksList.map(b => `<option value="${b.id}">${esc(b.account_name || b.bank_name || ('A/c ' + b.id))}</option>`).join('')
+    : '<option value="">No bank account — add one in Banking</option>';
+  document.getElementById('pbMode').value = 'Bank Transfer';
+  onPbModeChange();
+  document.getElementById('payBillModal').classList.add('open');
+  await renderBillPaymentHistory(id);
+}
+// Cash leaves no bank trail; bank/cheque/UPI do — only show the account picker
+// for the non-cash modes.
+function onPbModeChange(){
+  const isCash = /cash/i.test(document.getElementById('pbMode').value || '');
+  document.getElementById('pbBankWrap').style.display = isCash ? 'none' : '';
+}
+
+// Shows past payments on this bill with a Void action (admin/owner only —
+// the server enforces this; an accountant trying it just gets denied).
+async function renderBillPaymentHistory(id){
+  const wrap = document.getElementById('pbHistoryWrap');
+  const box  = document.getElementById('pbHistory');
+  try {
+    const res = await window.erp.getExpense(id);
+    const payments = (res && res.success && res.data.payments) || [];
+    if (!payments.length){ wrap.style.display = 'none'; box.innerHTML = ''; return; }
+    wrap.style.display = 'block';
+    box.innerHTML = payments.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+        <span>${esc(p.payment_date)} · ₹${fmt(p.amount)} · ${esc(p.payment_mode||'')}</span>
+        <span style="display:flex;gap:6px;">
+          <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:11px;" onclick="printPaymentVoucher(${p.id},${id})">Voucher</button>
+          <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:11px;color:var(--danger);" onclick="voidExpensePayment(${p.id},${id})">Void</button>
+        </span>
+      </div>`).join('');
+  } catch(e){ wrap.style.display = 'none'; }
+}
+
+// Indian-numbering amount in words (Rupees ... Only) — for the payment voucher.
+function amountInWords(n){
+  n = Math.round(Math.abs(+n || 0));
+  if (n === 0) return 'Rupees Zero Only';
+  const a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  const two = x => x < 20 ? a[x] : b[Math.floor(x/10)] + (x%10 ? ' ' + a[x%10] : '');
+  const three = x => (x >= 100 ? a[Math.floor(x/100)] + ' Hundred' + (x%100 ? ' ' : '') : '') + (x%100 ? two(x%100) : '');
+  let out = '';
+  const cr = Math.floor(n/10000000); n %= 10000000;
+  const lk = Math.floor(n/100000);   n %= 100000;
+  const th = Math.floor(n/1000);     n %= 1000;
+  if (cr) out += three(cr) + ' Crore ';
+  if (lk) out += two(lk)   + ' Lakh ';
+  if (th) out += two(th)   + ' Thousand ';
+  if (n)  out += three(n);
+  return 'Rupees ' + out.trim().replace(/\s+/g,' ') + ' Only';
+}
+
+// Payment voucher for a vendor-bill payment — the office's record (and the
+// vendor's acknowledgement) of money paid out. Mirrors the AR receipt voucher.
+async function printPaymentVoucher(paymentId, expenseId){
+  let exp = null, co = companyInfo || {};
+  try {
+    const [eRes, cRes] = await Promise.all([ window.erp.getExpense(expenseId), window.erp.getCompany() ]);
+    if (eRes && eRes.success) exp = eRes.data;
+    if (cRes && cRes.success && cRes.data) co = cRes.data;
+  } catch(e){}
+  if (!exp){ alert('Could not load the voucher.'); return; }
+  const p = (exp.payments || []).find(x => x.id === paymentId);
+  if (!p){ alert('Payment not found.'); return; }
+  const bankName = (banksList.find(b => b.id === p.bank_account_id) || {}).account_name || '';
+  const vchNo = 'PV-' + String(paymentId).padStart(5, '0');
+  const addrLine = [co.address, co.city, co.state, co.pincode].filter(Boolean).map(esc).join(', ');
+  const contact  = [co.phone && ('Ph: '+co.phone), co.email, co.gstin && ('GSTIN: '+co.gstin)].filter(Boolean).map(esc).join('  ·  ');
+  const logoHtml = (co.logo_path && /^data:image\//.test(co.logo_path))
+    ? `<img src="${co.logo_path}" alt="" style="max-height:58px;max-width:170px;object-fit:contain;margin-bottom:6px;">`
+    : `<div style="font-size:20px;font-weight:800;">${esc(co.name)||'Your Company'}</div>`;
+  const ref = [p.cheque_no && ('Cheque '+p.cheque_no), p.reference_no, bankName].filter(Boolean).map(esc).join(' · ');
+  const html = `<html><head><meta charset="UTF-8"><title>Payment Voucher ${esc(vchNo)}</title><style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;}
+    body{padding:34px;color:#1e293b;}
+    .doc{max-width:720px;margin:0 auto;border:1px solid #e2e8f0;border-radius:10px;padding:26px 30px;}
+    .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #b45309;padding-bottom:14px;margin-bottom:18px;}
+    .title{font-size:22px;font-weight:800;color:#b45309;letter-spacing:.5px;}
+    .meta{font-size:12px;color:#475569;text-align:right;line-height:1.6;}
+    .meta b{color:#0f172a;}
+    .sub{font-size:11px;color:#64748b;margin-top:4px;}
+    .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:13px;}
+    .row .l{color:#64748b;}
+    .row .v{font-weight:600;text-align:right;}
+    .amt-box{background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px 16px;margin:16px 0;display:flex;justify-content:space-between;align-items:center;}
+    .amt-box .big{font-size:24px;font-weight:800;color:#b45309;}
+    .words{font-size:12px;font-style:italic;color:#475569;margin-top:6px;}
+    .foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:34px;}
+    .sign{text-align:center;font-size:12px;color:#475569;}
+    .sign-line{margin-top:40px;border-top:1px solid #94a3b8;padding-top:4px;width:200px;}
+    .note{font-size:10px;color:#94a3b8;margin-top:20px;text-align:center;}
+    @media print{body{padding:0;} .doc{border:none;}}
+  </style></head><body><div class="doc">
+    <div class="head">
+      <div>${logoHtml}<div class="sub">${addrLine}</div><div class="sub">${contact}</div></div>
+      <div class="meta"><div class="title">PAYMENT VOUCHER</div>
+        <div>No: <b>${esc(vchNo)}</b></div>
+        <div>Date: <b>${esc(p.payment_date||'')}</b></div>
+      </div>
+    </div>
+    <div class="row"><span class="l">Paid to</span><span class="v">${esc(exp.vendor_name)||'—'}</span></div>
+    <div class="row"><span class="l">Against Bill</span><span class="v">${esc(exp.bill_no||('#'+expenseId))}</span></div>
+    <div class="row"><span class="l">Payment Mode</span><span class="v">${esc(p.payment_mode||'—')}${ref?(' · '+ref):''}</span></div>
+    ${p.notes?`<div class="row"><span class="l">Remarks</span><span class="v">${esc(p.notes)}</span></div>`:''}
+    <div class="amt-box"><span class="l" style="font-size:13px;color:#b45309;font-weight:700;">Amount Paid</span><span class="big">₹${fmt(p.amount)}</span></div>
+    <div class="words">${esc(amountInWords(p.amount))}</div>
+    <div class="row" style="margin-top:14px;"><span class="l">Bill Total</span><span class="v">₹${fmt(exp.total_amount)}</span></div>
+    <div class="row"><span class="l">Total Paid to date</span><span class="v">₹${fmt(exp.paid_amount)}</span></div>
+    <div class="row"><span class="l">Balance Outstanding</span><span class="v" style="color:${(exp.balance_amount||0)>0.01?'#dc2626':'#16a34a'};">₹${fmt(exp.balance_amount)}</span></div>
+    <div class="foot">
+      <div class="sign" style="text-align:left;">Received by<div class="sign-line">Payee Signature</div></div>
+      <div class="sign">For ${esc(co.name)||'Company'}<div class="sign-line">Authorised Signatory</div></div>
+    </div>
+    <div class="note">This is a computer-generated payment voucher.</div>
+  </div></body></html>`;
+  const w = window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),400);
+}
+
+async function voidExpensePayment(paymentId, expenseId){
+  if (!confirm('Void this payment? This reverses the bank balance and restores the outstanding amount on this bill.')) return;
+  try {
+    const res = await window.erp.voidExpensePayment(paymentId);
+    if (!res || !res.success){ alert('Could not void payment: '+(res&&res.error||'Permission denied — only an owner/admin can void a payment.')); return; }
+    await renderBillPaymentHistory(expenseId);
+    const fresh = await window.erp.getExpense(expenseId);
+    if (fresh && fresh.success){
+      document.getElementById('pbBal').value = '₹'+fmt(fresh.data.balance_amount);
+      document.getElementById('pbAmt').value = fresh.data.balance_amount;
+    }
+    await renderBills();
+    await renderPending();
+    alert('Payment voided.');
+  } catch(e){ alert('Void failed: '+e.message); }
+}
+
+async function confirmBillPay() {
+  const amt = +document.getElementById('pbAmt').value || 0;
+  if (!amt) { alert('Enter payment amount.'); return; }
+  const mode = document.getElementById('pbMode').value;
+  const isCash = /cash/i.test(mode);
+  const bankId = isCash ? null : (+document.getElementById('pbBank').value || null);
+  if (!isCash && !bankId) { alert('Select the bank account this payment was made from (or choose Cash).'); return; }
+  const payment = {
+    payment_date: document.getElementById('pbDate').value || today(),
+    amount:       amt,
+    payment_mode: mode,
+    bank_account_id: bankId,
+    tds_deducted: +document.getElementById('pbTds').value || 0,
+    notes:        document.getElementById('pbNotes').value.trim()
+  };
+  try {
+    const r = await window.erp.payExpense(payExpenseId, payment);
+    if (r && r.success === false) { alert('Could not record payment: ' + (r.error || 'Unknown error')); return; }
+    closeModal('payBillModal');
+    await renderBills();
+    await renderPending();
+    alert('Payment of ₹' + fmt(amt) + ' recorded successfully.');
+  } catch(e) {
+    alert('Error recording payment: ' + (e.message || e));
+  }
+}
+
+// ─── PURCHASE ORDERS
+function renderPOItems() {
+  document.getElementById('poItemsBody').innerHTML = poItems.map((it, i) => `
+    <tr>
+      <td><input type="text" value="${it.description || ''}" placeholder="Item description"
+          oninput="poItems[${i}].description=this.value"></td>
+      <td><input type="number" value="${it.qty || 1}" min="0" style="width:70px;"
+          oninput="poItems[${i}].qty=+this.value;calcPOTotals()"></td>
+      <td><input type="text" value="${it.unit || 'pcs'}" style="width:60px;"
+          oninput="poItems[${i}].unit=this.value"></td>
+      <td><input type="number" value="${it.rate || 0}" min="0" style="width:90px;"
+          oninput="poItems[${i}].rate=+this.value;calcPOTotals()"></td>
+      <td class="amount" style="width:90px;">₹${fmt((it.qty||1)*(it.rate||0))}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="removePOItem(${i})">
+        <i data-lucide="trash-2" style="width:12px;height:12px;"></i></button></td>
+    </tr>`).join('');
+  lucide.createIcons();
+  calcPOTotals();
+}
+
+function addPOItem() {
+  poItems.push({ description: '', qty: 1, unit: 'pcs', rate: 0 });
+  renderPOItems();
+}
+
+function removePOItem(i) {
+  poItems.splice(i, 1);
+  renderPOItems();
+}
+
+function calcPOTotals() {
+  const sub  = poItems.reduce((s, it) => s + (it.qty || 1) * (it.rate || 0), 0);
+  const gRate = +document.getElementById('poGstRate').value || 0;
+  const gst   = sub * gRate / 100;
+  const total = sub + gst;
+  document.getElementById('poTaxSub').textContent   = '₹' + fmt(sub);
+  document.getElementById('poTaxGst').textContent   = '₹' + fmt(gst);
+  document.getElementById('poTaxTotal').textContent = '₹' + fmt(total);
+}
+
+function openPOModal(id) {
+  editPOId = id || null;
+  poItems  = [];
+  document.getElementById('poModalTitle').textContent = id ? '📋 Edit Purchase Order' : '📋 New Purchase Order';
+  document.getElementById('poVendor').innerHTML = buildVendorOptions('');
+  document.getElementById('poSite').innerHTML   = buildSiteOptions('');
+  document.getElementById('poNo').value         = '';
+  document.getElementById('poDate').value       = today();
+  const del = new Date(); del.setDate(del.getDate() + 14);
+  document.getElementById('poDelivery').value   = del.toISOString().split('T')[0];
+  document.getElementById('poStatus').value     = 'draft';
+  document.getElementById('poGstRate').value    = '12';
+  document.getElementById('poNotes').value      = '';
+
+  if (id) {
+    loadPOForEdit(id);
+  } else {
+    poItems = [{ description: '', qty: 1, unit: 'pcs', rate: 0 }];
+    renderPOItems();
+  }
+  document.getElementById('poModal').classList.add('open');
+}
+
+async function loadPOForEdit(id) {
+  try {
+    const res = await window.erp.getPurchaseOrders({ id });
+    const list = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+    const po = list.find(p => p.id == id);
+    if (!po) return;
+    document.getElementById('poVendor').innerHTML = buildVendorOptions(po.vendor_id);
+    document.getElementById('poSite').innerHTML   = buildSiteOptions(po.site_id);
+    document.getElementById('poNo').value         = po.po_no || '';
+    document.getElementById('poDate').value       = po.po_date || '';
+    document.getElementById('poDelivery').value   = po.delivery_date || '';
+    document.getElementById('poStatus').value     = po.status || 'draft';
+    document.getElementById('poNotes').value      = po.notes || '';
+    poItems = (po.items && po.items.length)
+      ? po.items.map(it => ({ description: it.description, qty: it.qty, unit: it.unit, rate: it.rate }))
+      : [{ description: '', qty: 1, unit: 'pcs', rate: 0 }];
+    renderPOItems();
+  } catch(e) {
+    console.error('loadPOForEdit error', e);
+    poItems = [{ description: '', qty: 1, unit: 'pcs', rate: 0 }];
+    renderPOItems();
+  }
+}
+
+function onPOVendorChange() {}
+function onPOSiteChange()   {}
+
+async function savePO() {
+  const vendorEl   = document.getElementById('poVendor');
+  const siteEl     = document.getElementById('poSite');
+  const vendorId   = vendorEl.value;
+  const vendorName = vendorEl.options[vendorEl.selectedIndex]
+    ? vendorEl.options[vendorEl.selectedIndex].text : '';
+  const poNo = document.getElementById('poNo').value.trim();
+  if (!poNo)     { alert('PO number is required.'); return; }
+  if (!vendorId) { alert('Please select a vendor.'); return; }
+
+  const siteId   = siteEl.value;
+  const siteName = siteEl.options[siteEl.selectedIndex]
+    ? siteEl.options[siteEl.selectedIndex].text : '';
+
+  const sub   = poItems.reduce((s, it) => s + (it.qty || 1) * (it.rate || 0), 0);
+  const gRate = +document.getElementById('poGstRate').value || 0;
+  const gst   = sub * gRate / 100;
+  const total = sub + gst;
+
+  const data = {
+    ...(editPOId ? { id: editPOId } : {}),
+    po_no:         poNo,
+    vendor_id:     vendorId,
+    vendor_name:   vendorName,
+    site_id:       siteId || null,
+    site_name:     siteId ? siteName : '',
+    po_date:       document.getElementById('poDate').value,
+    delivery_date: document.getElementById('poDelivery').value,
+    items:         poItems,
+    subtotal:      Math.round(sub),
+    gst_amount:    Math.round(gst),
+    total_amount:  Math.round(total),
+    status:        document.getElementById('poStatus').value,
+    notes:         document.getElementById('poNotes').value.trim()
+  };
+
+  const btn = document.getElementById('savePOBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    await window.erp.savePurchaseOrder(data);
+    closeModal('poModal');
+    await renderPOs();
+  } catch(e) {
+    console.error('savePO error', e);
+    alert('Error saving PO: ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="save" style="width:14px;height:14px;"></i> Save PO';
+    lucide.createIcons();
+  }
+}
+
+async function renderPOs() {
+  const search = (document.getElementById('poSearch') || {value:''}).value.toLowerCase();
+  try {
+    const res = await window.erp.getPurchaseOrders({});
+    allPOs = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+  } catch(e) {
+    console.error('renderPOs error', e);
+    allPOs = [];
+  }
+
+  const filtered = search
+    ? allPOs.filter(p =>
+        (p.po_no || '').toLowerCase().includes(search) ||
+        (p.vendor_name || '').toLowerCase().includes(search))
+    : allPOs;
+
+  // KPIs
+  const kTotal    = filtered.length;
+  const kValue    = filtered.reduce((s, p) => s + (p.total_amount || 0), 0);
+  const kOpen     = filtered.filter(p => p.status === 'draft' || p.status === 'sent').length;
+  const kApproved = filtered.filter(p => p.status === 'approved').length;
+  document.getElementById('kPoTotal').textContent    = kTotal;
+  document.getElementById('kPoValue').textContent    = '₹' + fmt(kValue);
+  document.getElementById('kPoOpen').textContent     = kOpen;
+  document.getElementById('kPoApproved').textContent = kApproved;
+
+  const body  = document.getElementById('poBody');
+  const empty = document.getElementById('poEmpty');
+  empty.style.display = filtered.length ? 'none' : 'block';
+
+  body.innerHTML = filtered.map(p => {
+    const st = p.status || 'draft';
+    return `<tr>
+      <td><div class="name-bold">${esc(p.po_no || '—')}</div></td>
+      <td><div class="name-bold">${esc(p.vendor_name || '—')}</div></td>
+      <td><div class="sub-text">${esc(p.site_name || '—')}</div></td>
+      <td>${p.po_date || '—'}</td>
+      <td>${p.delivery_date || '—'}</td>
+      <td class="amount">₹${fmt(p.subtotal)}</td>
+      <td class="amount" style="color:var(--accent);">₹${fmt(p.gst_amount)}</td>
+      <td class="amount dr">₹${fmt(p.total_amount)}</td>
+      <td><span class="badge b-${st === 'received' ? 'paid' : st === 'approved' ? 'approved' : st === 'cancelled' ? 'rejected' : 'pending'}">${st}</span></td>
+      <td><div class="action-btns">
+        <button class="btn btn-outline btn-sm" title="Edit" onclick="openPOModal(${p.id})"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>
+        <button class="btn btn-danger btn-sm" title="Delete" onclick="deletePO(${p.id})"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+async function deletePO(id) {
+  if (!confirm('Delete this purchase order?')) return;
+  try {
+    const r = await window.erp.deletePurchaseOrder(id);
+    if (r && r.success === false) { alert('Could not delete PO: ' + (r.error || 'Unknown error')); return; }
+    await renderPOs();
+  } catch(e) {
+    alert('Error deleting PO: ' + (e.message || e));
+  }
+}
+
+function exportPOsCSV() {
+  let csv = 'PO No,Vendor,Site,PO Date,Delivery,Subtotal,GST,Total,Status\n';
+  allPOs.forEach(p => {
+    csv += `"${p.po_no||''}","${p.vendor_name||''}","${p.site_name||''}","${p.po_date||''}","${p.delivery_date||''}",${p.subtotal||0},${p.gst_amount||0},${p.total_amount||0},"${p.status||''}"\n`;
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'PurchaseOrders.csv';
+  a.click();
+}
+
+// ─── PENDING PAYMENTS
+async function renderPending() {
+  let expenses = [];
+  try {
+    const res = await window.erp.getExpenses({});
+    expenses = (res && res.data) ? res.data : (Array.isArray(res) ? res : []);
+  } catch(e) {
+    console.error('renderPending error', e);
+  }
+
+  const search   = (document.getElementById('pendSearch') || {value:''}).value.toLowerCase();
+  const now      = new Date();
+  const weekOut  = new Date(now); weekOut.setDate(weekOut.getDate() + 7);
+
+  const pending = expenses.filter(b => (b.balance_amount || 0) > 0);
+  const filtered = search
+    ? pending.filter(b =>
+        (b.vendor_name || '').toLowerCase().includes(search) ||
+        (b.bill_no || '').toLowerCase().includes(search))
+    : pending;
+
+  let kTotal = 0, kOver = 0, kWeek = 0;
+  filtered.forEach(b => {
+    const bal  = b.balance_amount || 0;
+    kTotal    += bal;
+    const due  = b.due_date ? new Date(b.due_date) : null;
+    if (due && due < now)     kOver += bal;
+    if (due && due <= weekOut && due >= now) kWeek += bal;
+  });
+
+  document.getElementById('kPendTotal').textContent   = '₹' + fmt(kTotal);
+  document.getElementById('kPendOverdue').textContent = '₹' + fmt(kOver);
+  document.getElementById('kPendWeek').textContent    = '₹' + fmt(kWeek);
+  document.getElementById('kPendCount').textContent   = filtered.length;
+
+  const body  = document.getElementById('pendBody');
+  const empty = document.getElementById('pendEmpty');
+  empty.style.display = filtered.length ? 'none' : 'block';
+
+  body.innerHTML = filtered.map(b => {
+    const st = b.status || 'pending';
+    const due = b.due_date ? new Date(b.due_date) : null;
+    const isOverdue = due && due < now;
+    return `<tr>
+      <td><div class="name-bold">${esc(b.bill_no || '—')}</div></td>
+      <td><div class="name-bold">${esc(b.vendor_name || '—')}</div></td>
+      <td><span class="badge cat-admin">${esc(b.category || '—')}</span></td>
+      <td>${b.bill_date || '—'}</td>
+      <td style="color:${isOverdue ? 'var(--danger)' : 'inherit'};">${b.due_date || '—'} ${isOverdue ? '⚠️' : ''}</td>
+      <td class="amount dr">₹${fmt(b.total_amount)}</td>
+      <td class="amount" style="color:var(--success);">₹${fmt(b.paid_amount)}</td>
+      <td class="amount" style="color:var(--accent);">₹${fmt(b.balance_amount)}</td>
+      <td><span class="badge b-${st}">${st}</span></td>
+      <td><div class="action-btns">
+        <button class="btn btn-success btn-sm" title="Pay Now" onclick="openPayBill(${b.id},'${jsArg(b.vendor_name||'')}',${b.balance_amount||0})">
+          <i data-lucide="credit-card" style="width:12px;height:12px;"></i> Pay
+        </button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+function exportPendingCSV() {
+  const rows = Array.from(document.getElementById('pendBody').querySelectorAll('tr'));
+  let csv = 'Bill No,Vendor,Category,Bill Date,Due Date,Total,Paid,Balance,Status\n';
+  // re-use allExpenses filtered
+  const now = new Date();
+  allExpenses.filter(b => (b.balance_amount || 0) > 0).forEach(b => {
+    csv += `"${b.bill_no||''}","${b.vendor_name||''}","${b.category||''}","${b.bill_date||''}","${b.due_date||''}",${b.total_amount||0},${b.paid_amount||0},${b.balance_amount||0},"${b.status||''}"\n`;
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'PendingPayments.csv';
+  a.click();
+}
+
+// ─── OCR ENGINE
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('ocrZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleOCRFile(file);
+}
+
+function handleOCRFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const preview = document.getElementById('imgPreview');
+    preview.src = e.target.result;
+    preview.classList.add('show');
+    runOCR(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function runOCR(imageData) {
+  const prog   = document.getElementById('ocrProgress');
+  const bar    = document.getElementById('progBar');
+  const txt    = document.getElementById('progText');
+  const result = document.getElementById('ocrResult');
+  prog.classList.add('show');
+  result.classList.remove('show');
+  bar.style.width = '0%'; txt.textContent = 'Loading OCR engine...';
+
+  if (typeof Tesseract === 'undefined') {
+    txt.textContent = '⚠️ OCR engine needs internet on first use. Please enter details manually.';
+    return;
+  }
+  try {
+    const worker = await Tesseract.createWorker('eng', 1, {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const pct = Math.round(m.progress * 100);
+          bar.style.width = pct + '%';
+          txt.textContent = 'Reading text... ' + pct + '%';
+        } else {
+          txt.textContent = m.status + '...';
+          if (m.status === 'loading tesseract core')       bar.style.width = '10%';
+          if (m.status === 'initializing tesseract')       bar.style.width = '30%';
+          if (m.status === 'loading language traineddata') bar.style.width = '50%';
+          if (m.status === 'initializing api')             bar.style.width = '70%';
+        }
+      }
+    });
+    const { data: { text } } = await worker.recognize(imageData);
+    await worker.terminate();
+    bar.style.width = '100%'; txt.textContent = '✅ OCR Complete!';
+    parseOCRText(text);
+  } catch(err) {
+    txt.textContent = '❌ OCR failed. Please enter manually.';
+    bar.style.width = '0%';
+    console.error(err);
+  }
+}
+
+function parseOCRText(text) {
+  const lines    = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const fullText = text.toUpperCase();
+
+  // Vendor name: first meaningful line
+  let vendor = lines[0] || 'Unknown Vendor';
+  for (let l of lines.slice(0, 5)) {
+    if (l.length > 3 && l.length < 60 && !/^\d/.test(l)) { vendor = l; break; }
+  }
+
+  // Bill / invoice number
+  let billno = '—';
+  const billMatch = text.match(/(?:invoice|bill|receipt|ref)[\s#:.no]*([A-Z0-9\/\-]+)/i);
+  if (billMatch) billno = billMatch[1];
+
+  // Date
+  let date = '—';
+  const dateMatch = text.match(/(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/);
+  if (dateMatch) {
+    const parts = dateMatch[1].split(/[\/\-\.]/);
+    if (parts.length === 3) {
+      const y = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+      date = `${y}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+    }
+  }
+
+  // Amounts
+  const amounts = [];
+  const amtMatches = text.matchAll(/(?:rs\.?|inr|₹)\s*([0-9,]+(?:\.[0-9]{1,2})?)/gi);
+  for (const m of amtMatches) amounts.push(parseFloat(m[1].replace(/,/g,'')));
+  const numMatches = text.matchAll(/\b(\d{1,8}(?:,\d{3})*(?:\.[0-9]{2})?)\b/g);
+  for (const m of numMatches) {
+    const v = parseFloat(m[1].replace(/,/g,''));
+    if (v > 100 && v < 10000000) amounts.push(v);
+  }
+  const uniqueAmts = [...new Set(amounts)].sort((a,b) => a - b);
+  const total    = uniqueAmts.length ? uniqueAmts[uniqueAmts.length - 1] : 0;
+  const subtotal = uniqueAmts.length > 1 ? uniqueAmts[uniqueAmts.length - 2] : total;
+  const gst      = Math.max(0, total - subtotal);
+
+  // GSTIN
+  let gstin = '—';
+  const gstinMatch = text.match(/\b([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1})\b/i);
+  if (gstinMatch) gstin = gstinMatch[1].toUpperCase();
+
+  ocrData = { vendor, billno, date, subtotal: Math.round(subtotal), gst: Math.round(gst), total: Math.round(total), gstin };
+
+  document.getElementById('ocr-vendor').textContent  = vendor;
+  document.getElementById('ocr-billno').textContent  = billno;
+  document.getElementById('ocr-date').textContent    = date;
+  document.getElementById('ocr-amount').textContent  = '₹' + fmt(subtotal);
+  document.getElementById('ocr-gst').textContent     = '₹' + fmt(gst);
+  document.getElementById('ocr-total').textContent   = '₹' + fmt(total);
+  document.getElementById('ocr-gstin').textContent   = gstin;
+  document.getElementById('ocrResult').classList.add('show');
+}
+
+function applyOCRData() {
+  document.getElementById('ocr-f-vendor').value = ocrData.vendor !== 'Unknown Vendor' ? ocrData.vendor : '';
+  document.getElementById('ocr-f-billno').value = ocrData.billno !== '—' ? ocrData.billno : '';
+  document.getElementById('ocr-f-date').value   = ocrData.date   !== '—' ? ocrData.date   : '';
+  document.getElementById('ocr-f-sub').value    = ocrData.subtotal || '';
+  document.getElementById('ocr-f-gst').value    = ocrData.gst     || '';
+  document.getElementById('ocr-f-total').value  = ocrData.total   || '';
+  document.getElementById('ocr-f-gstin').value  = ocrData.gstin   !== '—' ? ocrData.gstin : '';
+  alert('✅ OCR data applied! Please review all fields and click "Save Bill to Records".');
+}
+
+function calcOCRTotal() {
+  const sub = +document.getElementById('ocr-f-sub').value || 0;
+  const gst = +document.getElementById('ocr-f-gst').value || 0;
+  document.getElementById('ocr-f-total').value = sub + gst;
+}
+
+async function saveOCRBill() {
+  const vendorName = document.getElementById('ocr-f-vendor').value.trim();
+  const total      = +document.getElementById('ocr-f-total').value || 0;
+  if (!vendorName) { alert('Vendor name is required.'); return; }
+
+  const siteEl   = document.getElementById('ocr-f-site');
+  const siteId   = siteEl ? siteEl.value : '';
+  const siteName = siteEl && siteEl.options[siteEl.selectedIndex]
+    ? siteEl.options[siteEl.selectedIndex].text : '';
+
+  // Try to match vendor by name
+  const matchedVendor = vendorsList.find(v => v.name.toLowerCase() === vendorName.toLowerCase());
+  const vendorId = matchedVendor ? matchedVendor.id : null;
+
+  const sub = +document.getElementById('ocr-f-sub').value || total;
+  const gst = +document.getElementById('ocr-f-gst').value || 0;
+
+  const data = {
+    bill_no:      document.getElementById('ocr-f-billno').value.trim(),
+    vendor_id:    vendorId,
+    vendor_name:  vendorName,
+    vendor_gstin: document.getElementById('ocr-f-gstin').value.trim(),
+    site_id:      siteId || null,
+    site_name:    siteId ? siteName : '',
+    bill_date:    document.getElementById('ocr-f-date').value,
+    category:     document.getElementById('ocr-f-cat').value,
+    description:  document.getElementById('ocr-f-desc').value.trim(),
+    items:        [{ description: document.getElementById('ocr-f-desc').value.trim() || 'OCR Bill', qty: 1, unit: 'lot', rate: sub }],
+    gst_rate:     0,
+    cgst_amount:  0,
+    sgst_amount:  0,
+    igst_amount:  gst,
+    total_gst:    gst,
+    subtotal:     sub,
+    tds_rate:     0,
+    tds_amount:   0,
+    total_amount: total,
+    itc_eligible: 1,
+    status:       document.getElementById('ocr-f-status').value,
+    notes:        'Entered via OCR scan'
+  };
+
+  try {
+    const r = await window.erp.saveExpense(data);
+    if (r && r.success === false) { alert('Could not save bill: ' + (r.error || 'Unknown error')); return; }
+    // Reset OCR form
+    ['ocr-f-vendor','ocr-f-billno','ocr-f-date','ocr-f-sub','ocr-f-gst','ocr-f-total','ocr-f-gstin','ocr-f-desc'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('ocrResult').classList.remove('show');
+    document.getElementById('imgPreview').classList.remove('show');
+    document.getElementById('ocrProgress').classList.remove('show');
+    alert('✅ Bill saved successfully! Switching to Bills list...');
+    switchTab('bills');
+  } catch(e) {
+    alert('Error saving OCR bill: ' + (e.message || e));
+  }
+}
+
+// ─── INIT
+async function init() {
+  await loadDropdowns();
+  await renderBills();
+}
+
+// Called by the app shell when this screen is re-opened or the window regains
+// focus, so bills/POs reflect anything saved elsewhere — no full reload/flash.
+window.refreshPage = function(){
+  const active = document.querySelector('.tab.active');
+  const m = active && (active.getAttribute('onclick') || '').match(/switchTab\('([^']+)'\)/);
+  switchTab(m ? m[1] : 'bills');
+};
+
+// Boot: wait for the secure IPC bridge (window.erp) before initialising.
+// Shows a visible error instead of a dead page if the bridge never appears.
+(function boot(tries) {
+  if (window.erp) { init(); return; }
+  if (tries < 50) { setTimeout(function(){ boot(tries + 1); }, 100); return; }
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:12px 16px;font:600 14px system-ui;text-align:center;';
+  d.textContent = '⚠️ Could not connect to the data engine. Please close and reopen the application. If this repeats, reinstall the latest version.';
+  document.body.appendChild(d);
+})(0);
+</script>
+
+<!-- Management Entry Quick-Widget -->
+<script src="vendor/mgmt-quick-entry.js"></script>
+<script>
+// Pre-fill widget from the currently open vendor bill context
+window._mgmtCtx = function() {
+  const vendorSel = document.getElementById('eVendor');
+  const vendorName = vendorSel && vendorSel.options[vendorSel.selectedIndex] ? vendorSel.options[vendorSel.selectedIndex].text : '';
+  const amt = document.getElementById('eTotalAmt') ? document.getElementById('eTotalAmt').value : '';
+  return { party: vendorName || '', amount: amt || '', ref_no: document.getElementById('eBillNo') ? document.getElementById('eBillNo').value : '' };
+};
+</script>
+</body>
+</html>
