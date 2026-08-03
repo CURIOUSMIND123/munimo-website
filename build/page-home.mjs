@@ -1,30 +1,30 @@
-import { SITE, liveScreen, cta, faq, ORG, icons, beforeAfter, painGrid } from './layout.mjs';
+import { SITE, cta, faq, ORG, icons, beforeAfter } from './layout.mjs';
 import { CLIENTS, tcard, marquee, reviewSchema } from './clients-data.mjs';
 
 const F = faq([
-  ['What exactly does Munimo do?',
-   'We are a custom software company. We design and build the systems a business runs on — accounting and cash books, full ERP, school and clinic management, field and mobile apps, and one-off tools for a process nobody else has. We start from working engines we already own, then shape them to your business, which is why a custom build with us takes weeks rather than years.'],
-  ['Can I try the software before I commit anything?',
-   'Yes, and you should. Every product on this site runs live in your browser with sample data. Nothing to install, no account, no sales call. Open <a href="/software.html">the software page</a>, click into any product and use it properly — add an entry, change a record, run a report.'],
+  ['Do I have to be technical to work with you?',
+   'No. Most of the people we build for run a shop, a school, a clinic or a site — not an IT department. You tell us in plain words what is slow or painful today; we handle the software.'],
+  ['Can I really try it without signing up?',
+   'Yes. Pick your business in the picker at the top and use the real software — add an entry, collect a fee, book an appointment. Nothing to install, no account, no sales call. It resets when you reload.'],
   ['How much does it cost?',
-   'We price to your budget and your scope, not from a fixed rate card. Tell us what the software has to do and what you can spend, and we will tell you honestly what fits, what has to wait, and what we would not charge you for. Small additions to a system we have already built are usually a one-time charge.'],
+   'We price to your budget, not from a rate card, because no two businesses need the same thing. Tell us what it must do and what you can spend, and we will tell you honestly what fits. Small additions to a system we have already built are usually a one-time charge.'],
   ['Do I own the software or rent it?',
-   'Your choice. Take a perpetual licence and the software is yours to keep and run for as long as you like. Or subscribe monthly if you would rather keep costs low and flexible. Either way you are not locked in, and your data is exportable at any time.'],
-  ['What is included after the software goes live?',
-   'Three years of annual maintenance is included at no extra cost — bug fixes, security updates, small changes and support. Most companies charge fifteen to twenty per cent of the licence value every year for this. We do not, for the first three years.'],
-  ['We already have old software. Is moving worth the disruption?',
-   'Usually yes, and it is less disruptive than people expect. We import your existing data, run both systems side by side until you trust the new one, and only then switch. <a href="/legacy-vs-custom.html">This page</a> walks through what staying on legacy software actually costs and how a migration runs.'],
-  ['Do you work with companies outside India?',
-   'Yes. The software handles multiple currencies, tax rules, languages and time zones, and we work with clients remotely as standard. Nothing on this site is India-only.'],
-  ['How quickly can you add something we need?',
-   'Small changes to an existing build usually land in days. A new module is typically two to four weeks. Because we build on our own engines rather than from a blank page, most of what you ask for is configuration and interface work rather than new foundations.'],
+   'Your choice — own the licence outright and keep it for good, or subscribe monthly. Either way your data is yours and exportable at any time.'],
+  ['What happens after it goes live?',
+   'Three years of maintenance is included free — fixes, updates, small changes and support. Most companies charge fifteen to twenty per cent of the licence value every year for this. We do not, for the first three years.'],
+  ['We already have old software. Is switching worth it?',
+   'Usually, and it is less painful than people fear. We bring your data across and run both systems side by side until you trust the new one, then switch. Nobody goes live on a promise.'],
+  ['How fast can you build or change something?',
+   'A change to an existing system usually lands in days. A new system is typically weeks, because we build on engines we already own instead of starting from a blank page.'],
+  ['Do you work outside India?',
+   'Yes — multiple currencies, tax rules and languages are built in, and we work with clients remotely as standard.'],
 ]);
 
 export const meta = {
   path: 'index.html',
-  title: 'Munimo — Custom software built around your business',
-  desc: 'Custom ERP, accounting, clinic, school and field software, built around how your business works. Try every product live in your browser. Own it or subscribe.',
-  keywords: 'custom software development company, bespoke business software, custom ERP development, perpetual licence software, legacy software replacement, clinic management software, try ERP without signup',
+  title: 'Munimo — Custom software for schools, clinics, shops and trades',
+  desc: 'Pick your business and try the real software free — school, clinic, trading, retail. Then we build it around how you work. Own it or subscribe.',
+  keywords: 'custom software for small business, school management software, clinic management software, retail billing software, custom ERP, try business software free no signup, perpetual licence software',
   css: ['motion.css'],
   schema: {
     '@context': 'https://schema.org',
@@ -34,250 +34,123 @@ export const meta = {
         publisher: { '@id': SITE.domain + '/#org' } },
       { '@type': 'Service', name: 'Custom software development',
         provider: { '@id': SITE.domain + '/#org' }, areaServed: 'Worldwide',
-        description: 'Custom business software built on proven engines: ERP, accounting, clinic and school management, field and mobile applications. Perpetual licence or subscription, with three years of maintenance included.' },
+        description: 'Custom business software for schools, clinics, trading, retail and field operations, built on proven engines. Perpetual licence or subscription, three years of maintenance included.' },
       ...reviewSchema(SITE),
       F.schema,
     ],
   },
 };
 
-/* ── the scroll-driven product tour: real screens, real captions ── */
-const TOUR = [
-  ['Money', 'See the day before it closes',
-   'Cash and bank across every account, what is owed to you, what you owe, and the entries that moved today — live, not a report someone compiles on Monday.',
-   'app'],
-  ['Billing', 'Invoice, collect, chase',
-   'Quotations through to invoices and receipts, tax applied per line, and an ageing list that tells you exactly who is overdue and by how much.',
-   'invoices'],
-  ['People', 'Attendance through to payslip',
-   'Mark a crew present from a phone on site, and watch it flow into wages, advances and a salary run without anyone re-typing a name.',
-   'labour'],
-  ['Proof', 'Numbers you can defend',
-   'Every figure on every report links back to the entries behind it. When somebody asks why a number looks wrong, the answer takes seconds.',
-   'reports'],
+/* Each chip loads a REAL demo. School and clinic are their own dedicated apps;
+   trading / retail / contractor open the ERP configured that way. */
+const INDUSTRIES = [
+  ['School', icons.school, '/assets/shots/school.webp', '/demos/school/', 'munimo.online/demos/school',
+   '<b>For a school</b> — admissions, attendance, fees with printed receipts, exams and staff payroll.'],
+  ['Clinic', icons.heartbeat, '/assets/shots/clinic.webp', '/demos/clinic/', 'munimo.online/demos/clinic',
+   '<b>For a clinic</b> — doctor appointments, patient records, billing, pharmacy stock and payroll.'],
+  ['Trading', icons.box, '/assets/shots/app.webp', '/web-app/app.html', 'munimo.online/web-app',
+   '<b>For trading &amp; distribution</b> — invoicing, purchases, stock, receivables and full accounts.'],
+  ['Retail shop', icons.cart, '/assets/shots/cashbook.webp', '/web-app/lite.html', 'munimo.online/web-app',
+   '<b>For a shop</b> — fast billing, day-end cash, supplier dues and live margins.'],
+  ['Contractor', icons.wrench, '/assets/shots/labour.webp', '/web-app/app.html', 'munimo.online/web-app',
+   '<b>For a contractor</b> — site cash books, labour attendance and wages, subcontractor bills.'],
 ];
 
-const BENTO = [
-  ['full-erp.html', 'Full business ERP', 'Invoicing, purchases, stock, payroll, tax and profit — the whole office in one system.',
-   ['Any industry', 'Multi-branch'], 'app', 'bx-4 bx-wide'],
-  ['cash-book.html', 'Cash Book', 'Money in, money out, balances that tally. Web and phone share one book.',
-   ['Web + phone', 'Approvals'], 'cashflow', 'bx-2'],
-  ['mobile-app.html', 'Mobile field app', 'For staff with no signal. Captures offline, syncs later, office approves.',
-   ['Offline', 'Photo proof'], 'phone-home', 'bx-2'],
-  ['school-erp.html', 'School &amp; clinic systems', 'Admissions, fees and attendance. Patient bookings and doctor appointments. Two separate live demos you can open right now.',
-   ['Fees + receipts', 'Bookings'], 'school', 'bx-4 bx-wide'],
+const SERVICES = [
+  ['/school-erp.html', icons.school, 'School ERP', 'Admissions, attendance, fees with receipts, exams and staff payroll.', true],
+  ['/clinic-erp.html', icons.heartbeat, 'Clinic ERP', 'Appointments, patient records, billing, pharmacy stock and payroll.', true],
+  ['/full-erp.html', icons.layers, 'Full business ERP', 'Invoicing, purchases, stock, payroll, tax and profit — one system.', true],
+  ['/cash-book.html', icons.ledger, 'Cash Book', 'Money in, money out, balances that tally. Web and phone together.', true],
+  ['/mobile-app.html', icons.phone, 'Mobile field app', 'For staff on site with no signal. Captures offline, office approves.', true],
+  ['/custom-software.html', icons.wrench, 'Something custom', 'A system nobody sells you — built on our engines, in weeks not years.', false],
+];
+
+const PIPE = [
+  ['Pick or tell us', 'Try a demo above, or tell us the one thing your current system cannot do.'],
+  ['See it in weeks', 'A working version shaped to you — not a document. You use it and tell us what is wrong.'],
+  ['We move your data', 'Your records come across. Old and new run together until you trust the new one.'],
+  ['You own it', 'Own the licence or subscribe. Three years of maintenance included, free.'],
 ];
 
 export const body = `
-<!-- ══════════ HERO ══════════ -->
-<section class="sec" style="padding:clamp(88px,8.5vw,110px) 0 clamp(34px,4vw,56px);overflow:hidden">
+<!-- ══════════ HERO — pick your business, use your software ══════════ -->
+<section class="sec" style="padding:clamp(84px,8vw,104px) 0 clamp(30px,3.5vw,48px);overflow:hidden">
   <div class="wrap" style="position:relative;z-index:1">
-    <div class="center" style="max-width:830px;margin:0 auto">
-      <span class="pill rv">Custom software &middot; 5 businesses running on it</span>
-      <h1 class="h-display rv rv2" style="margin-top:17px">
-        Still running your business<br>on <span class="gold">spreadsheets and WhatsApp?</span>
+    <div class="center" style="max-width:820px;margin:0 auto">
+      <span class="pill rv">Custom software &middot; 5 businesses already run on it</span>
+      <h1 class="h-display rv rv2" style="margin-top:16px">
+        Your business deserves software<br>that <span class="gold">actually fits it.</span>
       </h1>
-      <p class="lead rv rv3" style="margin:19px auto 0;max-width:600px">
-        We build the software that replaces them &mdash; shaped to how
-        <b style="color:var(--t);font-weight:700">your</b> business already works.
-        Schools, clinics, shops, contractors. <b style="color:var(--t);font-weight:700">Try it below. No sign-up.</b>
-      </p>
-      <div class="rv rv4" style="display:flex;gap:12px;justify-content:center;margin-top:23px;flex-wrap:wrap">
-        <a class="btn btn-em btn-big" href="/software.html">Open a live demo</a>
-        <a class="btn btn-ghost btn-big" href="/contact.html">Get a price</a>
-      </div>
-      <p class="faint rv rv5" style="margin-top:15px;font-size:13px">
-        Priced to your budget &middot; own the licence or subscribe &middot; three years maintenance included
+      <p class="lead rv rv3" style="margin:17px auto 0;max-width:590px">
+        Not another template you bend yourself around.
+        <b style="color:var(--t);font-weight:700">Pick your trade below and use the real thing</b> &mdash;
+        no sign-up, no install.
       </p>
     </div>
 
-    <!-- the real software, tilted into the page -->
-    <div class="deck rv rv5">
-      <div class="deck-glow"></div>
-      <div class="deck-stage">
-        <div class="deck-main">
-          <img src="/assets/shots/app.webp" width="1500" height="940" alt="The Munimo ERP dashboard showing bank balances, receivables and the day's entries" fetchpriority="high">
-        </div>
-        <div class="deck-chip a">
-          <div class="k">In bank</div><div class="v em num">53,57,500</div><div class="s">4 accounts &middot; live</div>
-        </div>
-        <div class="deck-chip b">
-          <div class="k">Approved today</div><div class="v gold num">18</div><div class="s">Nothing pending</div>
-        </div>
-        <div class="deck-phone">
-          <img src="/assets/shots/phone-home.webp" width="400" height="840" alt="The same books on the Munimo phone app" loading="lazy">
+    <div class="pick rv rv4">
+      <div class="pchips">
+        ${INDUSTRIES.map((x, i) => `
+        <button class="pchip${i === 0 ? ' on' : ''}" data-label="${x[0]}"
+          data-shot="${x[2]}" data-src="${x[3]}" data-url="${x[4]}" data-line="${x[5].replace(/"/g, '&quot;')}">
+          ${x[1]}<span>${x[0]}</span></button>`).join('')}
+      </div>
+      <p class="pline"></p>
+      <div class="pwrap">
+        <div class="pframe">
+          <div class="pbar"><i class="r"></i><i class="y"></i><i class="g"></i>
+            <span class="purl"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span class="purl-t"></span></span>
+          </div>
+          <div class="pscreen">
+            <img class="pshot" src="/assets/shots/school.webp" width="1500" height="940" alt="Live business software demo" fetchpriority="high">
+            <iframe id="pframe" title="Live demo" loading="lazy"></iframe>
+            <div class="plaunch" role="button" aria-label="Open the live demo">
+              <span class="ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+              <b>Open the demo</b>
+              <small>Real software &middot; sample data &middot; no sign-up</small>
+            </div>
+          </div>
         </div>
       </div>
+      <p class="pnote">It runs entirely in your browser. Nothing you type is saved or sent anywhere.
+        &nbsp;·&nbsp; <a href="/software.html">See all software &rarr;</a></p>
     </div>
   </div>
 </section>
 
-<!-- ══════════ CLIENT MARQUEE ══════════ -->
-<section class="sec-tight" style="padding-top:clamp(46px,6vw,70px);padding-bottom:0">
+<!-- ══════════ PROOF STRIP ══════════ -->
+<section class="sec-tight" style="padding:clamp(30px,4vw,50px) 0">
   <div class="wrap">
-    <p class="center faint rv" style="font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:24px">
-      Built for and trusted by
+    <p class="center faint rv" style="font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:20px">
+      Trusted by real businesses &middot; rated 5.0
     </p>
   </div>
   <div class="rv rv2">${marquee()}</div>
 </section>
 
-<!-- ══════════ PAIN ══════════ -->
-<section class="sec-tight">
-  <div class="wrap">
-    <div class="sechead center" style="margin-bottom:clamp(28px,3.4vw,42px)">
-      <span class="eyebrow">Sound familiar?</span>
-      <h2 class="h1 rv">If two of these are true,<br>your software is costing you money.</h2>
-    </div>
-    ${painGrid([
-      ['&ldquo;I don&rsquo;t know today&rsquo;s number until someone sends it.&rdquo;',
-       'Cash, stock, dues, attendance — all of it lives in someone else&rsquo;s file until they get around to it.'],
-      ['&ldquo;Only one person knows how it works.&rdquo;',
-       'The spreadsheet, the workaround, the export order. Their notice period is your business risk.'],
-      ['&ldquo;We type the same thing three times.&rdquo;',
-       'Once on paper, once in the sheet, once in the billing software. At least one of them is wrong.'],
-      ['&ldquo;Month-end takes a week.&rdquo;',
-       'And it still does not tally. Everyone stops doing real work to chase numbers.'],
-      ['&ldquo;The software can&rsquo;t do it, so we do it by hand.&rdquo;',
-       'You bought a package and bent your business to fit it. The gaps are held together by WhatsApp.'],
-      ['&ldquo;Asking for a change costs money and takes months.&rdquo;',
-       'So you stopped asking. Your business improves; the software does not.'],
-    ])}
-  </div>
-</section>
-
-<!-- ══════════ STAT BAND ══════════ -->
-<section class="sec-tight">
-  <div class="wrap">
-    <div class="band rv">
-      <div><div class="bv em"><span data-count="3">3</span> yrs</div><div class="bl">Maintenance included, free</div></div>
-      <div><div class="bv">100%</div><div class="bl">Ownership option on every build</div></div>
-      <div><div class="bv gold">Days</div><div class="bl">Turnaround on a change you ask for</div></div>
-      <div><div class="bv">Any nation</div><div class="bl">Multi-currency, tax and language</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════ SCROLL TOUR — the real screens ══════════ -->
+<!-- ══════════ SERVICES — what we can build ══════════ -->
 <section class="sec">
   <div class="wrap">
     <div class="sechead center">
-      <span class="eyebrow">Inside the software</span>
-      <h2 class="h1 rv">This is what your team<br>would open every morning.</h2>
+      <span class="eyebrow">What we build for you</span>
+      <h2 class="h1 rv">Everything your business runs on,<br>in one system that fits it.</h2>
+      <p class="lead rv rv2">Ready-made where it can be, custom where it must be. Open any of them live.</p>
     </div>
-    <div class="tour">
-      <div class="tour-steps">
-        ${TOUR.map(([tag, h, p], i) => `
-        <div class="tour-step${i ? '' : ' on'}" role="button" tabindex="0">
-          <span class="n">0${i + 1}</span>
-          <h3>${h}</h3>
-          <p>${p}</p>
-          <span class="tag" style="margin-top:14px">${tag}</span>
-        </div>`).join('')}
-      </div>
-      <div class="tour-vis">
-        <div class="tour-frame">
-          <div class="tour-imgs">
-            ${TOUR.map(([, h, , shot], i) => `
-            <img src="/assets/shots/${shot}.webp" width="1500" height="940" alt="${h}"${i ? ' loading="lazy"' : ' class="on"'}>`).join('')}
-          </div>
-        </div>
-        <p class="figure-cap">Real screens from the running product &mdash;
-          <a href="/software.html" class="em" style="text-decoration:underline;text-underline-offset:3px">open them live</a>
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════ TOUCH IT ══════════ -->
-<section class="sec sec-alt">
-  <div class="wrap">
-    <div class="sechead center">
-      <span class="eyebrow">Not a video. Not a mockup.</span>
-      <h2 class="h1 rv">Use the real thing, right here.</h2>
-      <p class="lead rv rv2">
-        The actual software, loaded with sample data for a company that does not exist.
-        Add an entry and watch the balances move. It resets when you reload, and it
-        never touches a real customer's books.
-      </p>
-    </div>
-    <div class="rv rv3" style="max-width:1080px;margin:0 auto;position:relative">
-      <div class="glow" style="width:80%;height:70%;top:10%;left:10%;background:radial-gradient(ellipse,rgba(18,185,129,.22),transparent 66%)"></div>
-      <div style="position:relative">
-        ${liveScreen({ src: '/web-app/app.html', url: 'munimo.online/web-app',
-                       poster: '/assets/shots/app.webp', label: 'Start the live ERP',
-                       note: 'Real software, sample data, no sign-up' })}
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════ WHAT WE BUILD — bento ══════════ -->
-<section class="sec">
-  <div class="wrap">
-    <div class="sechead">
-      <span class="eyebrow">What we build</span>
-      <h2 class="h1 rv">Finished systems, running<br>real businesses today.</h2>
-      <p class="lead rv rv2">
-        These are also where your build starts. We reshape them to your process instead of
-        charging you to invent the same foundations again.
-      </p>
-    </div>
-    <div class="bento">
-      ${BENTO.map(([href, name, blurb, tags, shot, cls], i) => `
-      <a class="bx ${cls} rv ${i ? 'rv' + Math.min(i + 1, 4) : ''}" href="/${href}">
-        <div class="bx-body">
-          <h3>${name}</h3>
-          <p>${blurb}</p>
-          <div class="bx-tags">${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>
-          <span class="bx-arrow">Open it live <span aria-hidden="true">&rarr;</span></span>
-        </div>
-        <div class="bx-shot${shot.startsWith('phone') ? ' portrait' : ''}"><img src="/assets/shots/${shot}.webp" alt="${name}" loading="lazy"></div>
+    <div class="svcs">
+      ${SERVICES.map(([href, ico, name, blurb, live], i) => `
+      <a class="svc rv ${i % 3 ? 'rv' + ((i % 3) + 1) : ''}" href="${href}">
+        ${live ? '<span class="live">● LIVE</span>' : ''}
+        <div class="ico">${ico}</div>
+        <h3>${name}</h3>
+        <p>${blurb}</p>
+        <span class="go">${live ? 'Try it live' : 'See how'} <span aria-hidden="true">&rarr;</span></span>
       </a>`).join('')}
     </div>
   </div>
 </section>
 
-<!-- ══════════ ENGINES ══════════ -->
-<section class="sec sec-alt">
-  <div class="wrap">
-    <div class="sechead center">
-      <span class="eyebrow">Why we are fast</span>
-      <h2 class="h1 rv">Custom software, without paying<br>to rebuild the foundations.</h2>
-      <p class="lead rv rv2">
-        Most of any business system is the same underneath: a ledger that has to balance, tax
-        that has to be filed, people who have to be paid. We already own those engines, tested
-        and in production. Your money goes into what makes your business different.
-      </p>
-    </div>
-    <div class="engines rv rv3" data-scrub="0.08 0.50">
-      <div class="eng-core">
-        <div class="eng-grid">
-          ${[
-            [icons.ledger, 'Double-entry ledger', 'Every figure traces to an entry.'],
-            [icons.tax, 'Tax and compliance', 'Returns generated from live books.'],
-            [icons.people, 'People and payroll', 'Attendance through to payslip.'],
-            [icons.offline, 'Offline sync', 'Works with no signal, reconciles after.'],
-            [icons.check, 'Approval workflow', 'Who raises it, who must approve it.'],
-            [icons.ai, 'Natural language entry', 'Type a line, get a correct entry.'],
-          ].map(([ico, name, blurb], i) => `
-          <div class="eng" style="--ex:${[-190, 0, 190, -190, 0, 190][i]}px;--ey:${[-70, -120, -70, 70, 120, 70][i]}px;--er:${[-24, 0, 24, -24, 0, 24][i]}deg">
-            <div class="ico">${ico}</div><h4>${name}</h4><p>${blurb}</p>
-          </div>`).join('')}
-        </div>
-        <div class="eng-weld"></div>
-      </div>
-      <p class="eng-label">One system. Your rules on top.</p>
-    </div>
-    <div class="center rv rv4" style="margin-top:34px">
-      <a class="btn btn-ghost" href="/engines.html">See what each engine does &rarr;</a>
-    </div>
-  </div>
-</section>
-
 <!-- ══════════ BEFORE / AFTER ══════════ -->
-<section class="sec">
+<section class="sec sec-alt">
   <div class="wrap">
     <div class="sechead center">
       <span class="eyebrow">The difference</span>
@@ -291,7 +164,7 @@ export const body = `
           'The same figure typed in three places',
           'One person understands the file &mdash; and they are on leave',
           'Month-end takes a week and still does not tally',
-          'You find out about a problem after it cost you money',
+          'You hear about a problem after it cost you money',
         ],
         foot: 'You work around the software' },
       { head: 'One screen. The real number.',
@@ -305,48 +178,59 @@ export const body = `
         ],
         foot: 'The software works the way you do' }
     )}
-    <div class="center rv rv3" style="margin-top:32px">
-      <a class="btn btn-ghost" href="/legacy-vs-custom.html">The full comparison &rarr;</a>
+  </div>
+</section>
+
+<!-- ══════════ HOW IT WORKS — the pipeline ══════════ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sechead center">
+      <span class="eyebrow">How it works</span>
+      <h2 class="h1 rv">Four steps. No jargon.</h2>
+    </div>
+    <div class="pipe">
+      ${PIPE.map(([h, p], i) => `
+      <div class="pstep rv ${i ? 'rv' + (i + 1) : ''}">
+        <div class="pnum">${i + 1}</div>
+        <h3>${h}</h3>
+        <p>${p}</p>
+      </div>`).join('')}
+    </div>
+    <div class="center rv rv5" style="margin-top:44px">
+      <a class="btn btn-em btn-big" href="/contact.html">Tell us what you need</a>
     </div>
   </div>
 </section>
 
-<!-- ══════════ CLIENTS ══════════ -->
+<!-- ══════════ TESTIMONIALS ══════════ -->
 <section class="sec sec-alt">
   <div class="wrap">
-    <div class="sechead">
-      <span class="eyebrow">Clients</span>
-      <h2 class="h1 rv">Trading, healthcare, education,<br>HR and retail.</h2>
-      <p class="lead rv rv2">
-        Five very different businesses, five very different systems, one set of engines
-        underneath. Every quote below is from the person who signed it off.
-      </p>
+    <div class="sechead center">
+      <span class="eyebrow">In their words</span>
+      <h2 class="h1 rv">Five owners. Five industries.<br>The same answer.</h2>
     </div>
     <div class="tcards">
       ${CLIENTS.map((c, i) => `<div class="rv ${i % 3 ? 'rv' + ((i % 3) + 1) : ''}"${c.feature ? ' style="grid-column:span 2"' : ''}>${tcard(c, c.feature)}</div>`).join('')}
     </div>
-    <div class="rv" style="margin-top:34px">
-      <a class="btn btn-ghost" href="/clients.html">See what we built for each of them &rarr;</a>
+    <div class="center rv" style="margin-top:32px">
+      <a class="btn btn-ghost" href="/clients.html">See what we built for each &rarr;</a>
     </div>
   </div>
 </section>
 
-<!-- ══════════ COMMERCIALS ══════════ -->
+<!-- ══════════ PRICING ══════════ -->
 <section class="sec">
   <div class="wrap">
     <div class="sechead center">
-      <span class="eyebrow">Commercials</span>
-      <h2 class="h1 rv">You set the budget. We tell you<br>honestly what fits inside it.</h2>
-      <p class="lead rv rv2">
-        No rate card, because we have never met two businesses that needed the same thing.
-        Tell us what the software has to do and what you can spend.
-      </p>
+      <span class="eyebrow">Simple commercials</span>
+      <h2 class="h1 rv">You set the budget.<br>We are honest about it.</h2>
+      <p class="lead rv rv2">No rate card. Tell us what it must do and what you can spend.</p>
     </div>
     <div class="grid g3" style="max-width:1000px;margin:0 auto">
       ${[
-        [icons.lock, 'Own it outright', 'A perpetual licence. Yours to keep and run for as long as you want, with no monthly fee hanging over it.', true],
-        [icons.swap, 'Or subscribe', 'A monthly fee instead of a capital outlay, hosting and updates included. Keep cash free and stay flexible.', false],
-        [icons.shield, 'Three years of AMC, free', 'Fixes, security updates, small changes and support for three years. The industry norm is fifteen to twenty per cent a year.', false],
+        [icons.lock, 'Own it outright', 'A perpetual licence. Yours to keep and run for good, with no monthly fee.', true],
+        [icons.swap, 'Or subscribe', 'A monthly fee instead of a big payment, hosting and updates included.', false],
+        [icons.shield, '3 years AMC, free', 'Fixes, updates and small changes for three years. The industry charges 15–20% a year.', false],
       ].map(([ico, h, p, gold], i) => `
       <div class="card rv ${i ? 'rv' + (i + 1) : ''}">
         <div class="ico ${gold ? 'ico-gold' : ''}">${ico}</div>
@@ -354,37 +238,15 @@ export const body = `
         <p class="muted" style="margin-top:9px;font-size:15px">${p}</p>
       </div>`).join('')}
     </div>
-    <div class="center rv rv4" style="margin-top:32px">
-      <a class="btn btn-em btn-big" href="/contact.html">Get a price for your scope</a>
-      <p class="faint" style="margin-top:15px;font-size:13.5px">
-        Already running something of ours? Adding a feature is a one-time charge, not a new plan.
-      </p>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════ PROCESS ══════════ -->
-<section class="sec sec-alt">
-  <div class="wrap">
-    <div class="sechead"><span class="eyebrow">How a build runs</span><h2 class="h1 rv">Four steps. No mystery.</h2></div>
-    <div class="grid g4">
-      ${[
-        ['01', 'We watch you work', 'A call or a visit. We map what actually happens today, including the workarounds nobody admits to.'],
-        ['02', 'You see it early', 'A working version in weeks, not a document. You tell us where it is wrong while it is cheap to change.'],
-        ['03', 'We move your data', 'Your records come across. Both systems run together until you trust the new one.'],
-        ['04', 'It keeps growing', 'Three years of maintenance included. New requirements added as they come up, usually in days.'],
-      ].map(([n, h, p], i) => `
-      <div class="rv ${i ? 'rv' + (i + 1) : ''}">
-        <div class="mono em" style="font-size:13px;font-weight:800;letter-spacing:.1em">${n}</div>
-        <h3 class="h4" style="margin:11px 0 8px">${h}</h3>
-        <p class="muted" style="font-size:14.5px">${p}</p>
-      </div>`).join('')}
+    <div class="center rv rv4" style="margin-top:30px">
+      <a class="btn btn-em btn-big" href="/contact.html">Get a price for your business</a>
+      <p class="faint" style="margin-top:14px;font-size:13.5px">Already run something of ours? Adding a feature is a one-time charge, not a new plan.</p>
     </div>
   </div>
 </section>
 
 <!-- ══════════ FAQ ══════════ -->
-<section class="sec">
+<section class="sec sec-alt">
   <div class="wrap-n">
     <div class="sechead center"><span class="eyebrow">Questions</span><h2 class="h1 rv">Straight answers.</h2></div>
     <div class="rv rv2">${F.html}</div>
@@ -392,5 +254,5 @@ export const body = `
 </section>
 
 ${cta('Tell us what your business needs.',
-      'Describe the problem in your own words. We will tell you whether we are the right people for it — and if we are not, we will say so.')}
+      'In plain words — what is slow, what is painful, what nobody can see. We will tell you if we are the right people for it, and if we are not, we will say so.')}
 `;

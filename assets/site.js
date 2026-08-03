@@ -227,6 +227,51 @@
     }
   }
 
+  /* ── interactive industry picker (the hero) ────────────────────────────
+     Chips choose a trade; the real demo for it loads inline on click. One
+     screen, re-targeted — no six iframes fighting for memory.             */
+  var pick = $('.pick');
+  if (pick) {
+    var chips = $$('.pchip', pick),
+        shot = $('.pshot', pick), frame = $('#pframe', pick), launch = $('.plaunch', pick),
+        urlb = $('.purl-t', pick), line = $('.pline', pick),
+        lLabel = $('.plaunch b', pick), screen = $('.pscreen', pick);
+    var current = null, loaded = false;
+
+    function select(chip) {
+      chips.forEach(function (c) { c.classList.toggle('on', c === chip); });
+      current = chip.getAttribute('data-src');
+      // swap poster with a quick crossfade
+      shot.classList.add('fade');
+      setTimeout(function () {
+        shot.src = chip.getAttribute('data-shot');
+        shot.classList.remove('fade');
+      }, 200);
+      if (urlb) urlb.textContent = chip.getAttribute('data-url');
+      if (line) line.innerHTML = chip.getAttribute('data-line');
+      if (lLabel) lLabel.textContent = 'Open the ' + chip.getAttribute('data-label') + ' demo';
+      // reset to poster state for the new pick
+      loaded = false;
+      shot.style.display = '';
+      launch.classList.remove('gone');
+      frame.removeAttribute('src');
+    }
+    function go() {
+      if (loaded || !current) return;
+      loaded = true;
+      frame.src = current;
+      launch.classList.add('gone');
+      shot.style.display = 'none';   // reveal the iframe beneath the poster
+    }
+    chips.forEach(function (c) { c.addEventListener('click', function () { select(c); }); });
+    if (screen) screen.addEventListener('click', go);
+    launch.setAttribute('tabindex', '0');
+    launch.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+    });
+    if (chips[0]) select(chips[0]);
+  }
+
   /* ── tabbed panels ── */
   $$('[data-tabs]').forEach(function (root) {
     var btns = $$('[data-tab]', root), panes = $$('[data-pane]', root);

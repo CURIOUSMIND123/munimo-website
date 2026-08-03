@@ -14,8 +14,7 @@ export const SITE = {
 export const NAV = [
   ['software.html', 'Software'],
   ['custom-software.html', 'Custom build'],
-  ['engines.html', 'Engines'],
-  ['legacy-vs-custom.html', 'Why custom'],
+  ['ownership.html', 'Pricing'],
   ['clients.html', 'Clients'],
 ];
 
@@ -244,6 +243,8 @@ export const icons = {
   wrench: '<svg viewBox="0 0 24 24"><path d="M15 4a5 5 0 0 0-4.5 7.1L4 17.6 6.4 20l6.5-6.5A5 5 0 1 0 15 4z"/></svg>',
   school: '<svg viewBox="0 0 24 24"><path d="m12 3 10 5-10 5L2 8z"/><path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5"/></svg>',
   heartbeat: '<svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 3 10 2.5-6 1.5 3h5"/></svg>',
+  box: '<svg viewBox="0 0 24 24"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
+  cart: '<svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.4 12.4a1.5 1.5 0 0 0 1.5 1.2h8.2a1.5 1.5 0 0 0 1.5-1.2L21 7H6"/></svg>',
   shield: '<svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.4 8.2-8 9.4C7.4 20.2 4 17 4 12V6z"/><path d="m9 12 2 2 4-4"/></svg>',
 };
 
