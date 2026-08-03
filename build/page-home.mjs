@@ -1,4 +1,4 @@
-import { SITE, liveScreen, cta, faq, ORG, icons } from './layout.mjs';
+import { SITE, liveScreen, cta, faq, ORG, icons, beforeAfter, painGrid } from './layout.mjs';
 import { CLIENTS, tcard, marquee, reviewSchema } from './clients-data.mjs';
 
 const F = faq([
@@ -64,8 +64,8 @@ const BENTO = [
    ['Web + phone', 'Approvals'], 'cashflow', 'bx-2'],
   ['mobile-app.html', 'Mobile field app', 'For staff with no signal. Captures offline, syncs later, office approves.',
    ['Offline', 'Photo proof'], 'phone-home', 'bx-2'],
-  ['school-erp.html', 'School &amp; clinic systems', 'Admissions, fees and attendance. Patient bookings and doctor appointments. The same accounting engine underneath.',
-   ['Fees + receipts', 'Bookings'], 'clients', 'bx-4 bx-wide'],
+  ['school-erp.html', 'School &amp; clinic systems', 'Admissions, fees and attendance. Patient bookings and doctor appointments. Two separate live demos you can open right now.',
+   ['Fees + receipts', 'Bookings'], 'school', 'bx-4 bx-wide'],
 ];
 
 export const body = `
@@ -73,18 +73,18 @@ export const body = `
 <section class="sec" style="padding:clamp(88px,8.5vw,110px) 0 clamp(34px,4vw,56px);overflow:hidden">
   <div class="wrap" style="position:relative;z-index:1">
     <div class="center" style="max-width:830px;margin:0 auto">
-      <span class="pill rv">Custom software studio</span>
+      <span class="pill rv">Custom software &middot; 5 businesses running on it</span>
       <h1 class="h-display rv rv2" style="margin-top:17px">
-        Software built around your business.<br><span class="gold">Not the other way round.</span>
+        Still running your business<br>on <span class="gold">spreadsheets and WhatsApp?</span>
       </h1>
-      <p class="lead rv rv3" style="margin:19px auto 0;max-width:620px">
-        <b style="color:var(--t);font-weight:700">We are a custom software company.</b>
-        We build the systems businesses run on &mdash; and every product below is
-        live on this page. Open it before you speak to us.
+      <p class="lead rv rv3" style="margin:19px auto 0;max-width:600px">
+        We build the software that replaces them &mdash; shaped to how
+        <b style="color:var(--t);font-weight:700">your</b> business already works.
+        Schools, clinics, shops, contractors. <b style="color:var(--t);font-weight:700">Try it below. No sign-up.</b>
       </p>
       <div class="rv rv4" style="display:flex;gap:12px;justify-content:center;margin-top:23px;flex-wrap:wrap">
-        <a class="btn btn-em btn-big" href="/software.html">Use the software now</a>
-        <a class="btn btn-ghost btn-big" href="/contact.html">Tell us what you need</a>
+        <a class="btn btn-em btn-big" href="/software.html">Open a live demo</a>
+        <a class="btn btn-ghost btn-big" href="/contact.html">Get a price</a>
       </div>
       <p class="faint rv rv5" style="margin-top:15px;font-size:13px">
         Priced to your budget &middot; own the licence or subscribe &middot; three years maintenance included
@@ -120,6 +120,30 @@ export const body = `
     </p>
   </div>
   <div class="rv rv2">${marquee()}</div>
+</section>
+
+<!-- ══════════ PAIN ══════════ -->
+<section class="sec-tight">
+  <div class="wrap">
+    <div class="sechead center" style="margin-bottom:clamp(28px,3.4vw,42px)">
+      <span class="eyebrow">Sound familiar?</span>
+      <h2 class="h1 rv">If two of these are true,<br>your software is costing you money.</h2>
+    </div>
+    ${painGrid([
+      ['&ldquo;I don&rsquo;t know today&rsquo;s number until someone sends it.&rdquo;',
+       'Cash, stock, dues, attendance — all of it lives in someone else&rsquo;s file until they get around to it.'],
+      ['&ldquo;Only one person knows how it works.&rdquo;',
+       'The spreadsheet, the workaround, the export order. Their notice period is your business risk.'],
+      ['&ldquo;We type the same thing three times.&rdquo;',
+       'Once on paper, once in the sheet, once in the billing software. At least one of them is wrong.'],
+      ['&ldquo;Month-end takes a week.&rdquo;',
+       'And it still does not tally. Everyone stops doing real work to chase numbers.'],
+      ['&ldquo;The software can&rsquo;t do it, so we do it by hand.&rdquo;',
+       'You bought a package and bent your business to fit it. The gaps are held together by WhatsApp.'],
+      ['&ldquo;Asking for a change costs money and takes months.&rdquo;',
+       'So you stopped asking. Your business improves; the software does not.'],
+    ])}
+  </div>
 </section>
 
 <!-- ══════════ STAT BAND ══════════ -->
@@ -252,39 +276,37 @@ export const body = `
   </div>
 </section>
 
-<!-- ══════════ LEGACY VS CUSTOM ══════════ -->
+<!-- ══════════ BEFORE / AFTER ══════════ -->
 <section class="sec">
   <div class="wrap">
-    <div class="sechead">
-      <span class="eyebrow">The honest comparison</span>
-      <h2 class="h1 rv">What old software costs you<br>while you put up with it.</h2>
-      <p class="lead rv rv2">Scroll and watch the same screen change hands.</p>
+    <div class="sechead center">
+      <span class="eyebrow">The difference</span>
+      <h2 class="h1 rv">Your Monday morning,<br>before and after.</h2>
     </div>
-    <div class="shift rv rv3" data-scrub="0.16 0.70">
-      <div class="shift-pane shift-old">
-        <div class="shift-head"><span class="shift-t">LEDGER_2019_FINAL_v4.xls</span><span class="shift-chip">Legacy</span></div>
-        <div class="shift-line">SUM(H4:H92) &mdash; #REF! error<b>?</b></div>
-        <div class="shift-line">last saved by: accounts_pc<b>14 Mar</b></div>
-        <div class="shift-line">branch_3_expenses_FINAL(2).xls<b>not merged</b></div>
-        <div class="shift-line">manual entry &mdash; awaiting Ravi<b>6 days</b></div>
-        <div class="shift-line">tax working &mdash; separate file<b>unreconciled</b></div>
-      </div>
-      <div class="shift-pane shift-new">
-        <div class="shift-head"><span class="shift-t">Your books, live</span><span class="shift-chip">Custom</span></div>
-        <div class="shift-line">Cash and bank, all accounts<b>Tallied</b></div>
-        <div class="shift-line">Every entry traced to a person<b>Audited</b></div>
-        <div class="shift-line">All branches, one view<b>Live</b></div>
-        <div class="shift-line">Approvals cleared<b>Today</b></div>
-        <div class="shift-line">Tax return ready to file<b>Generated</b></div>
-      </div>
-      <div class="shift-seam"></div>
-      <div class="shift-cap">
-        <span class="a">Everyone works around the software</span>
-        <span class="b">The software works the way you do</span>
-      </div>
-    </div>
-    <div class="center rv rv4" style="margin-top:34px">
-      <a class="btn btn-ghost" href="/legacy-vs-custom.html">Read the full comparison &rarr;</a>
+    ${beforeAfter(
+      { head: 'Nobody knows the real number',
+        sub: 'And finding out takes half a day.',
+        items: [
+          'Every branch keeps its own spreadsheet',
+          'The same figure typed in three places',
+          'One person understands the file &mdash; and they are on leave',
+          'Month-end takes a week and still does not tally',
+          'You find out about a problem after it cost you money',
+        ],
+        foot: 'You work around the software' },
+      { head: 'One screen. The real number.',
+        sub: 'Before your first cup of tea is finished.',
+        items: [
+          'Every branch on one live screen',
+          'Entered once, correct everywhere',
+          'Anyone in your team can run it',
+          'Books close on the first of the month',
+          'You get told the moment something goes wrong',
+        ],
+        foot: 'The software works the way you do' }
+    )}
+    <div class="center rv rv3" style="margin-top:32px">
+      <a class="btn btn-ghost" href="/legacy-vs-custom.html">The full comparison &rarr;</a>
     </div>
   </div>
 </section>

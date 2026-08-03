@@ -1,4 +1,4 @@
-import { SITE, cta, faq, ORG, icons } from './layout.mjs';
+import { SITE, cta, faq, ORG, icons, beforeAfter } from './layout.mjs';
 
 const COMPARE = [
   ['When you need something changed',
@@ -70,43 +70,38 @@ export const body = `
       <h1 class="h-display rv rv2" style="margin-top:18px;font-size:clamp(31px,5vw,58px)">
         Old software rarely fails.<br><span class="gold">It just quietly taxes you.</span>
       </h1>
-      <p class="lead rv rv3" style="margin-top:22px">
-        Nobody wakes up and decides their system has stopped working. It erodes. An export here,
-        a re-keyed number there, a spreadsheet that becomes load-bearing, one person who is the
-        only one who understands the file. By the time it is obviously a problem, the business
-        has already been paying for it for years.
+      <p class="lead rv rv3" style="margin-top:22px;max-width:640px">
+        It never breaks outright. It just costs you an hour here, a wrong number there,
+        and one person nobody can afford to lose. Here is the same Monday, both ways.
       </p>
     </div>
   </div>
 </section>
 
-<!-- animation 3 -->
 <section class="sec-tight">
   <div class="wrap">
-    <div class="shift rv" data-scrub="0.16 0.70" style="max-width:1000px;margin:0 auto">
-      <div class="shift-pane shift-old">
-        <div class="shift-head"><span class="shift-t">LEDGER_2019_FINAL_v4.xls</span><span class="shift-chip">Legacy</span></div>
-        <div class="shift-line">SUM(H4:H92) &mdash; #REF! error<b>?</b></div>
-        <div class="shift-line">last saved by: accounts_pc<b>14 Mar</b></div>
-        <div class="shift-line">branch_3_expenses_FINAL(2).xls<b>not merged</b></div>
-        <div class="shift-line">manual entry &mdash; awaiting Ravi<b>6 days</b></div>
-        <div class="shift-line">tax working &mdash; separate file<b>unreconciled</b></div>
-      </div>
-      <div class="shift-pane shift-new">
-        <div class="shift-head"><span class="shift-t">Your books, live</span><span class="shift-chip">Custom</span></div>
-        <div class="shift-line">Cash and bank, all accounts<b>Tallied</b></div>
-        <div class="shift-line">Every entry traced to a person<b>Audited</b></div>
-        <div class="shift-line">All branches, one view<b>Live</b></div>
-        <div class="shift-line">Approvals cleared<b>Today</b></div>
-        <div class="shift-line">Tax return ready to file<b>Generated</b></div>
-      </div>
-      <div class="shift-seam"></div>
-      <div class="shift-cap">
-        <span class="a">Everyone works around the software</span>
-        <span class="b">The software works the way you do</span>
-      </div>
-    </div>
-    <p class="center faint rv" style="margin-top:18px;font-size:13.5px">Scroll to move between the two.</p>
+    ${beforeAfter(
+      { head: 'Nobody knows the real number',
+        sub: 'And finding out takes half a day.',
+        items: [
+          'Every branch keeps its own spreadsheet',
+          'The same figure typed in three places',
+          'One person understands the file &mdash; and they are on leave',
+          'Month-end takes a week and still does not tally',
+          'You hear about a problem after it cost you money',
+        ],
+        foot: 'You work around the software' },
+      { head: 'One screen. The real number.',
+        sub: 'Before your first cup of tea is finished.',
+        items: [
+          'Every branch on one live screen',
+          'Entered once, correct everywhere',
+          'Anyone in your team can run it',
+          'Books close on the first of the month',
+          'You get told the moment something goes wrong',
+        ],
+        foot: 'The software works the way you do' }
+    )}
   </div>
 </section>
 
@@ -118,12 +113,12 @@ export const body = `
     </div>
     <div class="grid g2" style="max-width:1000px">
       ${[
-        [icons.swap, 'Re-keying between systems', 'The same number typed into three places, and the quiet certainty that at least one of them is wrong. Every re-entry is a chance for an error nobody catches until month-end.'],
-        [icons.lock, 'The person who is the system', 'One employee understands the file, the workaround and the export order. That is not their fault, but it is a risk sitting on one person\'s notice period.'],
-        [icons.chart, 'Answers that take days', 'Management asks a reasonable question. Getting the answer means pulling exports, matching them by hand, and hoping. Decisions get made on stale numbers, or on instinct.'],
-        [icons.bolt, 'Change you have stopped asking for', 'After enough rejected requests, people stop asking. The business quietly stops improving its own processes because the software cannot follow.'],
-        [icons.shield, 'Risk you cannot see', 'Old software with no updates, backups nobody has tested, and access that was never revoked when someone left. This one stays invisible until the day it is not.'],
-        [icons.people, 'Training that never ends', 'New staff learn the software and the folklore around it. The longer the workaround list, the longer anyone takes to become useful.'],
+        [icons.swap, 'Re-keying between systems', 'The same number typed in three places. At least one is wrong, and nobody finds out until month-end.'],
+        [icons.lock, 'The person who is the system', 'One employee understands the file and the workaround. Their notice period is your business risk.'],
+        [icons.chart, 'Answers that take days', 'A simple question means pulling exports and matching them by hand. So decisions get made on instinct.'],
+        [icons.bolt, 'Change you have stopped asking for', 'After enough refusals, people stop asking. Your business improves; the software never does.'],
+        [icons.shield, 'Risk you cannot see', 'No updates, untested backups, and logins for people who left years ago. Invisible until the day it is not.'],
+        [icons.people, 'Training that never ends', 'New staff learn the software and the folklore around it. Both take months.'],
       ].map(([ico, h, p], i) => `
       <div class="card rv ${i % 2 ? 'rv2' : ''}">
         <div class="ico">${ico}</div>

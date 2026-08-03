@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Munimo Clinic ERP — live demo</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/assets/munimo-icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/demos/shell.css">
+</head>
+<body>
+<script src="/demos/shell.js"></script>
+<script>
+(function () {
+  var M = window.MunimoDemo, money = M.money, who = M.who, esc = M.esc;
+
+  var DOCTORS = ['Dr. Sangeeta Rao', 'Dr. Anil Menon', 'Dr. Farah Qureshi'];
+  var SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','15:00','15:30','16:00','16:30','17:00'];
+  var NAMES = ['Rekha Sharma','Amit Verma','Pooja Nair','Sunil Das','Kavita Iyer','Rahul Bose',
+               'Nisha Gupta','Vikram Reddy','Anita Joshi','Manoj Patel','Sneha Menon','Arun Khan'];
+  var TYPES = ['Consultation','Follow-up','Scan','Counselling','Procedure'];
+
+  var state = {
+    appts: NAMES.slice(0, 8).map(function (n, i) {
+      return { id: 500 + i, patient: n, doctor: DOCTORS[i % 3], slot: SLOTS[i],
+               type: TYPES[i % TYPES.length], status: i < 3 ? 'Done' : i === 3 ? 'In room' : 'Waiting',
+               fee: [800, 1200, 2500, 1500, 6500][i % 5] };
+    }),
+    patients: NAMES.map(function (n, i) {
+      return { id: 900 + i, name: n, age: 26 + ((i * 5) % 22), sex: i % 3 === 0 ? 'M' : 'F',
+               phone: '9' + String(200000000 + i * 8117).slice(0, 9),
+               last: ['12 Jul','04 Jul','28 Jun','19 Jun','02 Jul','25 Jun'][i % 6],
+               cycle: ['IUI · cycle 2','IVF · cycle 1','Consult only','IVF · cycle 3','Follow-up','IUI · cycle 1'][i % 6],
+               due: [0, 0, 4500, 0, 12000, 0][i % 6] };
+    }),
+    collectedToday: 46800,
+    bills: [],
+    stock: [['Gonadotropin inj.', 42, 8, 2100], ['Progesterone caps', 118, 30, 340],
+            ['Culture medium', 16, 10, 5600], ['Embryo transfer kit', 9, 6, 8900],
+            ['Ultrasound gel', 27, 10, 260], ['Cryo straws', 210, 50, 95]],
+  };
+
+  function waiting() { return state.appts.filter(function (a) { return a.status === 'Waiting'; }).length; }
+  function pendingDues() { return state.patients.reduce(function (s, p) { return s + p.due; }, 0); }
+  function lowStock() { return state.stock.filter(function (s) { return s[1] <= s[2]; }).length; }
+
+  var views = [
+    {
+      id: 'dash', name: 'Today', sub: 'The front desk view', icon: 'grid',
+      render: function (d) {
+        return d.kpis([
+          { label: "Today's appointments", value: String(state.appts.length), sub: waiting() + ' still waiting', icon: 'cal', tone: 'blue' },
+          { label: 'Collected today', value: money(state.collectedToday), sub: state.bills.length + ' bills raised', icon: 'rupee', tone: 'em' },
+          { label: 'Patient dues', value: money(pendingDues()), sub: 'Across active cycles', icon: 'alert', tone: 'gold' },
+          { label: 'Stock alerts', value: String(lowStock()), sub: 'Items at or below reorder', icon: 'box', tone: lowStock() ? 'red' : '' },
+        ]) +
+        d.panel("Today's list  ·  " + new Date().toISOString().slice(0, 10),
+          d.table([{ label: 'Time' }, { label: 'Patient' }, { label: 'Doctor' }, { label: 'Type' },
+                   { label: 'Status' }, { label: 'Fee', num: true }],
+            state.appts.map(function (a) {
+              var tone = a.status === 'Done' ? 'ok' : a.status === 'In room' ? 'info' : 'warn';
+              return ['<b>' + a.slot + '</b>', who(a.patient), esc(a.doctor),
+                      '<span class="chip mute">' + esc(a.type) + '</span>',
+                      '<span class="chip ' + tone + '">' + esc(a.status) + '</span>', money(a.fee)];
+            })));
+      },
+    },
+
+    {
+      id: 'appts', name: 'Appointments', sub: 'Book and manage the day', icon: 'cal', group: 'Clinic',
+      actions: [{ label: 'Book appointment', icon: 'plus', primary: true, run: function (d) { book(d); } }],
+      render: function (d) {
+        var taken = {};
+        state.appts.forEach(function (a) { taken[a.doctor + '|' + a.slot] = a; });
+        return d.kpis([
+          { label: 'Booked', value: String(state.appts.length), sub: 'Across 3 doctors', icon: 'cal' },
+          { label: 'Free slots', value: String(DOCTORS.length * SLOTS.length - state.appts.length), sub: 'Tap a green slot to book', icon: 'check', tone: 'em' },
+          { label: 'Waiting now', value: String(waiting()), sub: 'In the waiting room', icon: 'users', tone: 'gold' },
+        ]) +
+        DOCTORS.map(function (doc) {
+          return d.panel(doc,
+            '<div class="panel-b"><div style="display:flex;flex-wrap:wrap;gap:7px">' +
+            SLOTS.map(function (s) {
+              var a = taken[doc + '|' + s];
+              return a
+                ? '<span class="chip mute" style="padding:8px 12px" title="' + esc(a.patient) + '">' + s + ' &middot; ' + esc(a.patient.split(' ')[0]) + '</span>'
+                : '<button class="btn btn-g slot" data-doc="' + esc(doc) + '" data-slot="' + s + '" style="padding:8px 12px;font-size:11.5px">' + s + '</button>';
+            }).join('') + '</div></div>');
+        }).join('');
+      },
+      after: function (d) {
+        document.querySelectorAll('.slot').forEach(function (b) {
+          b.addEventListener('click', function () {
+            book(d, b.getAttribute('data-doc'), b.getAttribute('data-slot'));
+          });
+        });
+      },
+    },
+
+    {
+      id: 'patients', name: 'Patients', sub: 'Records and treatment cycles', icon: 'users',
+      render: function (d) {
+        return d.panel('Patient register',
+          d.table([{ label: 'Patient' }, { label: 'Age / Sex' }, { label: 'Treatment' },
+                   { label: 'Last visit' }, { label: 'Balance', num: true }],
+            state.patients.map(function (p) {
+              return [who(p.name, p.phone), p.age + ' / ' + p.sex,
+                      '<span class="chip info">' + esc(p.cycle) + '</span>', esc(p.last),
+                      p.due ? '<b style="color:#fca5a5">' + money(p.due) + '</b>'
+                            : '<span class="chip ok">Settled</span>'];
+            })));
+      },
+    },
+
+    {
+      id: 'billing', name: 'Billing', sub: 'Consultation, procedure and pharmacy', icon: 'rupee',
+      actions: [{ label: 'Raise a bill', icon: 'plus', primary: true, run: function (d) { bill(d); } }],
+      render: function (d) {
+        var rows = state.bills.concat([
+          { no: 'INV-4412', name: 'Rekha Sharma', item: 'IVF cycle — stage 2', amount: 68000, mode: 'Bank' },
+          { no: 'INV-4411', name: 'Amit Verma', item: 'Consultation + scan', amount: 2000, mode: 'UPI' },
+          { no: 'INV-4410', name: 'Pooja Nair', item: 'Counselling', amount: 1500, mode: 'Cash' },
+        ]);
+        return d.kpis([
+          { label: 'Collected today', value: money(state.collectedToday), sub: state.bills.length + ' new bills', icon: 'rupee', tone: 'em' },
+          { label: 'Outstanding', value: money(pendingDues()), sub: 'Patient balances', icon: 'alert', tone: 'gold' },
+          { label: 'Average bill', value: money(8400), sub: 'Last 30 days', icon: 'chart' },
+        ]) +
+        d.panel('Recent bills',
+          d.table([{ label: 'Bill no' }, { label: 'Patient' }, { label: 'For' }, { label: 'Mode' }, { label: 'Amount', num: true }],
+            rows.map(function (r) {
+              return ['<span style="font-family:ui-monospace,monospace;font-size:12px">' + esc(r.no) + '</span>',
+                      who(r.name), esc(r.item), '<span class="chip mute">' + esc(r.mode) + '</span>',
+                      '<b style="color:var(--em2)">' + money(r.amount) + '</b>'];
+            })));
+      },
+    },
+
+    {
+      id: 'stock', name: 'Inventory', sub: 'Drugs, consumables and lab', icon: 'box', group: 'Office',
+      render: function (d) {
+        return d.kpis([
+          { label: 'Items tracked', value: String(state.stock.length * 14), sub: 'Across 4 stores', icon: 'box' },
+          { label: 'Below reorder', value: String(lowStock()), sub: 'Needs a purchase order', icon: 'alert', tone: 'red' },
+          { label: 'Stock value', value: money(state.stock.reduce(function (s, x) { return s + x[1] * x[3]; }, 0)), sub: 'At cost', icon: 'rupee', tone: 'gold' },
+        ]) +
+        d.panel('Stock position',
+          d.table([{ label: 'Item' }, { label: 'On hand', num: true }, { label: 'Reorder at', num: true },
+                   { label: 'Unit cost', num: true }, { label: 'Status' }],
+            state.stock.map(function (s) {
+              var low = s[1] <= s[2];
+              return [esc(s[0]), s[1], s[2], money(s[3]),
+                      low ? '<span class="chip bad">Reorder</span>' : '<span class="chip ok">OK</span>'];
+            })));
+      },
+    },
+
+    {
+      id: 'staff', name: 'Staff & payroll', sub: 'Doctors, nurses and admin', icon: 'chart',
+      actions: [{ label: 'Run payroll', icon: 'check', primary: true, run: function (d) {
+        d.toast('Salary run prepared for 22 staff'); } }],
+      render: function (d) {
+        var staff = [['Dr. Sangeeta Rao', 'Consultant', 210000], ['Dr. Anil Menon', 'Consultant', 185000],
+                     ['Dr. Farah Qureshi', 'Consultant', 178000], ['Nurse Latha', 'Senior nurse', 42000],
+                     ['Nurse Bina', 'Nurse', 34000], ['Ramesh K', 'Lab technician', 38000],
+                     ['Divya S', 'Front desk', 26000], ['Suresh P', 'Accounts', 39000]];
+        return d.kpis([
+          { label: 'Staff', value: '22', sub: '3 consultants, 19 support', icon: 'users' },
+          { label: 'Monthly payroll', value: money(staff.reduce(function (s, x) { return s + x[2]; }, 0) * 1.6), sub: 'Before deductions', icon: 'rupee', tone: 'gold' },
+          { label: 'This month', value: 'Ready', sub: 'Awaiting approval', icon: 'check', tone: 'em' },
+        ]) +
+        d.panel('Salary register  ·  sample',
+          d.table([{ label: 'Name' }, { label: 'Role' }, { label: 'Gross', num: true },
+                   { label: 'Deductions', num: true }, { label: 'Net pay', num: true }],
+            staff.map(function (s) {
+              var ded = Math.round(s[2] * 0.14);
+              return [who(s[0]), esc(s[1]), money(s[2]), money(ded),
+                      '<b style="color:var(--em2)">' + money(s[2] - ded) + '</b>'];
+            })));
+      },
+    },
+  ];
+
+  function book(d, doc, slot) {
+    d.open('Book an appointment',
+      '<label class="field"><span>Patient</span><select name="pt">' +
+        state.patients.map(function (p) { return '<option>' + esc(p.name) + '</option>'; }).join('') +
+        '</select></label>' +
+      '<label class="field"><span>Doctor</span><select name="doc">' +
+        DOCTORS.map(function (x) { return '<option' + (x === doc ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') +
+        '</select></label>' +
+      '<label class="field"><span>Slot</span><select name="slot">' +
+        SLOTS.map(function (s) { return '<option' + (s === slot ? ' selected' : '') + '>' + s + '</option>'; }).join('') +
+        '</select></label>' +
+      '<label class="field"><span>Type</span><select name="type">' +
+        TYPES.map(function (t) { return '<option>' + t + '</option>'; }).join('') + '</select></label>',
+      [{ label: 'Cancel', run: function (x) { x.close(); } },
+       { label: 'Confirm booking', primary: true, run: function (x) {
+          var pt = x.val('pt'), dc = x.val('doc'), sl = x.val('slot');
+          if (state.appts.some(function (a) { return a.doctor === dc && a.slot === sl; })) {
+            x.toast('That slot is already taken'); return;
+          }
+          state.appts.push({ id: Date.now(), patient: pt, doctor: dc, slot: sl,
+                             type: x.val('type'), status: 'Waiting', fee: 1200 });
+          state.appts.sort(function (a, b) { return a.slot < b.slot ? -1 : 1; });
+          x.close(); x.toast(pt + ' booked with ' + dc + ' at ' + sl); x.render();
+       } }]);
+  }
+
+  function bill(d) {
+    d.open('Raise a bill',
+      '<label class="field"><span>Patient</span><select name="pt">' +
+        state.patients.map(function (p) { return '<option>' + esc(p.name) + '</option>'; }).join('') +
+        '</select></label>' +
+      '<label class="field"><span>For</span><select name="item">' +
+        ['Consultation','Follow-up','Scan','Counselling','IVF cycle — stage 1','IVF cycle — stage 2','Pharmacy']
+          .map(function (t) { return '<option>' + t + '</option>'; }).join('') + '</select></label>' +
+      '<label class="field"><span>Amount</span><input name="amt" value="2500"></label>' +
+      '<label class="field"><span>Mode</span><select name="mode"><option>Cash</option><option>UPI</option>' +
+        '<option>Card</option><option>Bank transfer</option></select></label>',
+      [{ label: 'Cancel', run: function (x) { x.close(); } },
+       { label: 'Raise & collect', primary: true, run: function (x) {
+          var amt = Math.max(parseInt(x.val('amt'), 10) || 0, 1);
+          var no = 'INV-' + String(4413 + state.bills.length);
+          state.bills.unshift({ no: no, name: x.val('pt'), item: x.val('item'), amount: amt, mode: x.val('mode') });
+          state.collectedToday += amt;
+          var pt = state.patients.filter(function (p) { return p.name === x.val('pt'); })[0];
+          if (pt && pt.due) pt.due = Math.max(0, pt.due - amt);
+          x.close(); x.toast(no + ' raised for ' + money(amt)); x.render();
+       } }]);
+  }
+
+  new M.Demo({
+    title: 'Munimo Clinic ERP — live demo',
+    brand: 'Babyscience IVF',
+    brandSub: 'Clinic ERP · live demo',
+    user: 'Front Desk',
+    userRole: 'ADMIN',
+    views: views,
+    state: state,
+  });
+})();
+</script>
+</body>
+</html>

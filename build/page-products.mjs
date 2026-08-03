@@ -232,13 +232,13 @@ const schoolErp = {
   lead: 'Admissions and student records, daily attendance, fee collection with printed receipts and dues that chase themselves, exams and results, staff payroll, and a parent who can see it all without phoning the office. The money side sits on the same accounting engine as our finance software, so the accounts are real accounts.',
   who: 'For schools, colleges and coaching institutes, at any size.',
   demoWide: true,
-  demoSrc: '/web-app/app.html',
-  demo: liveScreen({ src: '/web-app/app.html', url: 'munimo.online/web-app',
-                     poster: '/assets/web/cashbook-hero.png', label: 'Open the live system',
-                     note: 'The shared engine — school screens are built per institution' }),
-  galleryHead: 'The engine a school build sits on.',
-  gallery: [['clients', 'Records and balances per party'], ['reports', 'Collection and dues reporting'],
-            ['employees', 'Staff and payroll']],
+  demoSrc: '/demos/school/',
+  demo: liveScreen({ src: '/demos/school/', url: 'munimo.online/demos/school',
+                     poster: '/assets/shots/school.webp', label: 'Open the live School ERP',
+                     note: 'Collect a fee, print the receipt, mark a class present' }),
+  galleryHead: 'Straight from the school demo.',
+  gallery: [['school-fees', 'The dues list — who to chase first'], ['school-att', 'Marking a class in one pass'],
+            ['school-exams', 'Marks, totals and grades']],
   featuresHead: 'The parts every institution needs,<br>and the ones only yours does.',
   features: [
     [icons.people, 'Students and admissions', 'Enquiry to enrolment, documents, sections and batches, transfers and leaving certificates, full student history.'],
@@ -257,7 +257,7 @@ const schoolErp = {
     'The integrations you need: payment gateway for online fees, messaging for parents, biometric devices for attendance.',
   ],
   faq: [
-    ['Is there a ready school demo I can click?', 'The live demo on this page is the shared engine — the ledger, fees, payroll and reporting that a school build sits on. The school-facing screens are built per institution, because fee structures and report cards are never the same twice. We will walk you through a school build on a call, or send a recording of one.'],
+    ['Is the demo the actual school software?', 'It is a working school system with sample data — collect a fee and the dues drop and a receipt prints, mark a class and the attendance percentage moves. Your build starts from this and then changes, because fee structures, report card formats and academic calendars are never the same at two institutions.'],
     ['Can parents pay fees online?', 'Yes, through a payment gateway connected during the build. Receipts are generated automatically and the dues list updates itself.'],
     ['We are a coaching institute, not a school. Does that work?', 'Yes. Batches instead of classes, flexible fee cycles and shorter courses are all normal configurations rather than special cases.'],
     ['What about our existing student data?', 'It comes across. Spreadsheets, an old system, or a mix of both — we map and import it, then run a checking period before you rely on it.'],
@@ -315,4 +315,53 @@ const mobileApp = {
   ctaS: 'Tell us what your people need to capture in the field and where the paper currently gets lost.',
 };
 
-export const pages = [fullErp, cashBook, schoolErp, mobileApp].map(build);
+
+/* ─────────────────────────────── CLINIC ERP ────────────────────────────── */
+const clinicErp = {
+  path: 'clinic-erp.html',
+  name: 'Clinic ERP',
+  category: 'BusinessApplication',
+  os: 'Web, Android, iOS',
+  tint: 'rgba(167,139,250,.14)',
+  title: 'Custom clinic and hospital management software | Munimo',
+  desc: 'Patient bookings and doctor appointments in the same system as billing, pharmacy stock, payroll and accounts. Try the real clinic demo live with sample data.',
+  keywords: 'clinic management software, hospital ERP, patient appointment booking system, IVF clinic software, clinic billing and inventory software',
+  h1: 'The clinic, not just<br>the accounts.',
+  lead: 'Patient bookings and doctor slots, billing for consultations and procedures, pharmacy and lab stock, staff payroll, and the accounts &mdash; all one system. Nothing typed twice, and the day actually reconciles at the end of it.',
+  who: 'For clinics, day-care hospitals, diagnostic centres and specialist practices.',
+  demoWide: true,
+  demoSrc: '/demos/clinic/',
+  demo: liveScreen({ src: '/demos/clinic/', url: 'munimo.online/demos/clinic',
+                     poster: '/assets/shots/clinic.webp', label: 'Open the live Clinic ERP',
+                     note: 'Book a slot, raise a bill, check the stock alerts' }),
+  galleryHead: 'Straight from the clinic demo.',
+  gallery: [['clinic-appts', 'Doctor slots — tap a free one to book'], ['clinic-billing', 'Consultation, procedure and pharmacy billing'],
+            ['clinic-stock', 'Drugs and consumables with reorder alerts']],
+  featuresHead: 'One system from the front desk<br>to the year-end accounts.',
+  features: [
+    [icons.people, 'Patients and history', 'Records, treatment cycles, documents and visit history, all in one place instead of a file and a spreadsheet.'],
+    [icons.check, 'Appointments', 'Doctor-wise slots with double-booking blocked, a live waiting list, and reminders to the patient.'],
+    [icons.ledger, 'Billing that reconciles', 'Consultation, procedure, pharmacy and package billing, with balances tracked per patient.'],
+    [icons.layers, 'Pharmacy and lab stock', 'Drugs and consumables with batch and expiry, reorder alerts before you run out mid-procedure.'],
+    [icons.tax, 'Staff and payroll', 'Consultants, nurses, technicians and admin — attendance, salary runs and statutory deductions.'],
+    [icons.chart, 'The real picture', 'Revenue per doctor, per procedure and per month, with every figure traceable to the bill behind it.'],
+  ],
+  customHead: 'No two practices work the same way.',
+  customLead: 'A fertility clinic, a dental practice and a diagnostic centre share almost nothing on screen. This is what we build to order.',
+  custom: [
+    'Your treatment protocols and cycle stages, with the fields and consents your specialty actually needs.',
+    'Your billing packages, insurance and TPA workflows, and the way you split fees with visiting consultants.',
+    'Your report formats and templates, printed the way you already print them.',
+    'Integrations: payment gateway, SMS and WhatsApp reminders, lab machines and diagnostic equipment.',
+  ],
+  faq: [
+    ['Is the demo a real clinic system?', 'Yes — it is a working system with sample data. Book a free slot and it fills, raise a bill and the day\'s collection moves, look at inventory and you will see items below reorder level. Nothing you do is stored anywhere.'],
+    ['We are an IVF clinic. Does it handle cycles?', 'Yes, and that is exactly the kind of thing that gets built to order. Cycle stages, protocols, consents and stage-wise billing are configured for your practice rather than forced into a generic appointment model.'],
+    ['Can it handle more than one branch or doctor?', 'Yes. Doctors, rooms, branches and their calendars are all separate, and reporting rolls up across them or splits by whichever you need.'],
+    ['What about patient data privacy?', 'Your data lives in your own store, access is by role, and every view and change is logged. If you host it yourself, it never leaves your premises at all.'],
+  ],
+  ctaH: 'Tell us how your clinic runs.',
+  ctaS: 'The front desk, the doctors, the billing and the stock. We will tell you what a build would involve.',
+};
+
+export const pages = [fullErp, cashBook, schoolErp, clinicErp, mobileApp].map(build);

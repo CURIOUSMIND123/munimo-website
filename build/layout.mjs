@@ -111,6 +111,7 @@ function footer() {
         <a href="/full-erp.html">Full business ERP</a>
         <a href="/cash-book.html">Cash Book</a>
         <a href="/school-erp.html">School ERP</a>
+        <a href="/clinic-erp.html">Clinic ERP</a>
         <a href="/mobile-app.html">Mobile field app</a>
         <a href="/software.html">Try everything live</a>
       </div>
@@ -242,5 +243,45 @@ export const icons = {
   swap: '<svg viewBox="0 0 24 24"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></svg>',
   wrench: '<svg viewBox="0 0 24 24"><path d="M15 4a5 5 0 0 0-4.5 7.1L4 17.6 6.4 20l6.5-6.5A5 5 0 1 0 15 4z"/></svg>',
   school: '<svg viewBox="0 0 24 24"><path d="m12 3 10 5-10 5L2 8z"/><path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5"/></svg>',
+  heartbeat: '<svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 3 10 2.5-6 1.5 3h5"/></svg>',
   shield: '<svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.4 8.2-8 9.4C7.4 20.2 4 17 4 12V6z"/><path d="m9 12 2 2 4-4"/></svg>',
 };
+
+/** Before / after: the single clearest thing on the site. Red chaos on the
+    left, green calm on the right, readable in two seconds on any screen. */
+export function beforeAfter(bad, good) {
+  const X = '<svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+  const T = '<svg viewBox="0 0 24 24"><path d="M20 7 10 17l-5-5"/></svg>';
+  const li = (icon) => (t) =>
+    `<div class="ba-li"><span class="ba-ico">${icon}</span><span>${t}</span></div>`;
+  return `
+<div class="ba">
+  <div class="ba-col bad rv">
+    <div class="ba-hd">
+      <span class="ba-tag">Right now</span>
+      <h3>${bad.head}</h3>
+      <p>${bad.sub}</p>
+    </div>
+    <div class="ba-list">${bad.items.map(li(X)).join('')}</div>
+    <div class="ba-foot">${bad.foot}</div>
+  </div>
+  <div class="ba-col good rv rv2">
+    <div class="ba-hd">
+      <span class="ba-tag">With Munimo</span>
+      <h3>${good.head}</h3>
+      <p>${good.sub}</p>
+    </div>
+    <div class="ba-list">${good.items.map(li(T)).join('')}</div>
+    <div class="ba-foot">${good.foot}</div>
+  </div>
+</div>`;
+}
+
+/** A big, loud pain-point line. For owners who skim, not read. */
+export function painGrid(items) {
+  return `<div class="grid g3">${items.map(([big, small], i) => `
+    <div class="card rv ${i % 3 ? 'rv' + ((i % 3) + 1) : ''}">
+      <p style="font-size:clamp(19px,2.3vw,24px);font-weight:800;letter-spacing:-.022em;line-height:1.28">${big}</p>
+      <p class="muted" style="margin-top:11px;font-size:14.5px">${small}</p>
+    </div>`).join('')}</div>`;
+}

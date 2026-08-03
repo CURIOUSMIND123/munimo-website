@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Munimo School ERP — live demo</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/assets/munimo-icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/demos/shell.css">
+</head>
+<body>
+<script src="/demos/shell.js"></script>
+<script>
+(function () {
+  var M = window.MunimoDemo, money = M.money, who = M.who, esc = M.esc;
+
+  /* ── sample school: Paramount-sized, entirely fictional records ── */
+  var CLASSES = ['Nursery', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+  var FIRST = ['Aarav','Ananya','Vihaan','Diya','Arjun','Ishita','Kabir','Meera','Rohan','Saanvi',
+               'Aditya','Kavya','Nikhil','Priya','Rahul','Sneha','Vikram','Anjali','Karan','Tara',
+               'Manav','Riya','Dev','Neha','Yash','Pooja','Siddharth','Aisha','Varun','Nisha'];
+  var LAST = ['Sharma','Verma','Singh','Nath','Das','Gupta','Reddy','Iyer','Patel','Khan',
+              'Bose','Menon','Rao','Joshi','Mehta'];
+
+  function mk(i) {
+    var name = FIRST[i % FIRST.length] + ' ' + LAST[(i * 7) % LAST.length];
+    var cls = CLASSES[i % CLASSES.length];
+    var fee = 12000 + (CLASSES.indexOf(cls) * 1400);
+    var paidRatio = [1, 1, 1, 0.5, 1, 0, 1, 1, 0.5, 1][i % 10];
+    return {
+      id: 1000 + i, name: name, cls: cls, sec: 'ABC'[i % 3],
+      roll: (i % 40) + 1,
+      guardian: LAST[(i * 7) % LAST.length] + ' family',
+      phone: '9' + String(100000000 + i * 7919).slice(0, 9),
+      termFee: fee, paid: Math.round(fee * paidRatio),
+      att: 82 + ((i * 13) % 18),
+    };
+  }
+  var STUDENTS = [];
+  for (var i = 0; i < 42; i++) STUDENTS.push(mk(i));
+
+  var state = {
+    students: STUDENTS,
+    totalEnrolled: 1248,          // the school's real roll; the list is a sample of it
+    collectedToday: 184500,
+    receipts: [],
+    attendance: {},               // studentId -> 'P'|'A'|'L'
+    attDate: new Date().toISOString().slice(0, 10),
+    marks: {},
+  };
+
+  function dues() {
+    return state.students.reduce(function (s, x) { return s + (x.termFee - x.paid); }, 0);
+  }
+  function duesCount() {
+    return state.students.filter(function (x) { return x.paid < x.termFee; }).length;
+  }
+  function attPct() {
+    var v = Object.keys(state.attendance);
+    if (!v.length) return null;
+    var p = v.filter(function (k) { return state.attendance[k] !== 'A'; }).length;
+    return Math.round((p / v.length) * 100);
+  }
+
+  /* ─────────────────────────── views ─────────────────────────── */
+  var views = [
+    {
+      id: 'dash', name: 'Today', sub: 'The morning view for the office', icon: 'grid',
+      render: function (d) {
+        var pct = attPct();
+        var recent = state.receipts.slice(0, 5);
+        return d.kpis([
+          { label: 'Students on roll', value: state.totalEnrolled.toLocaleString('en-IN'), sub: 'Across 11 classes', icon: 'users', tone: '' },
+          { label: 'Fees collected today', value: money(state.collectedToday), sub: state.receipts.length + ' receipts issued', icon: 'rupee', tone: 'em' },
+          { label: 'Outstanding dues', value: money(dues()), sub: duesCount() + ' students pending', icon: 'alert', tone: 'gold' },
+          { label: "Attendance today", value: pct == null ? 'Not marked' : pct + '%', sub: pct == null ? 'Mark it in Attendance' : Object.keys(state.attendance).length + ' students marked', icon: 'check', tone: pct == null ? '' : 'blue' },
+        ]) +
+        '<div style="display:grid;grid-template-columns:1.35fr 1fr;gap:16px" class="dash-grid">' +
+        d.panel('Fee collection, last 6 months',
+          '<div class="panel-b bars-wrap"><div class="bars">' +
+          [62, 71, 58, 84, 76, 91].map(function (h, i) {
+            return '<div style="height:' + h + '%"><span>' + ['Feb','Mar','Apr','May','Jun','Jul'][i] + '</span></div>';
+          }).join('') + '</div></div>') +
+        d.panel('Needs attention',
+          '<div class="panel-b" style="display:grid;gap:11px">' +
+          '<div style="display:flex;gap:11px;align-items:flex-start"><span class="chip bad">' + duesCount() + ' pending</span>' +
+            '<div style="font-size:12.5px;color:var(--m)">Fee dues of <b style="color:var(--t)">' + money(dues()) + '</b> across the sample. Reminders go out on the 5th.</div></div>' +
+          '<div style="display:flex;gap:11px;align-items:flex-start"><span class="chip warn">3 soon</span>' +
+            '<div style="font-size:12.5px;color:var(--m)">Half-yearly exam marks entry closes Friday.</div></div>' +
+          '<div style="display:flex;gap:11px;align-items:flex-start"><span class="chip info">Payroll</span>' +
+            '<div style="font-size:12.5px;color:var(--m)">Staff salary run for this month is ready to approve.</div></div>' +
+          '</div>') +
+        '</div>' +
+        (recent.length ? d.panel('Receipts issued just now', d.table(
+          [{ label: 'Receipt' }, { label: 'Student' }, { label: 'Class' }, { label: 'Amount', num: true }],
+          recent.map(function (r) {
+            return ['<span class="mono" style="font-family:ui-monospace,monospace;font-size:12px">' + r.no + '</span>',
+                    who(r.name), '<span class="chip mute">' + r.cls + '</span>',
+                    '<b style="color:var(--em2)">' + money(r.amount) + '</b>'];
+          }))) : '');
+      },
+      after: function () {
+        var s = document.createElement('style');
+        s.textContent = '@media(max-width:900px){.dash-grid{grid-template-columns:1fr!important}}';
+        document.getElementById('body').appendChild(s);
+      },
+    },
+
+    {
+      id: 'students', name: 'Students', sub: 'Admissions and records', icon: 'users', group: 'School',
+      actions: [{ label: 'Add student', icon: 'plus', primary: true, run: function (d) { addStudent(d); } }],
+      render: function (d) {
+        return d.panel('Student register  ·  showing ' + state.students.length + ' of ' + state.totalEnrolled.toLocaleString('en-IN'),
+          d.table([{ label: 'Student' }, { label: 'Class' }, { label: 'Roll', num: true },
+                   { label: 'Guardian' }, { label: 'Attendance', num: true }, { label: 'Fee status' }],
+            state.students.slice(0, 14).map(function (s) {
+              var bal = s.termFee - s.paid;
+              return [who(s.name, s.phone),
+                      '<span class="chip mute">' + s.cls + '-' + s.sec + '</span>',
+                      s.roll, esc(s.guardian), s.att + '%',
+                      bal <= 0 ? '<span class="chip ok">Paid</span>'
+                               : '<span class="chip bad">' + money(bal) + ' due</span>'];
+            })));
+      },
+    },
+
+    {
+      id: 'att', name: 'Attendance', sub: 'Mark the class in one pass', icon: 'check',
+      actions: [
+        { label: 'Mark all present', run: function (d) {
+            state.students.slice(0, 12).forEach(function (s) { state.attendance[s.id] = 'P'; });
+            d.toast('Whole class marked present'); d.render();
+          } },
+        { label: 'Save attendance', icon: 'check', primary: true, run: function (d) {
+            var n = Object.keys(state.attendance).length;
+            if (!n) { d.toast('Mark at least one student first'); return; }
+            d.toast(n + ' students saved for ' + state.attDate);
+          } },
+      ],
+      render: function (d) {
+        var pct = attPct();
+        return d.kpis([
+          { label: 'Date', value: state.attDate, sub: 'Class V-A', icon: 'cal' },
+          { label: 'Marked', value: Object.keys(state.attendance).length + ' / 12', sub: 'Tap P, A or L below', icon: 'users' },
+          { label: 'Present', value: pct == null ? '—' : pct + '%', sub: 'Updates as you mark', icon: 'check', tone: 'em' },
+        ]) +
+        d.panel('Class V-A  ·  ' + state.attDate,
+          d.table([{ label: 'Student' }, { label: 'Roll', num: true }, { label: 'Mark' }],
+            state.students.slice(0, 12).map(function (s) {
+              var cur = state.attendance[s.id] || '';
+              return [who(s.name), s.roll,
+                '<div class="seg" data-sid="' + s.id + '">' +
+                ['P', 'A', 'L'].map(function (v) {
+                  return '<button data-v="' + v + '"' + (cur === v ? ' class="on"' : '') + '>' + v + '</button>';
+                }).join('') + '</div>'];
+            })));
+      },
+      after: function (d) {
+        document.querySelectorAll('.seg[data-sid]').forEach(function (seg) {
+          seg.addEventListener('click', function (e) {
+            var b = e.target.closest('button'); if (!b) return;
+            state.attendance[seg.getAttribute('data-sid')] = b.getAttribute('data-v');
+            d.render();
+          });
+        });
+      },
+    },
+
+    {
+      id: 'fees', name: 'Fees', sub: 'Collect, receipt and chase', icon: 'rupee',
+      actions: [{ label: 'Collect fee', icon: 'plus', primary: true, run: function (d) { collect(d); } }],
+      render: function (d) {
+        var pending = state.students.filter(function (s) { return s.paid < s.termFee; });
+        return d.kpis([
+          { label: 'Collected today', value: money(state.collectedToday), sub: state.receipts.length + ' receipts', icon: 'rupee', tone: 'em' },
+          { label: 'Outstanding', value: money(dues()), sub: pending.length + ' students', icon: 'alert', tone: 'gold' },
+          { label: 'Term fee', value: money(12000) + '–' + money(26000), sub: 'By class, with concessions', icon: 'doc' },
+        ]) +
+        d.panel('Dues list  ·  who to chase first',
+          d.table([{ label: 'Student' }, { label: 'Class' }, { label: 'Term fee', num: true },
+                   { label: 'Paid', num: true }, { label: 'Balance', num: true }, { label: '' }],
+            pending.slice(0, 12).map(function (s) {
+              return [who(s.name, s.guardian), '<span class="chip mute">' + s.cls + '-' + s.sec + '</span>',
+                      money(s.termFee), money(s.paid),
+                      '<b style="color:#fca5a5">' + money(s.termFee - s.paid) + '</b>',
+                      '<button class="btn btn-g pay" data-id="' + s.id + '">Collect</button>'];
+            })));
+      },
+      after: function (d) {
+        document.querySelectorAll('.pay').forEach(function (b) {
+          b.addEventListener('click', function () { collect(d, +b.getAttribute('data-id')); });
+        });
+      },
+    },
+
+    {
+      id: 'exams', name: 'Exams', sub: 'Marks and report cards', icon: 'award',
+      actions: [{ label: 'Publish results', icon: 'check', primary: true, run: function (d) {
+        d.toast('Results published — parents notified'); } }],
+      render: function (d) {
+        return d.panel('Half-yearly  ·  Class V-A  ·  marks entry',
+          d.table([{ label: 'Student' }, { label: 'English', num: true }, { label: 'Maths', num: true },
+                   { label: 'Science', num: true }, { label: 'Total', num: true }, { label: 'Grade' }],
+            state.students.slice(0, 10).map(function (s, i) {
+              var m = [62 + ((i * 17) % 34), 58 + ((i * 23) % 40), 65 + ((i * 11) % 32)];
+              var tot = m[0] + m[1] + m[2], pc = tot / 3;
+              var g = pc >= 85 ? ['A+', 'ok'] : pc >= 70 ? ['A', 'ok'] : pc >= 55 ? ['B', 'info'] : ['C', 'warn'];
+              return [who(s.name), m[0], m[1], m[2], '<b>' + tot + ' / 300</b>',
+                      '<span class="chip ' + g[1] + '">' + g[0] + '</span>'];
+            })));
+      },
+    },
+
+    {
+      id: 'staff', name: 'Staff & payroll', sub: 'Teaching and non-teaching', icon: 'chart', group: 'Office',
+      actions: [{ label: 'Run payroll', icon: 'check', primary: true, run: function (d) {
+        d.toast('Salary run prepared for 48 staff — awaiting approval'); } }],
+      render: function (d) {
+        var staff = [['Meena Rao', 'Senior teacher', 52000], ['Anil Kumar', 'Teacher', 41000],
+                     ['Fatima Sheikh', 'Teacher', 43500], ['Joseph Mathew', 'Sports', 34000],
+                     ['Lata Devi', 'Admin', 28000], ['Ravi Shankar', 'Accounts', 36500],
+                     ['Sunita Bose', 'Librarian', 26000], ['Prakash Jha', 'Maintenance', 21000]];
+        var total = staff.reduce(function (s, x) { return s + x[2]; }, 0);
+        return d.kpis([
+          { label: 'Staff', value: '48', sub: '31 teaching, 17 support', icon: 'users' },
+          { label: 'Monthly payroll', value: money(total * 6), sub: 'Before deductions', icon: 'rupee', tone: 'gold' },
+          { label: 'This month', value: 'Ready', sub: 'Awaiting principal approval', icon: 'check', tone: 'em' },
+        ]) +
+        d.panel('Salary register  ·  sample',
+          d.table([{ label: 'Name' }, { label: 'Role' }, { label: 'Gross', num: true },
+                   { label: 'Deductions', num: true }, { label: 'Net pay', num: true }],
+            staff.map(function (s) {
+              var ded = Math.round(s[2] * 0.12);
+              return [who(s[0]), esc(s[1]), money(s[2]), money(ded),
+                      '<b style="color:var(--em2)">' + money(s[2] - ded) + '</b>'];
+            })));
+      },
+    },
+  ];
+
+  /* ─────────────────────────── actions ─────────────────────────── */
+  function addStudent(d) {
+    d.open('Add a student',
+      '<label class="field"><span>Full name</span><input name="name" placeholder="Student name" autofocus></label>' +
+      '<label class="field"><span>Class</span><select name="cls">' +
+        CLASSES.map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select></label>' +
+      '<label class="field"><span>Section</span><select name="sec"><option>A</option><option>B</option><option>C</option></select></label>' +
+      '<label class="field"><span>Guardian phone</span><input name="phone" placeholder="10-digit mobile"></label>',
+      [{ label: 'Cancel', run: function (x) { x.close(); } },
+       { label: 'Admit student', primary: true, run: function (x) {
+          var name = x.val('name');
+          if (!name) { x.toast('Enter the student name'); return; }
+          var cls = x.val('cls');
+          var fee = 12000 + (CLASSES.indexOf(cls) * 1400);
+          state.students.unshift({ id: Date.now(), name: name, cls: cls, sec: x.val('sec'),
+            roll: state.students.length + 1, guardian: name.split(' ').slice(-1)[0] + ' family',
+            phone: x.val('phone') || '—', termFee: fee, paid: 0, att: 100 });
+          state.totalEnrolled++;
+          x.close(); x.toast(name + ' admitted to ' + cls); x.render();
+       } }]);
+  }
+
+  function collect(d, id) {
+    var pending = state.students.filter(function (s) { return s.paid < s.termFee; });
+    var pick = id ? state.students.filter(function (s) { return s.id === id; })[0] : pending[0];
+    if (!pick) { d.toast('No dues left in the sample'); return; }
+    var bal = pick.termFee - pick.paid;
+    d.open('Collect fee',
+      '<div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:15px">' +
+        who(pick.name, pick.cls + '-' + pick.sec + '  ·  ' + pick.guardian) + '</div>' +
+      '<label class="field"><span>Amount to collect</span><input name="amt" value="' + bal + '"></label>' +
+      '<label class="field"><span>Mode</span><select name="mode"><option>Cash</option><option>UPI</option>' +
+        '<option>Bank transfer</option><option>Cheque</option></select></label>' +
+      '<p style="font-size:11.5px;color:var(--f)">Balance due ' + money(bal) + '. A receipt is generated on collection.</p>',
+      [{ label: 'Cancel', run: function (x) { x.close(); } },
+       { label: 'Collect & print receipt', primary: true, run: function (x) {
+          var amt = Math.min(Math.max(parseInt(x.val('amt'), 10) || 0, 1), bal);
+          pick.paid += amt;
+          state.collectedToday += amt;
+          var no = 'RC-' + String(2600 + state.receipts.length + 1);
+          state.receipts.unshift({ no: no, name: pick.name, cls: pick.cls, amount: amt, mode: x.val('mode') });
+          x.open('Receipt ' + no,
+            '<div class="receipt"><div class="rh"><h4>Paramount Academy</h4>' +
+              '<p>Fee receipt &middot; ' + state.attDate + '</p></div>' +
+              '<div class="row"><span>Receipt no</span><b>' + no + '</b></div>' +
+              '<div class="row"><span>Student</span><b>' + esc(pick.name) + '</b></div>' +
+              '<div class="row"><span>Class</span><b>' + pick.cls + '-' + pick.sec + '</b></div>' +
+              '<div class="row"><span>Mode</span><b>' + esc(x.val('mode') || 'Cash') + '</b></div>' +
+              '<div class="row tot"><span>Amount paid</span><span>' + money(amt) + '</span></div>' +
+              '<div class="rf"><span>Balance ' + money(pick.termFee - pick.paid) + '</span>' +
+              '<span>Authorised signatory</span></div></div>',
+            [{ label: 'Done', primary: true, run: function (y) { y.close(); y.toast('Receipt ' + no + ' issued'); y.render(); } }]);
+       } }]);
+  }
+
+  new M.Demo({
+    title: 'Munimo School ERP — live demo',
+    brand: 'Paramount Academy',
+    brandSub: 'School ERP · live demo',
+    user: 'Office Admin',
+    userRole: 'ADMIN',
+    views: views,
+    state: state,
+  });
+})();
+</script>
+</body>
+</html>

@@ -81,39 +81,42 @@
 .eng-label{text-align:center;margin-top:26px;font-size:13px;font-weight:700;color:var(--em2);
            opacity:calc(max(0, var(--p) - .78) * 4.5)}
 
-/* ─────────────────────────── 3 · SHIFT ────────────────────────────── */
-/* One screen. Scroll wipes the legacy version away and the custom one in. */
-.shift{--p:0;position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--hair2);
-       background:var(--ink2);aspect-ratio:16/8.4}
-@media(max-width:700px){.shift{aspect-ratio:4/3.9}}
-.shift-pane{position:absolute;inset:0;padding:clamp(16px,2.4vw,28px);display:flex;flex-direction:column;gap:9px}
-/* legacy: cramped, grey, alarming */
-.shift-old{background:repeating-linear-gradient(0deg,#141613,#141613 26px,#181b17 26px,#181b17 52px);
-           clip-path:inset(0 calc(var(--p) * 100%) 0 0)}
-.shift-new{background:linear-gradient(165deg,#0e1714,#0a1210);clip-path:inset(0 0 0 calc((1 - var(--p)) * 100%))}
-.shift-seam{position:absolute;top:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent,var(--em),transparent);
-            left:calc(var(--p) * 100%);box-shadow:0 0 26px 3px rgba(18,185,129,.55);z-index:4;
-            opacity:calc(min(1, var(--p) * 6) * min(1, (1 - var(--p)) * 6))}
-.shift-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
-.shift-t{font-size:clamp(12px,1.5vw,15px);font-weight:800;letter-spacing:-.01em}
-.shift-old .shift-t{color:#a8a49a;font-family:var(--mono)}
-.shift-new .shift-t{color:var(--t)}
-.shift-chip{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:4px 10px;border-radius:100px}
-.shift-old .shift-chip{background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.4);color:#fca5a5}
-.shift-new .shift-chip{background:rgba(18,185,129,.13);border:1px solid rgba(18,185,129,.4);color:var(--em2)}
-.shift-line{display:flex;align-items:center;gap:10px;font-size:clamp(10px,1.2vw,12.5px);
-            padding:7px 10px;border-radius:7px}
-.shift-old .shift-line{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);
-                       color:#8b8880;font-family:var(--mono);letter-spacing:-.03em}
-.shift-new .shift-line{background:rgba(255,255,255,.03);border:1px solid var(--hair);color:var(--m);font-weight:600}
-.shift-line b{margin-left:auto;font-weight:800;flex-shrink:0}
-.shift-old .shift-line b{color:#fca5a5}
-.shift-new .shift-line b{color:var(--em2)}
-.shift-cap{position:absolute;left:0;right:0;bottom:0;padding:13px 18px;font-size:12.5px;font-weight:700;
-           background:linear-gradient(0deg,rgba(7,10,9,.94),transparent);z-index:5;display:flex;
-           justify-content:space-between;gap:14px}
-.shift-cap .a{color:#fca5a5;opacity:calc(1 - var(--p))}
-.shift-cap .b{color:var(--em2);opacity:var(--p);text-align:right}
+/* ─────────────────────── 3 · BEFORE / AFTER ───────────────────────── */
+/* The old wipe was clever and unreadable on a phone. This is two labelled
+   panels — red chaos, green calm — that anyone understands at a glance.
+   On desktop they sit side by side; on mobile they stack, still labelled. */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,1.8vw,22px);align-items:stretch}
+@media(max-width:760px){.ba{grid-template-columns:1fr}}
+.ba-col{border-radius:17px;overflow:hidden;border:1px solid var(--hair);display:flex;flex-direction:column}
+.ba-col.bad{background:linear-gradient(168deg,#171410,#100e0c);border-color:rgba(248,113,113,.24)}
+.ba-col.good{background:linear-gradient(168deg,#0e1a15,#0a1210);border-color:rgba(18,185,129,.3);
+             box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 70px rgba(18,185,129,.08)}
+.ba-hd{padding:clamp(17px,2vw,23px) clamp(18px,2.2vw,25px);border-bottom:1px solid var(--hair)}
+.ba-tag{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.14em;
+        text-transform:uppercase;padding:5px 12px;border-radius:100px;margin-bottom:13px}
+.ba-col.bad .ba-tag{background:rgba(248,113,113,.13);border:1px solid rgba(248,113,113,.36);color:#fca5a5}
+.ba-col.good .ba-tag{background:rgba(18,185,129,.13);border:1px solid rgba(18,185,129,.4);color:var(--em2)}
+.ba-hd h3{font-size:clamp(19px,2.4vw,26px);font-weight:800;letter-spacing:-.024em;line-height:1.2}
+.ba-col.good .ba-hd h3{color:var(--em3)}
+.ba-hd p{font-size:13.5px;color:var(--m);margin-top:8px}
+.ba-list{padding:clamp(14px,1.8vw,20px) clamp(18px,2.2vw,25px) clamp(20px,2.4vw,26px);
+         display:grid;gap:2px;flex:1}
+.ba-li{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--hair)}
+.ba-li:last-child{border-bottom:0}
+.ba-ico{width:21px;height:21px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
+        justify-content:center;margin-top:1px}
+.ba-col.bad .ba-ico{background:rgba(248,113,113,.15)}
+.ba-col.good .ba-ico{background:rgba(18,185,129,.16)}
+.ba-ico svg{width:11px;height:11px;stroke-width:3.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ba-col.bad .ba-ico svg{stroke:#fca5a5}
+.ba-col.good .ba-ico svg{stroke:var(--em2)}
+.ba-li span{font-size:14.5px;line-height:1.45;font-weight:600}
+.ba-col.bad .ba-li span{color:#a8a49a}
+.ba-col.good .ba-li span{color:var(--t)}
+.ba-foot{padding:15px clamp(18px,2.2vw,25px);border-top:1px solid var(--hair);font-size:13px;
+         font-weight:800;letter-spacing:-.01em}
+.ba-col.bad .ba-foot{color:#fca5a5;background:rgba(248,113,113,.05)}
+.ba-col.good .ba-foot{color:var(--em2);background:rgba(18,185,129,.06)}
 
 /* ── comparison table (legacy vs custom) ── */
 .vs{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:0;border:1px solid var(--hair);
