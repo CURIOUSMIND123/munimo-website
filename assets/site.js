@@ -25,18 +25,49 @@
     $$('a', mnav).forEach(function (a) { a.addEventListener('click', function () { mnav.classList.remove('open'); }); });
   }
 
-  /* ── reveal on scroll ── */
+  /* ── reveal on scroll ───────────────────────────────────────────────────
+     The observer gives the nice staggered timing, but it can be outrun by a
+     fast flick, a jump to an anchor or a restored scroll position — and a
+     missed reveal leaves that content invisible forever. So a rAF-throttled
+     sweep also reveals anything whose top has crossed into view. Content
+     being visible always wins over content being animated.                 */
   var rv = $$('.rv');
   if (rv.length) {
     if (RM || !('IntersectionObserver' in window)) {
       rv.forEach(function (el) { el.classList.add('in'); });
     } else {
+      var pending = rv.slice();
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
           if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
         });
-      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+      }, { rootMargin: '0px 0px -6% 0px', threshold: 0 });
       rv.forEach(function (el) { io.observe(el); });
+
+      var sweep = function () {
+        if (!pending.length) return;
+        var vh = window.innerHeight, still = [];
+        for (var i = 0; i < pending.length; i++) {
+          var el = pending[i];
+          if (el.classList.contains('in')) continue;
+          if (el.getBoundingClientRect().top < vh) { el.classList.add('in'); io.unobserve(el); }
+          else still.push(el);
+        }
+        pending = still;
+      };
+      var st = null;
+      var queue = function () {
+        if (st) return;
+        st = requestAnimationFrame(function () { st = null; sweep(); });
+      };
+      window.addEventListener('scroll', queue, { passive: true });
+      window.addEventListener('resize', queue);
+      // Lazy images landing after first paint change the page height, which can
+      // move a section into view without a scroll event. Re-sweep on any layout
+      // growth so nothing is left stranded invisible.
+      window.addEventListener('load', queue);
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.body);
+      sweep();
     }
   }
 
@@ -143,6 +174,56 @@
           }
         })();
       }
+    }
+  }
+
+  /* ── hero deck: a few degrees of cursor parallax ──────────────────────
+     Enough that the product reads as an object in space, not a picture.  */
+  var deck = $('.deck');
+  if (deck && !RM && window.matchMedia('(pointer:fine)').matches) {
+    var stage = $('.deck-stage', deck), tick = null;
+    var move = function (e) {
+      if (tick) return;
+      tick = requestAnimationFrame(function () {
+        tick = null;
+        var r = deck.getBoundingClientRect();
+        var cx = (e.clientX - r.left) / r.width - 0.5;
+        var cy = (e.clientY - r.top) / r.height - 0.5;
+        stage.style.setProperty('--ry', (cx * 7).toFixed(2) + 'deg');
+        stage.style.setProperty('--rx', (11 - cy * 7).toFixed(2) + 'deg');
+      });
+    };
+    deck.addEventListener('mousemove', move);
+    deck.addEventListener('mouseleave', function () {
+      stage.style.setProperty('--ry', '0deg');
+      stage.style.setProperty('--rx', '11deg');
+    });
+  }
+
+  /* ── sticky product tour ───────────────────────────────────────────────
+     The copy scrolls; the screenshot beside it swaps to match whichever
+     step is currently in the reading position. Clicking a step jumps too. */
+  var tour = $('.tour');
+  if (tour) {
+    var steps = $$('.tour-step', tour), shots = $$('.tour-imgs img', tour);
+    var show = function (i) {
+      steps.forEach(function (s, n) { s.classList.toggle('on', n === i); });
+      shots.forEach(function (s, n) { s.classList.toggle('on', n === i); });
+    };
+    show(0);
+    steps.forEach(function (s, i) {
+      s.addEventListener('click', function () {
+        show(i);
+        if (window.innerWidth <= 940) s.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      });
+    });
+    if (!RM && 'IntersectionObserver' in window) {
+      var tio = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (e.isIntersecting) show(steps.indexOf(e.target));
+        });
+      }, { rootMargin: '-42% 0px -42% 0px', threshold: 0 });
+      steps.forEach(function (s) { tio.observe(s); });
     }
   }
 

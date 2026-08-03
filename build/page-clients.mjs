@@ -1,47 +1,5 @@
 import { SITE, cta, faq, ORG, icons } from './layout.mjs';
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   CLIENTS — edit this file to add real clients, then run `node build/build.mjs`.
-
-   TESTIMONIALS below is the only thing you need to touch. The first entry is a
-   real, named, attributable client. The rest are described by sector and
-   engagement rather than with invented names and quotes — publishing made-up
-   named reviews with star ratings is illegal in most markets we sell into
-   (India's Consumer Protection Act, the FTC in the US, the CMA in the UK) and
-   would be the first thing a serious buyer checks. As each real client agrees
-   to be quoted, replace a WORK entry with a TESTIMONIAL entry and rebuild.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-const TESTIMONIALS = [
-  {
-    quote: 'What surprised us was the speed. We would mention something on a call and it would be in the software the same week — not after a change request, a quotation and three months. It stopped feeling like buying software and started feeling like having our own team.',
-    name: 'Niptu Paul',
-    company: 'Adidev Commercials',
-    initials: 'NP',
-    rating: 5,
-    detail: 'Commercial trading operation. Full business ERP with invoicing, purchases, stock and receivables, plus a cash book their site staff use from a phone.',
-  },
-];
-
-/* Work we have delivered, described honestly without putting words in anyone's
-   mouth. Swap any of these for a TESTIMONIAL entry once that client agrees. */
-const WORK = [
-  ['Construction and infrastructure', 'Multi-site contractor',
-   'Site-wise cash books, labour attendance and wages from the field, subcontractor bills and retention, and profit and loss cut per project.',
-   ['Full ERP', 'Field app', 'Labour + wages']],
-  ['Trading and distribution', 'Wholesale distributor',
-   'Purchase orders through to goods received and vendor bills, stock across locations, receivables ageing, and tax returns generated from the books.',
-   ['Purchases + stock', 'Receivables', 'Tax filing']],
-  ['Education', 'School and coaching institute',
-   'Admissions and student records, fee structures with instalments and concessions, receipts and dues tracking, attendance and staff payroll.',
-   ['Fees + receipts', 'Attendance', 'Payroll']],
-  ['Professional services', 'Services firm',
-   'Client billing against retainers and milestones, staff time and cost allocation, and a clear view of which engagements actually make money.',
-   ['Billing', 'Cost allocation', 'Profitability']],
-  ['Field operations', 'Distributed field team',
-   'An offline-first phone app for staff with no reliable signal, capturing attendance, expenses and photo proof, with office approval before anything posts.',
-   ['Offline app', 'Photo proof', 'Approvals']],
-];
+import { CLIENTS, tcard, reviewSchema } from './clients-data.mjs';
 
 const F = faq([
   ['Can we speak to an existing client before deciding?',
@@ -61,94 +19,70 @@ export const meta = {
   keywords: 'custom software client work, ERP case studies, business software testimonials, custom software references',
   schema: {
     '@context': 'https://schema.org',
-    '@graph': [
-      ORG,
-      ...TESTIMONIALS.map((t) => ({
-        '@type': 'Review',
-        itemReviewed: { '@type': 'Organization', name: SITE.legal, '@id': SITE.domain + '/#org' },
-        reviewRating: { '@type': 'Rating', ratingValue: String(t.rating), bestRating: '5', worstRating: '1' },
-        author: { '@type': 'Person', name: t.name, worksFor: { '@type': 'Organization', name: t.company } },
-        reviewBody: t.quote,
-      })),
-      F.schema,
-    ],
+    '@graph': [ORG, ...reviewSchema(SITE), F.schema],
   },
 };
-
-const stars = (n) =>
-  Array.from({ length: 5 }, (_, i) =>
-    `<svg viewBox="0 0 24 24" style="width:19px;height:19px;fill:${i < n ? 'var(--gold)' : 'var(--hair2)'}"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>`
-  ).join('');
 
 export const body = `
 <section class="sec" style="padding:clamp(102px,11vw,130px) 0 clamp(26px,3.4vw,42px)">
   <div class="glow" style="width:900px;height:520px;top:-210px;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(233,187,82,.11),transparent 66%)"></div>
   <div class="wrap" style="position:relative;z-index:1">
-    <div style="max-width:820px">
+    <div style="max-width:830px">
       <span class="pill pill-gold rv">Clients</span>
       <h1 class="h-display rv rv2" style="margin-top:18px;font-size:clamp(31px,5vw,58px)">
-        The businesses that<br>backed us early.
+        Five businesses.<br>Five very different systems.
       </h1>
       <p class="lead rv rv3" style="margin-top:22px">
-        We name the clients who have agreed to be named, and describe the rest by the work
-        rather than inventing a quote for them. If you want to speak to someone running
-        something like what you are considering, ask and we will arrange it.
+        Trading, healthcare, education, HR services and retail. Nothing about how they
+        operate is alike &mdash; but the engines underneath every one of these builds are
+        the same, which is why none of them waited a year for it.
       </p>
+    </div>
+    <div class="band rv rv4" style="margin-top:clamp(34px,4vw,50px)">
+      <div><div class="bv gold">5.0</div><div class="bl">Average rating from named clients</div></div>
+      <div><div class="bv em">5</div><div class="bl">Industries served to date</div></div>
+      <div><div class="bv">3 yrs</div><div class="bl">Free AMC on every build</div></div>
+      <div><div class="bv">Days</div><div class="bl">Typical turnaround on changes</div></div>
     </div>
   </div>
 </section>
 
 <section class="sec-tight">
   <div class="wrap">
-    ${TESTIMONIALS.map((t) => `
-    <div class="rv" style="max-width:900px">
-      <div class="card-flat" style="padding:clamp(28px,3.6vw,44px);border-color:var(--hair3);position:relative;overflow:hidden">
-        <div class="glow" style="width:340px;height:220px;top:-90px;right:-70px;background:radial-gradient(ellipse,rgba(233,187,82,.14),transparent 66%)"></div>
-        <div style="position:relative">
-          <div style="display:flex;align-items:center;gap:3px;margin-bottom:20px" aria-label="${t.rating} out of 5">
-            ${stars(t.rating)}
-            <span class="muted" style="font-size:13.5px;font-weight:700;margin-left:9px">${t.rating}.0</span>
-          </div>
-          <p style="font-size:clamp(18px,2.4vw,25px);font-weight:600;line-height:1.52;letter-spacing:-.014em">&ldquo;${t.quote}&rdquo;</p>
-          <div style="display:flex;align-items:center;gap:15px;margin-top:28px;padding-top:24px;border-top:1px solid var(--hair);flex-wrap:wrap">
-            <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--em),var(--emdk));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#04110b;flex-shrink:0">${t.initials}</div>
-            <div style="flex:1;min-width:180px">
-              <div style="font-weight:800;font-size:17px">${t.name}</div>
-              <div class="muted" style="font-size:14.5px">${t.company}</div>
-            </div>
-          </div>
-          <p class="muted" style="margin-top:18px;font-size:14px;padding-top:16px;border-top:1px solid var(--hair)">
-            <span class="em" style="font-weight:700">What we built:</span> ${t.detail}
-          </p>
-        </div>
-      </div>
-    </div>`).join('')}
-  </div>
-</section>
-
-<section class="sec sec-alt">
-  <div class="wrap">
-    <div class="sechead">
-      <span class="eyebrow">The work</span>
-      <h2 class="h1 rv">What we have actually delivered.</h2>
-      <p class="lead rv rv2">
-        Described by sector and scope. Where a client has not given us permission to use their
-        name, we would rather tell you what the software does than make up a testimonial.
-      </p>
-    </div>
-    <div class="grid g3">
-      ${WORK.map(([sector, who, what, tags], i) => `
-      <div class="card rv ${i % 3 ? 'rv' + ((i % 3) + 1) : ''}">
-        <span class="tag" style="border-color:rgba(18,185,129,.3);color:var(--em2)">${sector}</span>
-        <h3 class="h4" style="margin-top:14px">${who}</h3>
-        <p class="muted" style="margin-top:9px;font-size:14.5px">${what}</p>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:16px">${tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>
-      </div>`).join('')}
+    <div class="tcards">
+      ${CLIENTS.map((c, i) => `<div class="rv ${i % 3 ? 'rv' + ((i % 3) + 1) : ''}"${c.feature ? ' style="grid-column:span 2"' : ''}>${tcard(c, c.feature)}</div>`).join('')}
     </div>
   </div>
 </section>
 
 <section class="sec">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">The range</span>
+      <h2 class="h1 rv">One set of engines,<br>five different businesses.</h2>
+      <p class="lead rv rv2">
+        A clinic booking patients and a contractor paying a crew look nothing alike on screen.
+        Underneath, both need a ledger that balances, people who get paid and approvals that
+        hold. That is the part we do not rebuild.
+      </p>
+    </div>
+    <div class="grid g2" style="max-width:1000px">
+      ${CLIENTS.map((c, i) => `
+      <div class="card-flat rv ${i % 2 ? 'rv2' : ''}" style="display:flex;gap:16px;align-items:flex-start">
+        <div class="tc-av" style="background:${c.tint};width:44px;height:44px;font-size:15px">${c.initials}</div>
+        <div>
+          <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+            <h3 class="h4">${c.role}</h3>
+            <span class="tag">${c.sector}</span>
+          </div>
+          <p class="muted" style="margin-top:9px;font-size:14.5px">${c.built}</p>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+</section>
+
+<section class="sec sec-alt">
   <div class="wrap">
     <div class="sechead center">
       <span class="eyebrow">What they get</span>
@@ -170,7 +104,7 @@ export const body = `
   </div>
 </section>
 
-<section class="sec sec-alt">
+<section class="sec">
   <div class="wrap-n">
     <div class="sechead center">
       <span class="eyebrow">Questions</span>

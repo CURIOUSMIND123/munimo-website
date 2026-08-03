@@ -56,6 +56,7 @@ ${keywords ? `<meta name="keywords" content="${esc(keywords)}">` : ''}
 <link rel="icon" href="/assets/favicon-32.png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/favicon-180.png">
 <link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/visual.css">
 ${(css || []).map((c) => `<link rel="stylesheet" href="/assets/${c}">`).join('\n')}
 ${schema ? `<script type="application/ld+json">${JSON.stringify(schema)}</script>` : ''}
 </head>
@@ -67,6 +68,7 @@ function header(path) {
   const link = ([href, label]) =>
     `<a href="/${href}"${href === path ? ' class="on" aria-current="page"' : ''}>${label}</a>`;
   return `
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
 <header class="hd">
   <div class="hd-in">
     <a class="logo" href="/" aria-label="${SITE.name} home">

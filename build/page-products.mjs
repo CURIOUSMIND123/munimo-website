@@ -69,6 +69,23 @@ function build(p) {
   </div>
 </section>
 
+${p.gallery ? `
+<section class="sec-tight">
+  <div class="wrap">
+    <div class="sechead center" style="margin-bottom:clamp(26px,3vw,38px)">
+      <span class="eyebrow">Real screens</span>
+      <h2 class="h2 rv">${p.galleryHead}</h2>
+    </div>
+    <div class="grid g3">
+      ${p.gallery.map(([shot, cap], i) => `
+      <figure class="rv ${i % 3 ? 'rv' + ((i % 3) + 1) : ''}">
+        <div class="figure tilt"><img src="/assets/shots/${shot}.webp" alt="${cap}" loading="lazy"></div>
+        <figcaption class="figure-cap">${cap}</figcaption>
+      </figure>`).join('')}
+    </div>
+  </div>
+</section>` : ''}
+
 <section class="sec">
   <div class="wrap">
     <div class="sechead">
@@ -122,6 +139,10 @@ const fullErp = {
   demo: liveScreen({ src: '/web-app/app.html', url: 'munimo.online/web-app',
                      poster: '/assets/web/cashbook-hero.png', label: 'Start the live ERP',
                      note: 'Click anywhere to use the real system' }),
+  galleryHead: 'Straight from the running product.',
+  gallery: [['invoices', 'Sales invoices with tax per line'], ['purchases', 'Purchase orders and vendor bills'],
+            ['reports', 'Reports that drill to the entry'], ['inventory', 'Stock across locations'],
+            ['employees', 'Employees and payroll'], ['gst', 'Tax returns from live books']],
   featuresHead: 'Everything the office does,<br>without the gaps between tools.',
   features: [
     [icons.ledger, 'Sales and invoicing', 'Quotations, invoices, credit notes, payment tracking and reminders. Tax applied correctly per line and per customer.'],
@@ -167,6 +188,9 @@ const cashBook = {
   demo: liveScreen({ src: '/web-app/lite.html', url: 'munimo.online/web-app/lite',
                      poster: '/assets/web/cashbook-hero.png', label: 'Open the live Cash Book',
                      note: 'Add an entry and watch the balance move' }),
+  galleryHead: 'The book, on a screen and in a pocket.',
+  gallery: [['cashflow', 'Money in and out, by head'], ['cashbook', 'The simple cash book view'],
+            ['phone-home', 'The same book on a phone']],
   featuresHead: 'A book that stays honest<br>without anyone policing it.',
   features: [
     [icons.ledger, 'Money in, money out', 'Every receipt and payment against a head you choose, with the party, the mode and a note. Two taps on a phone, one line in the book.'],
@@ -212,6 +236,9 @@ const schoolErp = {
   demo: liveScreen({ src: '/web-app/app.html', url: 'munimo.online/web-app',
                      poster: '/assets/web/cashbook-hero.png', label: 'Open the live system',
                      note: 'The shared engine — school screens are built per institution' }),
+  galleryHead: 'The engine a school build sits on.',
+  gallery: [['clients', 'Records and balances per party'], ['reports', 'Collection and dues reporting'],
+            ['employees', 'Staff and payroll']],
   featuresHead: 'The parts every institution needs,<br>and the ones only yours does.',
   features: [
     [icons.people, 'Students and admissions', 'Enquiry to enrolment, documents, sections and batches, transfers and leaving certificates, full student history.'],
@@ -258,6 +285,9 @@ const mobileApp = {
            <span class="livedot">LIVE</span>
            <iframe src="/lite-app/?demo=1" title="Munimo mobile field app — live demo" loading="lazy"></iframe>
          </div>`,
+  galleryHead: 'What the field sees, and what the office gets.',
+  gallery: [['phone-home', 'The field home screen'], ['phone-attend', 'Marking a crew present'],
+            ['labour', 'It lands in the office as wages']],
   featuresHead: 'Built for a phone in a pocket,<br>not a laptop on a desk.',
   features: [
     [icons.offline, 'No signal, no problem', 'Everything works offline and queues up. When the phone finds a network it syncs quietly, with no duplicates and nothing lost.'],
