@@ -2,8 +2,9 @@
    dependency on this file. Edit here, run `node build/build.mjs`, commit. */
 
 export const SITE = {
-  name: 'Munimo',
-  legal: 'Munimo Software',
+  name: 'Munimo',                 // the product / brand people search for
+  legal: 'Awdhex Technologies',   // the registered company that owns it
+  brand: 'Munimo',
   domain: 'https://munimo.online',
   tagline: 'Custom software, built for how your business actually works',
   wa: '919599942248',
@@ -96,7 +97,10 @@ function footer() {
     <div class="ft-grid">
       <div>
         <a class="logo" href="/"><img class="logo-m" src="/assets/munimo-icon.svg" alt="" width="31" height="31"> ${SITE.name}</a>
-        <p class="muted" style="margin-top:14px;font-size:14.5px;max-width:330px">
+        <p class="muted" style="margin-top:12px;font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--em2)">
+          A product of ${SITE.legal}
+        </p>
+        <p class="muted" style="margin-top:12px;font-size:14.5px;max-width:330px">
           We build custom software for businesses that have outgrown spreadsheets and
           off-the-shelf tools. Own it outright or subscribe. Three years of maintenance included.
         </p>
@@ -130,7 +134,7 @@ function footer() {
       </div>
     </div>
     <div class="ft-btm">
-      <span>&copy; <span data-year>2026</span> ${SITE.legal}. All rights reserved.</span>
+      <span>&copy; <span data-year>2026</span> ${SITE.legal}. All rights reserved. Munimo is a product of ${SITE.legal}.</span>
       <span>Built for businesses worldwide.</span>
     </div>
   </div>
@@ -215,15 +219,19 @@ export function faq(items) {
 export const ORG = {
   '@type': 'Organization',
   '@id': SITE.domain + '/#org',
-  name: SITE.legal,
+  name: SITE.legal,               // Awdhex Technologies
+  alternateName: SITE.brand,      // Munimo (the product brand)
+  legalName: SITE.legal,
   url: SITE.domain,
   logo: SITE.domain + '/assets/munimo-logo.svg',
-  description: 'Custom software development studio. We build ERP, accounting, school management and field applications tailored to each business, available as a perpetual licence or a subscription.',
+  brand: { '@type': 'Brand', name: SITE.brand },
+  description: 'Awdhex Technologies is a custom software company. Its Munimo product line covers ERP, accounting, school and clinic management, and field applications, each tailored to the business and available as a perpetual licence or a subscription.',
   email: SITE.email,
   telephone: '+' + SITE.wa,
   areaServed: 'Worldwide',
   knowsAbout: ['Custom software development', 'ERP development', 'Business process automation',
-               'Legacy software migration', 'School management systems', 'Accounting software'],
+               'Legacy software migration', 'School management systems', 'Clinic management systems',
+               'Accounting software'],
 };
 
 export const icons = {
