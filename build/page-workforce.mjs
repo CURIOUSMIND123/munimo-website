@@ -1,8 +1,9 @@
 import { SITE, cta, faq, ORG, icons } from './layout.mjs';
 import { CLIENTS, tcard, reviewSchema } from './clients-data.mjs';
-import { deck, filmPhone, filmWide, priceEngine, constructProTable, comboTable,
+import { filmPhone, filmWide, priceEngine, constructProTable, comboTable,
          addonsTerms, workforceContents, ic } from './parts.mjs';
 import { SLABS, CARD, ENTRY, money, lakh } from './pricing-data.mjs';
+import { wfDemo } from './wfdemo.mjs';
 
 const VID_V = 'TcsdlIyAut0';
 const VID_H = 'RXZDZ7Rdojk';
@@ -35,8 +36,8 @@ export const meta = {
   title: 'Munimo Workforce — manpower tracking and attendance for contract labour in India',
   desc: 'Face and GPS proof of duty for contract and field workforces, with payroll calculated from proven duty only. Works offline, needs no attendance hardware. From ₹39 per worker a month.',
   keywords: 'manpower tracking app India, contract labour attendance software, face attendance app without hardware, GPS attendance for contract workers, railway contractor attendance and payroll, offline face recognition attendance India, labour muster app, keyman patrol GPS monitoring, security guard attendance app, housekeeping staff attendance software',
-  css: ['motion.css', 'saas.css'],
-  js: ['saas.js'],
+  css: ['motion.css', 'saas.css', 'wfdemo.css'],
+  js: ['saas.js', 'wfdemo.js'],
   schema: {
     '@context': 'https://schema.org',
     '@graph': [
@@ -134,7 +135,7 @@ export const body = `
         </p>
         <div class="rv rv3" style="display:flex;gap:11px;margin-top:28px;flex-wrap:wrap">
           <a class="btn btn-em btn-big" href="#price">See your price</a>
-          <a class="btn btn-ghost btn-big" href="https://wa.me/${SITE.wa}" target="_blank" rel="noopener">Ask on WhatsApp</a>
+          <a class="btn btn-ghost btn-big" href="#how">Watch it work</a>
         </div>
         <ul class="rv rv4" style="list-style:none;margin:30px 0 0;padding:0;display:grid;gap:9px;max-width:46ch">
           ${['Works with no signal — the face match runs on the phone',
@@ -289,15 +290,18 @@ export const body = `
   </div>
 </section>
 
-<!-- ══════════ THE DECK ══════════ -->
-<section class="sec">
+<!-- ══════════ THE WORKING DEMONSTRATION ══════════ -->
+<section class="sec" id="how">
   <div class="wrap">
     <div class="sechead">
-      <span class="eyebrow">The whole case, running by itself</span>
-      <h2 class="h1 rv">Nine years of circulars, in two minutes.</h2>
-      <p class="lead rv rv2">Hover to hold it, or click a bar to jump.</p>
+      <span class="eyebrow">Watch it work</span>
+      <h2 class="h1 rv">What he taps. What you see. Same second.</h2>
+      <p class="lead rv rv2">
+        Four kinds of duty, each with its own checks. His phone and your
+        dashboard, side by side and in step.
+      </p>
     </div>
-    <div class="rv rv2">${deck({ secs: 8 })}</div>
+    <div class="rv rv2">${wfDemo()}</div>
   </div>
 </section>
 

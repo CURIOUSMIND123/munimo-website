@@ -1,8 +1,9 @@
 import { SITE, cta, faq, ORG, icons } from './layout.mjs';
 import { CLIENTS, tcard, marquee, reviewSchema } from './clients-data.mjs';
-import { deck, filmPhone, filmWide, priceEngine, constructProTable, comboTable,
+import { filmPhone, filmWide, priceEngine, constructProTable, comboTable,
          addonsTerms, workforceContents, ic } from './parts.mjs';
 import { SLABS, CONSTRUCTPRO, ENTRY, CARD, money, lakh } from './pricing-data.mjs';
+import { wfDemo } from './wfdemo.mjs';
 
 const VID_V = 'TcsdlIyAut0';   // vertical, the app in a worker's hand
 const VID_H = 'RXZDZ7Rdojk';   // wide, the whole thing end to end
@@ -45,8 +46,8 @@ export const meta = {
   title: 'Munimo Workforce — face and GPS attendance for contract labour, with payroll',
   desc: 'Prove every outsourced shift. Face check with a blink test, GPS matched to the site, works offline, and payroll calculated from proven duty only. From ₹39 per worker a month. No hardware to buy.',
   keywords: 'manpower tracking software India, contract labour attendance app, face attendance without hardware, GPS attendance for field workers, railway contractor attendance software, workforce attendance and payroll, offline face recognition attendance, labour attendance app for contractors, keyman patrol GPS tracking, site attendance app India',
-  css: ['motion.css', 'saas.css'],
-  js: ['saas.js'],
+  css: ['motion.css', 'saas.css', 'wfdemo.css'],
+  js: ['saas.js', 'wfdemo.js'],
   schema: {
     '@context': 'https://schema.org',
     '@graph': [
@@ -138,7 +139,7 @@ export const body = `
 
         <div class="rv rv3" style="display:flex;gap:11px;margin-top:28px;flex-wrap:wrap">
           <a class="btn btn-em btn-big" href="#price">See your price</a>
-          <a class="btn btn-ghost btn-big" href="/workforce.html">How a duty is proven</a>
+          <a class="btn btn-ghost btn-big" href="#how">Watch it work</a>
         </div>
 
         <div class="rv rv4" style="display:grid;grid-template-columns:repeat(3,auto);gap:clamp(16px,3vw,38px);margin-top:34px;justify-content:start">
@@ -180,22 +181,18 @@ export const body = `
   </div>
 </section>
 
-<!-- ══════════ THE AUTO-RUNNING DECK ══════════ -->
-<section class="sec" id="story">
+<!-- ══════════ THE WORKING DEMONSTRATION ══════════ -->
+<section class="sec" id="how">
   <div class="wrap">
     <div class="sechead">
-      <span class="eyebrow">The whole case, running by itself</span>
-      <h2 class="h1 rv">Nine years of circulars, in two minutes.</h2>
+      <span class="eyebrow">Watch it work</span>
+      <h2 class="h1 rv">What he taps. What you see. Same second.</h2>
       <p class="lead rv rv2">
-        It plays on its own. Hover to hold it, or click a bar to jump.
+        His phone and your dashboard, side by side and in step. Pick a kind of
+        duty and watch the whole thing play itself.
       </p>
     </div>
-    <div class="rv rv2">${deck({ secs: 8 })}</div>
-    <p class="faint rv rv3" style="margin-top:16px;font-size:12.5px;max-width:70ch">
-      Every figure on these slides comes from a public source named on the slide
-      itself — Railway Board letters, a Rajya Sabha answer, a CAG report, and
-      vendors&rsquo; own published price pages.
-    </p>
+    <div class="rv rv2">${wfDemo()}</div>
   </div>
 </section>
 

@@ -1,0 +1,219 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   wfdemo.css — the working demonstration: what the worker does on his phone,
+   and what the office sees on the dashboard, side by side and in step.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.wf{position:relative}
+
+/* ── pick a duty type ───────────────────────────────────────────────────── */
+.wf-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+.wf-tab{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:99px;
+  border:1px solid var(--hair2);background:var(--ink2);color:var(--m);cursor:pointer;
+  font:700 13px/1 var(--font);transition:.3s var(--ease);white-space:nowrap}
+.wf-tab svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.wf-tab:hover{color:var(--t);border-color:var(--hair3)}
+.wf-tab.on{background:var(--em);border-color:var(--em);color:#04150e}
+@media(max-width:560px){.wf-tab{padding:8px 11px;font-size:11.5px;gap:6px}.wf-tab svg{width:13px;height:13px}}
+
+/* ── the stage ──────────────────────────────────────────────────────────── */
+.wf-stage{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);
+  gap:clamp(18px,3vw,44px);align-items:center}
+@media(max-width:900px){.wf-stage{grid-template-columns:1fr;justify-items:center}}
+
+.wf-side{font-size:10.5px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--f);margin:0 0 12px;text-align:center}
+
+/* ── the phone ──────────────────────────────────────────────────────────── */
+.wfp{position:relative;width:clamp(238px,24vw,286px);aspect-ratio:9/19;flex:none;
+  border-radius:clamp(30px,3vw,40px);padding:clamp(6px,.7vw,9px);
+  background:linear-gradient(160deg,#28342e,#0c110f 42%,#1b241f);
+  box-shadow:0 40px 80px -32px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.07)}
+.wfp::after{content:"";position:absolute;inset:-14%;z-index:-1;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(18,185,129,.22),transparent 62%);filter:blur(30px)}
+.wfp-scr{position:relative;width:100%;height:100%;border-radius:clamp(25px,2.5vw,33px);
+  overflow:hidden;background:#070d0a;display:flex;flex-direction:column}
+.wfp-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 7px;
+  font-size:9.5px;font-weight:700;color:#8aa096;flex:none}
+.wfp-bar i{display:inline-flex;gap:3px;font-style:normal}
+.wfp-bar b{display:block;width:3px;height:7px;border-radius:1px;background:#8aa096}
+.wfp-bar b:nth-child(2){height:9px}.wfp-bar b:nth-child(3){height:11px}
+.wfp-who{display:flex;align-items:center;gap:9px;padding:4px 16px 12px;flex:none;
+  border-bottom:1px solid rgba(255,255,255,.07)}
+.wfp-av{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,#12b981,#0a5c40);color:#04150e;font:800 11px/1 var(--font)}
+.wfp-who b{display:block;font-size:12.5px;color:#eef3f8;line-height:1.2}
+.wfp-who small{display:block;font-size:9.5px;color:#7f9289;margin-top:1px}
+
+.wfp-body{position:relative;flex:1;min-height:0}
+.wfs{position:absolute;inset:0;padding:14px 16px;display:flex;flex-direction:column;gap:10px;
+  opacity:0;visibility:hidden;transform:translateY(10px) scale(.985);
+  transition:opacity .45s var(--ease),transform .55s var(--ease),visibility .45s}
+.wfs.on{opacity:1;visibility:visible;transform:none}
+
+.wfs-eye{font-size:8.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#34d399;margin:0}
+.wfs-eye.amber{color:#e9bb52}
+.wfs h4{margin:0;font-size:15px;line-height:1.25;font-weight:800;color:#f2f6f4}
+.wfs p{margin:0;font-size:11px;line-height:1.45;color:#9fb3aa}
+
+/* a card inside a phone screen */
+.wfc{padding:12px;border-radius:13px;background:#101b16;border:1px solid rgba(255,255,255,.08)}
+.wfc-row{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;line-height:1.5}
+.wfc-row span{color:#8aa096}
+.wfc-row b{color:#eef3f8;font-weight:700}
+.wfc-t{font-size:12.5px;font-weight:800;color:#f2f6f4;margin:0 0 7px}
+
+/* the face viewfinder */
+.wff{position:relative;flex:1;min-height:0;border-radius:15px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 38%,#1d2c25,#080f0c 72%);display:grid;place-items:center}
+.wff-oval{width:58%;aspect-ratio:3/4;border-radius:50%;border:2px dashed rgba(52,211,153,.55);
+  position:relative;display:grid;place-items:center;transition:border-color .4s,box-shadow .4s}
+.wff.lock .wff-oval{border-style:solid;border-color:#34d399;box-shadow:0 0 0 6px rgba(52,211,153,.14),0 0 30px rgba(52,211,153,.4)}
+.wff-head{width:72%;aspect-ratio:3/4;border-radius:50% 50% 46% 46%;
+  background:linear-gradient(170deg,#3c4f45,#22302a);position:relative}
+.wff-eye{position:absolute;top:38%;width:13%;height:7%;border-radius:50%;background:#0b100e;
+  transition:transform .12s linear}
+.wff-eye.l{left:24%}.wff-eye.r{right:24%}
+.wff.blink .wff-eye{transform:scaleY(.08)}
+.wff-mouth{position:absolute;bottom:22%;left:36%;width:28%;height:5%;border-radius:0 0 99px 99px;background:#0b100e;opacity:.55}
+.wff-scan{position:absolute;left:8%;right:8%;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,#34d399,transparent);box-shadow:0 0 14px #34d399;
+  animation:wfscan 1.9s ease-in-out infinite}
+@keyframes wfscan{0%,100%{top:22%}50%{top:72%}}
+.wff.lock .wff-scan{display:none}
+.wff-tag{position:absolute;left:50%;bottom:11px;transform:translateX(-50%);white-space:nowrap;
+  padding:6px 13px;border-radius:99px;font:800 9.5px/1 var(--font);letter-spacing:.09em;
+  text-transform:uppercase;background:rgba(7,13,10,.86);border:1px solid rgba(52,211,153,.4);color:#34d399}
+.wff.lock .wff-tag{background:#12b981;border-color:#12b981;color:#04150e}
+
+/* the little GPS map on the phone */
+.wfg{position:relative;flex:1;min-height:0;border-radius:15px;overflow:hidden;background:#0b1410;
+  border:1px solid rgba(255,255,255,.07)}
+.wfg svg{position:absolute;inset:0;width:100%;height:100%}
+.wfg-fence{fill:rgba(52,211,153,.09);stroke:rgba(52,211,153,.5);stroke-width:1.4;stroke-dasharray:5 4}
+.wfg-me{fill:#e9bb52;filter:drop-shadow(0 0 7px rgba(233,187,82,.95))}
+.wfg-tag{position:absolute;left:10px;right:10px;bottom:10px;padding:8px 11px;border-radius:10px;
+  background:rgba(7,13,10,.9);border:1px solid rgba(52,211,153,.32);font-size:10px;color:#eef3f8;line-height:1.4}
+.wfg-tag b{color:#34d399}
+
+/* big tap target */
+.wfb{display:block;width:100%;padding:13px;border:0;border-radius:12px;background:#12b981;
+  color:#04150e;font:800 13px/1 var(--font);text-align:center;flex:none;position:relative;overflow:hidden}
+.wfb.ghost{background:transparent;border:1px solid rgba(255,255,255,.16);color:#cfe0d8}
+.wfb.press::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;
+  background:rgba(255,255,255,.55);transform:translate(-50%,-50%) scale(0);animation:wfripple .6s ease-out}
+@keyframes wfripple{to{transform:translate(-50%,-50%) scale(26);opacity:0}}
+
+.wfp-cue{position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);z-index:5;
+  padding:7px 14px;border-radius:99px;background:rgba(7,13,10,.9);border:1px solid rgba(52,211,153,.4);
+  color:#34d399;font:800 9px/1 var(--font);letter-spacing:.14em;text-transform:uppercase;
+  opacity:0;transition:.35s var(--ease)}
+.wfp-cue.on{opacity:1;bottom:12px}
+
+/* a finger tapping the screen */
+.wf-tap{position:absolute;z-index:6;width:30px;height:30px;border-radius:50%;pointer-events:none;
+  border:2px solid rgba(255,255,255,.85);background:rgba(255,255,255,.22);
+  opacity:0;transform:translate(-50%,-50%) scale(.5)}
+.wf-tap.go{animation:wftap .72s var(--ease)}
+@keyframes wftap{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  35%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.9)}}
+
+/* ── the dashboard ──────────────────────────────────────────────────────── */
+.wfd{width:100%;border-radius:16px;overflow:hidden;background:#080f0c;border:1px solid var(--hair);
+  box-shadow:0 36px 90px -40px rgba(0,0,0,.85)}
+.wfd-bar{display:flex;align-items:center;gap:7px;padding:9px 13px;background:#0c1511;
+  border-bottom:1px solid var(--hair)}
+.wfd-bar i{width:8px;height:8px;border-radius:50%;background:#2b3a33;display:block}
+.wfd-url{flex:1;margin-left:7px;padding:4px 10px;border-radius:6px;background:#0a120e;
+  border:1px solid var(--hair);font:600 10px/1.5 var(--mono);color:#6f8178;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wfd-live{display:inline-flex;align-items:center;gap:5px;font:800 8.5px/1 var(--font);
+  letter-spacing:.13em;text-transform:uppercase;color:#34d399}
+.wfd-live em{width:6px;height:6px;border-radius:50%;background:#34d399;animation:wfpulse 1.6s infinite}
+@keyframes wfpulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.6)}50%{opacity:.55;box-shadow:0 0 0 5px rgba(52,211,153,0)}}
+
+.wfd-in{padding:clamp(12px,1.5vw,18px);display:grid;gap:12px}
+
+/* KPI strip */
+.wfk{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.wfk>div{padding:11px 12px;border-radius:11px;background:#0d1612;border:1px solid rgba(255,255,255,.06)}
+.wfk b{display:block;font-size:clamp(17px,2vw,24px);font-weight:800;letter-spacing:-.03em;
+  color:#f2f6f4;line-height:1;font-variant-numeric:tabular-nums;transition:color .35s}
+.wfk b.hit{color:#34d399}
+.wfk b.warn{color:#e9bb52}
+.wfk span{display:block;font-size:9.5px;color:#7f9289;margin-top:5px;line-height:1.3}
+@media(max-width:520px){.wfk{grid-template-columns:repeat(2,1fr)}}
+
+.wfd-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:12px}
+@media(max-width:700px){.wfd-grid{grid-template-columns:1fr}}
+
+.wfpan{border-radius:12px;background:#0d1612;border:1px solid rgba(255,255,255,.06);overflow:hidden}
+.wfpan-h{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:9px 12px;
+  border-bottom:1px solid rgba(255,255,255,.06);font:800 9.5px/1 var(--font);
+  letter-spacing:.14em;text-transform:uppercase;color:#7f9289}
+.wfpan-h em{font-style:normal;color:#34d399;letter-spacing:.04em;text-transform:none;font-size:10px}
+
+/* the live board */
+.wfrow{display:grid;grid-template-columns:1fr auto auto;gap:9px;align-items:center;
+  padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.045);font-size:11px;
+  opacity:0;transform:translateX(-10px);transition:opacity .5s var(--ease),transform .5s var(--ease),background .5s}
+.wfrow.in{opacity:1;transform:none}
+.wfrow.flash{background:rgba(52,211,153,.12)}
+.wfrow:last-child{border-bottom:0}
+.wfrow b{color:#eef3f8;font-weight:700;display:block;line-height:1.3}
+.wfrow small{display:block;font-size:9px;color:#6f8178;margin-top:1px}
+.wfrow time{font-variant-numeric:tabular-nums;color:#9fb3aa;font-size:10px}
+.pill2{padding:3px 9px;border-radius:99px;font:800 8.5px/1.5 var(--font);letter-spacing:.07em;
+  text-transform:uppercase;white-space:nowrap}
+.pill2.on{background:rgba(52,211,153,.16);color:#34d399;border:1px solid rgba(52,211,153,.36)}
+.pill2.wait{background:rgba(233,187,82,.14);color:#e9bb52;border:1px solid rgba(233,187,82,.33)}
+.pill2.off{background:rgba(255,255,255,.05);color:#6f8178;border:1px solid rgba(255,255,255,.09)}
+.pill2.done{background:#12b981;color:#04150e;border:1px solid #12b981}
+
+/* the map, with the trail he actually walked */
+.wfmap{position:relative;height:clamp(150px,17vw,208px);background:
+  radial-gradient(ellipse at 30% 20%,#12201a,#080f0c 70%)}
+.wfmap svg{position:absolute;inset:0;width:100%;height:100%}
+.wfmap-grid{stroke:rgba(255,255,255,.045);stroke-width:1}
+.wfmap-route{fill:none;stroke:rgba(255,255,255,.14);stroke-width:2.4;stroke-linecap:round;stroke-dasharray:6 7}
+.wfmap-trail{fill:none;stroke:#34d399;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 6px rgba(52,211,153,.75));transition:stroke-dashoffset 1.1s linear}
+.wfmap-node{fill:#0b1410;stroke:rgba(255,255,255,.3);stroke-width:2;transition:.4s}
+.wfmap-node.hit{fill:#34d399;stroke:#34d399;filter:drop-shadow(0 0 8px rgba(52,211,153,.9))}
+.wfmap-node.miss{fill:#0b1410;stroke:#f87171;filter:drop-shadow(0 0 7px rgba(248,113,113,.7))}
+.wfmap-dot{fill:#e9bb52;filter:drop-shadow(0 0 9px rgba(233,187,82,.95));transition:transform 1.1s linear}
+.wfmap-lab{font:700 8px var(--font);fill:#7f9289;letter-spacing:.06em}
+.wfmap-lab.on{fill:#cfe0d8}
+.wfmap-cap{position:absolute;left:10px;bottom:9px;right:10px;font-size:9.5px;color:#9fb3aa;line-height:1.4}
+.wfmap-cap b{color:#34d399}
+
+/* the money strip */
+.wfpay{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:11px 12px}
+.wfpay>div{text-align:left}
+.wfpay b{display:block;font-size:14px;font-weight:800;color:#f2f6f4;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;transition:color .4s}
+.wfpay b.hit{color:#34d399}
+.wfpay span{display:block;font-size:9px;color:#7f9289;margin-top:3px}
+
+/* ── the caption rail under the stage ───────────────────────────────────── */
+.wf-rail{margin-top:18px;padding:14px 16px;border-radius:14px;background:var(--ink2);
+  border:1px solid var(--hair);display:flex;align-items:center;gap:14px}
+.wf-step{flex:1;min-width:0}
+.wf-step b{display:block;font-size:14px;font-weight:800;color:var(--t);line-height:1.3}
+.wf-step p{margin:3px 0 0;font-size:12.5px;color:var(--m);line-height:1.45}
+.wf-dots{display:flex;gap:5px;flex:none}
+.wf-dots i{display:block;width:16px;height:3px;border-radius:2px;background:rgba(255,255,255,.14);
+  transition:background .4s,width .4s}
+.wf-dots i.on{background:var(--em2);width:26px}
+.wf-dots i.past{background:rgba(52,211,153,.4)}
+.wf-play{flex:none;width:32px;height:32px;display:grid;place-items:center;border-radius:9px;
+  border:1px solid var(--hair2);background:var(--surface);color:var(--t);cursor:pointer;transition:.25s}
+.wf-play:hover{background:var(--em);border-color:var(--em);color:#04150e}
+.wf-play svg{width:13px;height:13px;fill:currentColor}
+@media(max-width:560px){.wf-dots{display:none}}
+
+@media(prefers-reduced-motion:reduce){
+  .wfs,.wfrow,.wfmap-trail,.wfmap-dot{transition-duration:.01ms!important}
+  .wff-scan,.wfd-live em,.wf-tap.go{animation:none}
+}

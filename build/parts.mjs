@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   parts.mjs — the three new pieces: the auto-running deck, the video frames
+   parts.mjs — the three new pieces: the working demonstration pieces: video frames
    with no player furniture, and the animated price engine.
    ────────────────────────────────────────────────────────────────────────── */
 import { icons } from './layout.mjs';
@@ -8,7 +8,7 @@ import { SLABS, SLAB_POLICY, CONSTRUCTPRO, CP_WHAT, COMBOS, COMBO_RULE, ADDONS, 
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/* extra line icons the deck needs */
+/* extra line icons the pages need */
 export const ic = {
   face: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9 15c.9.8 1.9 1.2 3 1.2s2.1-.4 3-1.2"/></svg>',
   pin: '<svg viewBox="0 0 24 24"><path d="M12 22s7-6.4 7-12a7 7 0 1 0-14 0c0 5.6 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>',
@@ -23,173 +23,6 @@ export const ic = {
   rupee: '<svg viewBox="0 0 24 24"><path d="M7 4h10M7 9h10M15 4c0 3.5-2.4 5-8 5l7 10"/></svg>',
   tower: '<svg viewBox="0 0 24 24"><path d="M8 3 6 21M16 3l2 18M7 10h10M4.5 6a9 9 0 0 1 15 0"/></svg>',
 };
-
-/* ── the deck ────────────────────────────────────────────────────────────── */
-
-const six = (items) => `<div class="sl-six" data-seq>${items.map(([i, t, b]) =>
-  `<div>${i}<div><strong>${t}</strong><p>${b}</p></div></div>`).join('')}</div>`;
-
-const rail = (nodes, dim) => `<div class="sl-rail${dim ? ' dim' : ''}" data-seq>${
-  dim ? '' : '<span class="runner"></span>'}${nodes.map(([t, b, off]) =>
-  `<div class="${off ? 'off' : ''}"><i></i><strong>${t}</strong><p>${b}</p></div>`).join('')}</div>`;
-
-const ladder = (rows) => `<div class="sl-lad" data-seq>${rows.map(([a, b]) =>
-  `<div><p class="bad">${a}</p><span>&rarr;</span><p class="good">${b}</p></div>`).join('')}</div>`;
-
-/** The slides, in order. Each is plain HTML — readable even with no JS. */
-const SLIDES = [
-  { eye: 'Munimo Workforce',
-    h: 'Every outsourced shift. <em>Proven.</em>',
-    sub: 'Face and GPS proof that a man was where the contract says, and pay that follows that proof — on trains, at stations, on the track and on site.',
-    body: `<div class="sl-trio" data-seq>
-      <div><b class="em">Face</b><p>Checked in and out, with a blink test</p><small>Matched on the phone, so no signal is needed</small></div>
-      <div><b class="em">GPS</b><p>Inside the site fence, or at the right station</p><small>A mock-location app is detected and flagged</small></div>
-      <div><b class="em">Pay</b><p>Slips, bank file, EPF and ESI from proven duty</p><small>Anything in doubt waits for a person to look</small></div>
-    </div>`,
-    note: 'Running today at Adidev Commercials · a product of Awdhex Technologies' },
-
-  { eye: 'The ask', gold: true,
-    h: 'The railway has been asking for this since 2017',
-    sub: 'Not a problem we invented. A requirement that has been written down, circular after circular, for nine years.',
-    body: `<div class="sl-time" data-seq>
-      <div><i></i><b>2017</b><p>Tender standard: GPRS biometric attendance for on-board housekeeping</p></div>
-      <div><i></i><b>2018</b><p>Shramik Kalyan portal: contractors upload what they paid</p></div>
-      <div><i></i><b>2020</b><p>Railway Board: link attendance to contractor payments</p></div>
-      <div><i></i><b>2023</b><p>Board to every General Manager: attendance at the starting station</p></div>
-      <div><i></i><b>2024</b><p>Station staff: biometric or face attendance</p></div>
-      <div><i></i><b>2026</b><p>Keymen and patrolmen: GPS monitoring on patrol</p></div>
-    </div>`,
-    note: 'Railway Board letters of 29.06.2020 and 20.09.2023 · Ministry of Railways · press reports, 2024 and 2026' },
-
-  { eye: 'The size of it', gold: true,
-    h: 'Outsourced work is large, and its wages are hard to check',
-    body: `<div class="sl-trio" data-seq>
-      <div><b>~1,080</b><p>pairs of trains with on-board housekeeping</p><small>Rajya Sabha answer, July 2019</small></div>
-      <div><b>3,81,831</b><p>contract workers registered on Shramik Kalyan</p><small>Ministry of Railways, March 2021 · 15,812 contractors</small></div>
-      <div><b class="em">105 of 463</b><p>audited contracts paid minimum wages correctly</p><small>CAG Report No. 19 of 2018, before the portal existed</small></div>
-    </div>`,
-    note: 'Public sources. Figures as published on the dates shown.' },
-
-  { eye: 'The gap', gold: true,
-    h: 'Today, proof stops at the starting station',
-    body: rail([
-      ['Start station', 'Biometric machine, where one is provided'],
-      ['On the train', 'Not covered', 1],
-      ['Destination', 'Not covered', 1],
-      ['Pay', 'The contractor&rsquo;s own wage sheet', 1],
-    ], true),
-    sub: '<b style="color:var(--gold)">Left early? Reached the destination? Paid for what he worked?</b> Nobody can see it.',
-    note: 'Munimo Workforce · munimo.online' },
-
-  { eye: 'How it works',
-    h: 'Proof follows him to the destination, and into his pay',
-    body: rail([
-      ['Start station', 'Face with a blink test, GPS matched to the station, the train number'],
-      ['On the train', 'Kept on the phone with or without signal; a GPS trail where there is one'],
-      ['Destination', 'Face and GPS at the destination, or in the yard the train was moved to'],
-      ['Pay', 'Paid for proven duty only; anything in doubt waits for a person'],
-    ]),
-    sub: '<b style="color:var(--em2)">Two faces, two positions, one timetable.</b> That is a duty, proven.',
-    note: 'Station, track and site duties follow the same idea, each with its own checks' },
-
-  { eye: 'What exists today', gold: true,
-    h: 'What the market sells, and what it leaves out',
-    body: `<div class="sl-mkt" data-seq>
-      <div><strong>Face-attendance kiosks</strong><em>e.g. Truein</em><p>For contract and multi-site workforces</p><b>₹290–390 per worker a year, plus ₹69,000 a year</b></div>
-      <div><strong>Field-staff GPS apps</strong><em>e.g. Unolo, TrackoField</em><p>For sales and service teams on the road</p><b>About ₹250–300 per user a month</b></div>
-      <div class="us"><strong>Munimo Workforce</strong><em>One system</em><p>Attendance, field tracking and payroll in one place</p><b>From ₹39 per worker a month, nothing to buy</b></div>
-    </div>`,
-    note: 'Vendors&rsquo; published pages and listings, October 2026. Prices as published; quotes may differ.' },
-
-  { eye: 'Integrity',
-    h: 'Built to be hard to fake',
-    sub: 'Every one of these is running in the app today, not on a roadmap.',
-    body: six([
-      [ic.pin, 'Fake GPS is caught', 'A mock-location app is detected on the phone'],
-      [ic.key, 'One man, one phone', 'A hardware key ties his code to his handset'],
-      [ic.eye, 'A live face, not a photo', 'A blink test at every face check'],
-      [ic.users, 'Two phones, one code', 'Code-sharing is recorded and flagged'],
-      [ic.face, 'Matched on the phone', 'Face match needs no network, so there are no excuses'],
-      [ic.warn, 'Fair to the worker', 'If the phone shuts the app, that is proven, not blamed on him'],
-    ]),
-    note: 'All of these run at Adidev Commercials today.' },
-
-  { eye: 'For a contractor',
-    h: 'What changes on the ground',
-    body: ladder([
-      ['Calling around to find who is on duty', 'A live board of every man and every unit'],
-      ['A signature at the start, nothing after', 'Face and GPS at both ends of every duty'],
-      ['Days counted by hand at month end', 'Slips, bank file, EPF and ESI from proven duty'],
-      ['Arguments over who worked what', 'His face, the time and the place, on record'],
-      ['A face machine bought for every site', 'The supervisor&rsquo;s phone is the kiosk'],
-    ]),
-    note: 'Munimo Workforce · munimo.online' },
-
-  { eye: 'Beyond the railway',
-    h: 'Any team you cannot see, proven the same way',
-    body: six([
-      [ic.key, 'Security guards', 'Face at the post, random checks in the shift, his round on the map'],
-      [ic.home, 'Housekeeping and facilities', 'Hospitals, malls, offices: face in and out, inside the fence'],
-      [ic.gear, 'Factories and warehouses', 'The supervisor&rsquo;s phone is the gate; contract labour needs no phone'],
-      [ic.route, 'Sanitation and city crews', 'The beat he walked, as a trail on the map, ward by ward'],
-      [ic.tower, 'Field technicians', 'Towers, solar, lifts: proof he reached site, and how long he stayed'],
-      [ic.users, 'Tea gardens and plantations', 'Muster by face at the garden, offline, in the language he speaks'],
-    ]),
-    note: 'Illustrative uses, built from features already live. Each workforce is set up with its own sites, rules and rates.' },
-
-  { eye: 'Getting started',
-    h: 'How a contract goes live',
-    body: `<div class="sl-flow" data-seq>
-      <div><i>1</i><strong>Set up the contract</strong><p>Sites, trains, rates and the contract&rsquo;s own rules</p></div>
-      <div><i>2</i><strong>Enrol every man</strong><p>Face and details, taken by his supervisor on the spot</p></div>
-      <div><i>3</i><strong>Run beside the old way</strong><p>One pay cycle side by side, and compare</p></div>
-      <div><i>4</i><strong>Pay from proven duty</strong><p>Slips, bank file and site sheets, out of the system</p></div>
-    </div>`,
-    sub: 'Each contract keeps its own rules: check windows, pay rates, the site&rsquo;s closing hour, what counts as a short day.',
-    note: 'How long each step takes depends on the size of the contract.' },
-
-  { eye: 'In their words',
-    h: '',
-    body: `<div class="sl-quote" data-seq>
-      <p>&ldquo;Whatever we asked for, it was in the app in days, not months. They understood our work before they wrote a line of it.&rdquo;</p>
-      <footer>Niptu Paul · Adidev Commercials</footer>
-    </div>`,
-    note: 'Running their railway contract workforce on Munimo today.' },
-
-  { eye: 'Munimo Workforce',
-    h: 'Put one contract on it, and compare the month',
-    sub: 'Nothing to buy, no machine per site. We set up your sites, rates and rules, and your supervisors are shown how to use it.',
-    body: `<div class="sl-trio" data-seq>
-      <div><b class="em">₹39</b><p>per worker a month, to start</p><small>Minimum 25 workers. Annual billing costs two months less.</small></div>
-      <div><b class="em">3 yrs</b><p>of maintenance, included</p><small>Not fifteen per cent of the licence, every year</small></div>
-      <div><b class="em">₹0</b><p>of hardware to buy</p><small>The supervisor&rsquo;s phone is the kiosk</small></div>
-    </div>`,
-    note: 'munimo.online · a product of Awdhex Technologies' },
-];
-
-export function deck({ secs = 7 } = {}) {
-  return `
-<div class="deck edge" data-deck="${secs}" role="region" aria-roledescription="carousel" aria-label="How Munimo Workforce proves a shift">
-  <div class="deck-stage">
-    ${SLIDES.map((s, n) => `
-    <article class="sl${n === 0 ? ' on' : ''}" aria-hidden="${n === 0 ? 'false' : 'true'}" aria-label="Slide ${n + 1} of ${SLIDES.length}">
-      ${s.eye ? `<p class="sl-eye${s.gold ? ' gold' : ''}">${s.eye}</p>` : ''}
-      ${s.h ? `<h3>${s.h}</h3>` : ''}
-      ${s.sub ? `<p class="sl-sub">${s.sub}</p>` : ''}
-      <div class="sl-body">${s.body || ''}</div>
-      ${s.note ? `<p class="sl-note">${s.note}</p>` : ''}
-    </article>`).join('')}
-  </div>
-  <div class="deck-bar">
-    <div class="deck-seg"></div>
-    <span class="deck-ct">1 / ${SLIDES.length}</span>
-    <div class="deck-nav">
-      <button type="button" class="deck-prev" aria-label="Previous slide"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <button type="button" class="deck-next" aria-label="Next slide"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
-    </div>
-  </div>
-</div>`;
-}
 
 /* ── video with no player furniture ──────────────────────────────────────── */
 
