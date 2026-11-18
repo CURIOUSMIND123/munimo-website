@@ -1,4 +1,5 @@
 import { SITE, cta, faq, ORG, icons } from './layout.mjs';
+import { priceEngine, otherProducts } from './parts.mjs';
 
 const F = faq([
   ['What does a perpetual licence actually give us?',
@@ -21,9 +22,11 @@ const F = faq([
 
 export const meta = {
   path: 'ownership.html',
-  title: 'Own the licence, or subscribe | Munimo',
-  desc: 'Own the software outright with a perpetual licence, or subscribe monthly with hosting included. Three years of maintenance either way.',
-  keywords: 'perpetual licence business software, own your software outright, software subscription vs perpetual licence, free annual maintenance contract software, source code escrow custom software',
+  title: 'Pricing — Munimo Workforce, Lite Cashbook and ConstructPro',
+  desc: 'Munimo Workforce from \u20b939 per worker a month, Lite Cashbook free for one user, ConstructPro \u20b91,499 per site. Or own the licence outright. Three years of maintenance either way.',
+  css: ['saas.css'],
+  js: ['saas.js'],
+  keywords: 'manpower tracking software price India, contract labour attendance app pricing, perpetual licence business software, own your software outright, software subscription vs perpetual licence, free annual maintenance contract software, source code escrow custom software',
   schema: {
     '@context': 'https://schema.org',
     '@graph': [ORG, {
@@ -124,30 +127,42 @@ export const body = `
   </div>
 </section>
 
-<section class="sec">
-  <div class="wrap-n">
-    <div class="sechead center">
-      <span class="eyebrow">Price</span>
-      <h2 class="h1 rv">We price to your budget,<br>not from a rate card.</h2>
+<section class="sec" id="price">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">Munimo Workforce</span>
+      <h2 class="h1 rv">Move the dial. The price is the price.</h2>
+      <p class="lead rv rv2">
+        Per worker, per month. No setup fee, no hardware, no per-site licence, and
+        three years of maintenance inside every figure here.
+      </p>
     </div>
-    <div class="rv rv2 card-flat" style="padding:clamp(26px,3.4vw,40px)">
-      <p style="font-size:16.5px">
-        There is no price list on this site, and that is deliberate. We have never met two
-        businesses that needed the same software, so a published figure would be either
-        meaningless or misleading.
+    <div class="rv rv2">${priceEngine({ start: 200 })}</div>
+
+    <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
+      <span class="eyebrow">The other two, priced</span>
+      <h2 class="h2 rv">Lite Cashbook and ConstructPro.</h2>
+    </div>
+    <div class="rv rv2">${otherProducts()}</div>
+
+    <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
+      <span class="eyebrow gold">Anything we build from scratch</span>
+      <h2 class="h2 rv">A custom build is quoted to your budget.</h2>
+    </div>
+    <div class="rv rv2 card-flat" style="padding:clamp(24px,3vw,36px)">
+      <p style="font-size:16px;margin:0">
+        The three products above have a price because they already exist. Software we
+        build specifically for you does not, so we do not pretend otherwise.
       </p>
-      <p class="muted" style="margin-top:18px;font-size:15.5px">
-        What we do instead: you tell us what the software has to do and what you are able to
-        spend. We come back with what fits inside that, what genuinely should wait for a second
-        phase, and what we think is not worth building at all. If your budget does not cover
-        what you are asking for, we will say so plainly rather than quote it and manage the
-        shortfall later.
+      <p class="muted" style="margin:16px 0 0;font-size:15px">
+        You tell us what it has to do and what you can spend. We come back with what fits
+        inside that, what should wait for a second phase, and what we think is not worth
+        building at all. If the budget does not cover the ask, we say so plainly instead of
+        quoting it and managing the shortfall later. For businesses already running something
+        of ours, additions are a one-time charge against the existing system, not a move to a
+        bigger plan.
       </p>
-      <p class="muted" style="margin-top:18px;font-size:15.5px">
-        For businesses already running something of ours, additions are almost always a
-        one-time charge against the existing system, not a move to a bigger plan.
-      </p>
-      <div style="margin-top:26px;display:flex;gap:12px;flex-wrap:wrap">
+      <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
         <a class="btn btn-em" href="/contact.html">Tell us your scope and budget</a>
         <a class="btn btn-wa" href="https://wa.me/${SITE.wa}" target="_blank" rel="noopener">Ask on WhatsApp</a>
       </div>

@@ -13,8 +13,8 @@ export const SITE = {
 };
 
 export const NAV = [
-  ['software.html', 'Software'],
-  ['custom-software.html', 'Custom build'],
+  ['workforce.html', 'Workforce'],
+  ['software.html', 'Products'],
   ['ownership.html', 'Pricing'],
   ['clients.html', 'Clients'],
 ];
@@ -22,7 +22,7 @@ export const NAV = [
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /* ── <head> ─────────────────────────────────────────────────────────────── */
-function head({ title, desc, path, keywords, schema, css }) {
+function head({ title, desc, path, keywords, schema, css, js }) {
   const url = SITE.domain + '/' + (path === 'index.html' ? '' : path);
   const ogimg = SITE.domain + '/assets/og-cover.png';
   return `<!doctype html>
@@ -58,6 +58,7 @@ ${keywords ? `<meta name="keywords" content="${esc(keywords)}">` : ''}
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="stylesheet" href="/assets/visual.css">
 ${(css || []).map((c) => `<link rel="stylesheet" href="/assets/${c}">`).join('\n')}
+${(js || []).map((j) => `<script src="/assets/${j}" defer></script>`).join('\n')}
 ${schema ? `<script type="application/ld+json">${JSON.stringify(schema)}</script>` : ''}
 </head>
 <body>`;
@@ -101,8 +102,9 @@ function footer() {
           A product of ${SITE.legal}
         </p>
         <p class="muted" style="margin-top:12px;font-size:14.5px;max-width:330px">
-          We build custom software for businesses that have outgrown spreadsheets and
-          off-the-shelf tools. Own it outright or subscribe. Three years of maintenance included.
+          Munimo Workforce proves every outsourced shift with face and GPS, and pays
+          from that proof. Lite Cashbook and ConstructPro sit beside it. Own the licence
+          or subscribe — three years of maintenance either way.
         </p>
         <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
           <a class="btn btn-wa" href="https://wa.me/${SITE.wa}" target="_blank" rel="noopener">WhatsApp</a>
@@ -110,20 +112,21 @@ function footer() {
         </div>
       </div>
       <div>
-        <h5>Software</h5>
-        <a href="/full-erp.html">Full business ERP</a>
-        <a href="/cash-book.html">Cash Book</a>
+        <h5>Products</h5>
+        <a href="/workforce.html">Munimo Workforce</a>
+        <a href="/cash-book.html">Lite Cashbook</a>
+        <a href="/full-erp.html">ConstructPro &amp; full ERP</a>
         <a href="/school-erp.html">School ERP</a>
         <a href="/clinic-erp.html">Clinic ERP</a>
         <a href="/mobile-app.html">Mobile field app</a>
         <a href="/software.html">Try everything live</a>
       </div>
       <div>
-        <h5>Services</h5>
+        <h5>More</h5>
         <a href="/custom-software.html">Custom software build</a>
         <a href="/engines.html">Our engines</a>
         <a href="/legacy-vs-custom.html">Legacy vs custom</a>
-        <a href="/ownership.html">Own it or subscribe</a>
+        <a href="/ownership.html">Pricing</a>
       </div>
       <div>
         <h5>Company</h5>

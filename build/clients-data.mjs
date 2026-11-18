@@ -8,12 +8,12 @@ export const CLIENTS = [
   {
     name: 'Niptu Paul',
     role: 'Adidev Commercials',
-    sector: 'Trading',
+    sector: 'Railway contracts',
     initials: 'NP',
     tint: 'linear-gradient(135deg,#12b981,#0a5c40)',
     rating: 5,
     quote: 'What surprised us was the speed. We would mention something on a call and it would be in the software the same week — not after a change request, a quotation and three months. It stopped feeling like buying software and started feeling like having our own team.',
-    built: 'Full business ERP with invoicing, purchases, stock and receivables, plus a cash book their site staff use from a phone.',
+    built: 'Munimo Workforce for their railway contract staff \u2014 face and GPS proof of duty on trains, at stations and on the track, with payroll from proven duty \u2014 alongside a full business ERP for invoicing, purchases, stock and receivables.',
     feature: true,
   },
   {

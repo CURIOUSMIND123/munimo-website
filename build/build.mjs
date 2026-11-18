@@ -9,6 +9,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const MODULES = [
   './page-home.mjs',
+  './page-workforce.mjs',
   './page-software.mjs',
   './page-products.mjs',
   './page-custom.mjs',
@@ -33,7 +34,7 @@ for (const m of MODULES) {
 
 /* ── sitemap ── */
 const today = new Date().toISOString().slice(0, 10);
-const priority = (p) => (p === 'index.html' ? '1.0' : p === 'software.html' || p === 'contact.html' ? '0.9' : '0.8');
+const priority = (p) => (p === 'index.html' ? '1.0' : p === 'workforce.html' ? '0.95' : p === 'software.html' || p === 'ownership.html' || p === 'contact.html' ? '0.9' : '0.8');
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'),
 `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

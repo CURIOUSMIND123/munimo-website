@@ -1,258 +1,336 @@
-import { SITE, cta, faq, ORG, icons, beforeAfter } from './layout.mjs';
+import { SITE, cta, faq, ORG, icons } from './layout.mjs';
 import { CLIENTS, tcard, marquee, reviewSchema } from './clients-data.mjs';
+import { deck, filmPhone, filmWide, priceEngine, ownOrRent, otherProducts, ic } from './parts.mjs';
+import { WORKFORCE, MIN_WORKERS, money } from './pricing-data.mjs';
+
+const VID_V = 'TcsdlIyAut0';   // vertical, the app in a worker's hand
+const VID_H = 'RXZDZ7Rdojk';   // wide, the whole thing end to end
 
 const F = faq([
-  ['Do I have to be technical to work with you?',
-   'No. Most of the people we build for run a shop, a school, a clinic or a site — not an IT department. You tell us in plain words what is slow or painful today; we handle the software.'],
-  ['Can I really try it without signing up?',
-   'Yes. Pick your business in the picker at the top and use the real software — add an entry, collect a fee, book an appointment. Nothing to install, no account, no sales call. It resets when you reload.'],
-  ['How much does it cost?',
-   'We price to your budget, not from a rate card, because no two businesses need the same thing. Tell us what it must do and what you can spend, and we will tell you honestly what fits. Small additions to a system we have already built are usually a one-time charge.'],
-  ['Do I own the software or rent it?',
-   'Your choice — own the licence outright and keep it for good, or subscribe monthly. Either way your data is yours and exportable at any time.'],
-  ['What happens after it goes live?',
-   'Three years of maintenance is included free — fixes, updates, small changes and support. Most companies charge fifteen to twenty per cent of the licence value every year for this. We do not, for the first three years.'],
-  ['We already have old software. Is switching worth it?',
-   'Usually, and it is less painful than people fear. We bring your data across and run both systems side by side until you trust the new one, then switch. Nobody goes live on a promise.'],
-  ['How fast can you build or change something?',
-   'A change to an existing system usually lands in days. A new system is typically weeks, because we build on engines we already own instead of starting from a blank page.'],
-  ['Do you work outside India?',
-   'Yes — multiple currencies, tax rules and languages are built in, and we work with clients remotely as standard.'],
+  ['What does Munimo Workforce actually prove?',
+   'That a named man was at a named place at a named time, and that he was still there when the shift ended. Face with a blink test at both ends, GPS matched to the site or the station, and the trail in between. His pay is then calculated from those proven duties and nothing else.'],
+  ['Does every worker need a smartphone?',
+   'No. For contract labour the supervisor’s phone is the kiosk — he holds it up, each man’s face is checked, and the whole gang is marked present in a minute. Workers who do have phones can mark their own duty.'],
+  ['What happens where there is no network?',
+   'It keeps working. The face match runs on the phone itself, not on a server, so a check completes with no signal at all. Duties queue on the handset and sync the moment there is a bar of network. Nothing is lost and nothing is waved through.'],
+  ['Can a worker fake it?',
+   'Each of the obvious tricks is handled. A mock-location app is detected. A photo held to the camera fails the blink test. A hardware key ties his code to one handset, so two phones with one code is recorded and flagged. And if the phone itself kills the app, that is logged as the phone’s fault, not held against him.'],
+  ['How is this different from a face-attendance machine?',
+   'A machine proves he reached the gate. It cannot prove he stayed, cannot follow him onto a train or along a track, and it does not pay him. It also has to be bought and mounted at every site. Munimo needs no hardware, works anywhere the work happens, and pay comes out of the same system.'],
+  ['What does it cost?',
+   `From ${money(WORKFORCE[0].price)} per worker a month, minimum ${MIN_WORKERS} workers, with annual billing costing two months less. Nothing to buy, setup and enrolment are free, and three years of maintenance is included. The dial on this page gives you the figure for your own headcount.`],
+  ['Can we own it instead of subscribing?',
+   'Yes. A perpetual licence is quoted one-time against your scope, runs on your own server, never expires and never phones home. What you have already paid on subscription usually counts towards it.'],
+  ['Is it only for railway contracts?',
+   'That is where it was built and hardest tested, but the parts are general. Security posts, housekeeping, factory gates, sanitation beats, field technicians and plantation musters all use the same face checks, fences, random checks and payroll.'],
+  ['How long until a contract is live?',
+   'Setting up sites, rates and rules takes days. Enrolling men is a few minutes per gang, done by their own supervisor. We then run one pay cycle beside your existing method so you can compare the two before trusting it.'],
+  ['Is our data ours?',
+   'Entirely, and exportable in full with its structure intact, whenever you like, without asking us. Holding data hostage is the worst practice in this industry.'],
 ]);
+
+const APP = (name, desc, price, url) => ({
+  '@type': 'SoftwareApplication',
+  name, description: desc,
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Android, iOS, Web',
+  url: SITE.domain + url,
+  publisher: { '@id': SITE.domain + '/#org' },
+  offers: price,
+});
 
 export const meta = {
   path: 'index.html',
-  title: 'Munimo — Custom software for schools, clinics, shops and trades',
-  desc: 'Pick your business and try the real software free — school, clinic, trading, retail. Then we build it around how you work. Own it or subscribe.',
-  keywords: 'custom software for small business, school management software, clinic management software, retail billing software, custom ERP, try business software free no signup, perpetual licence software',
-  css: ['motion.css'],
+  title: 'Munimo Workforce — face and GPS attendance for contract labour, with payroll',
+  desc: 'Prove every outsourced shift. Face check with a blink test, GPS matched to the site, works offline, and payroll calculated from proven duty only. From ₹39 per worker a month. No hardware to buy.',
+  keywords: 'manpower tracking software India, contract labour attendance app, face attendance without hardware, GPS attendance for field workers, railway contractor attendance software, workforce attendance and payroll, offline face recognition attendance, labour attendance app for contractors, keyman patrol GPS tracking, site attendance app India',
+  css: ['motion.css', 'saas.css'],
+  js: ['saas.js'],
   schema: {
     '@context': 'https://schema.org',
     '@graph': [
       ORG,
       { '@type': 'WebSite', '@id': SITE.domain + '/#site', url: SITE.domain, name: SITE.name,
         publisher: { '@id': SITE.domain + '/#org' } },
-      { '@type': 'Service', name: 'Custom software development',
-        provider: { '@id': SITE.domain + '/#org' }, areaServed: 'Worldwide',
-        description: 'Custom business software for schools, clinics, trading, retail and field operations, built on proven engines. Perpetual licence or subscription, three years of maintenance included.' },
+      APP('Munimo Workforce',
+        'Face and GPS proof of duty for contract and field workforces, with payroll calculated from proven duty. Works offline, needs no attendance hardware.',
+        WORKFORCE.map((t) => ({
+          '@type': 'Offer', name: t.name, price: t.price, priceCurrency: 'INR',
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification', price: t.price, priceCurrency: 'INR',
+            unitText: 'worker per month', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'worker' },
+          },
+        })), '/workforce.html'),
+      APP('Munimo Lite Cashbook', 'Cash and bank book for small businesses, with parties, dues and GST-ready exports.',
+        [{ '@type': 'Offer', price: 0, priceCurrency: 'INR' }, { '@type': 'Offer', price: 199, priceCurrency: 'INR' }], '/cash-book.html'),
+      APP('Munimo ConstructPro', 'Site materials, labour and subcontractor bills, BOQ against actual, machinery logs and progress billing.',
+        [{ '@type': 'Offer', price: 1499, priceCurrency: 'INR' }], '/full-erp.html'),
       ...reviewSchema(SITE),
       F.schema,
     ],
   },
 };
 
-/* Each chip loads a REAL demo. School and clinic are their own dedicated apps;
-   trading / retail / contractor open the ERP configured that way. */
-const INDUSTRIES = [
-  ['School', icons.school, '/assets/shots/school.webp', '/demos/school/', 'munimo.online/demos/school',
-   '<b>For a school</b> — admissions, attendance, fees with printed receipts, exams and staff payroll.'],
-  ['Clinic', icons.heartbeat, '/assets/shots/clinic.webp', '/demos/clinic/', 'munimo.online/demos/clinic',
-   '<b>For a clinic</b> — doctor appointments, patient records, billing, pharmacy stock and payroll.'],
-  ['Trading', icons.box, '/assets/shots/app.webp', '/web-app/app.html', 'munimo.online/web-app',
-   '<b>For trading &amp; distribution</b> — invoicing, purchases, stock, receivables and full accounts.'],
-  ['Retail shop', icons.cart, '/assets/shots/cashbook.webp', '/web-app/lite.html', 'munimo.online/web-app',
-   '<b>For a shop</b> — fast billing, day-end cash, supplier dues and live margins.'],
-  ['Contractor', icons.wrench, '/assets/shots/labour.webp', '/web-app/app.html', 'munimo.online/web-app',
-   '<b>For a contractor</b> — site cash books, labour attendance and wages, subcontractor bills.'],
+/* ── the four beats of a duty ────────────────────────────────────────────── */
+const BEATS = [
+  [ic.face, 'He shows his face', 'A blink test proves it is a live face, not a photo. Matched on the phone, so no network is needed.'],
+  [ic.pin, 'The place is checked', 'GPS inside the site fence, or at the right station for the right train. A fake-location app is caught.'],
+  [ic.route, 'The shift is watched', 'Random face checks inside the shift, and the trail he actually walked, drawn on a map.'],
+  [ic.rupee, 'He is paid for it', 'Slips, bank file, EPF and ESI, from proven duty only. Anything in doubt waits for a person.'],
 ];
 
-const SERVICES = [
-  ['/school-erp.html', icons.school, 'School ERP', 'Admissions, attendance, fees with receipts, exams and staff payroll.', true],
-  ['/clinic-erp.html', icons.heartbeat, 'Clinic ERP', 'Appointments, patient records, billing, pharmacy stock and payroll.', true],
-  ['/full-erp.html', icons.layers, 'Full business ERP', 'Invoicing, purchases, stock, payroll, tax and profit — one system.', true],
-  ['/cash-book.html', icons.ledger, 'Cash Book', 'Money in, money out, balances that tally. Web and phone together.', true],
-  ['/mobile-app.html', icons.phone, 'Mobile field app', 'For staff on site with no signal. Captures offline, office approves.', true],
-  ['/custom-software.html', icons.wrench, 'Something custom', 'A system nobody sells you — built on our engines, in weeks not years.', false],
-];
-
-const PIPE = [
-  ['Pick or tell us', 'Try a demo above, or tell us the one thing your current system cannot do.'],
-  ['See it in weeks', 'A working version shaped to you — not a document. You use it and tell us what is wrong.'],
-  ['We move your data', 'Your records come across. Old and new run together until you trust the new one.'],
-  ['You own it', 'Own the licence or subscribe. Three years of maintenance included, free.'],
+const PRODUCTS = [
+  { name: 'Munimo Workforce', tag: 'The main thing we do',
+    line: 'Prove every shift. Pay from the proof.',
+    body: 'Face and GPS proof of duty for contract and field workforces, and payroll calculated from it. Works with no signal. Needs no hardware.',
+    price: `From ${money(WORKFORCE[0].price)} per worker a month`,
+    href: '/workforce.html', demo: '/web-app/app.html', demoLabel: 'Open the office side',
+    icon: ic.users, hero: true,
+    bullets: ['Face check with a blink test', 'GPS fence per site, or per station and train',
+      'Random checks and walked trails', 'Payroll, EPF and ESI from proven duty',
+      'Offline, in four languages', 'The supervisor’s phone is the kiosk'] },
+  { name: 'Lite Cashbook', tag: 'Money in, money out',
+    line: 'The cash book your accountant stops arguing with.',
+    body: 'Cash and bank entries, parties, due lists and GST-ready exports, built for the person who actually handles the money.',
+    price: 'Free for one user, then ₹199 a month',
+    href: '/cash-book.html', demo: '/web-app/lite.html', demoLabel: 'Open it now', icon: icons.ledger,
+    bullets: ['Entries in seconds on a phone', 'Parties, dues and reminders', 'GST-ready exports'] },
+  { name: 'ConstructPro', tag: 'Sites, materials, bills',
+    line: 'What the site spent, against what it was meant to.',
+    body: 'Material and inventory per site, labour and subcontractor bills, BOQ against actual, machinery logs and progress billing.',
+    price: '₹1,499 per site a month',
+    href: '/full-erp.html', demo: '/web-app/app.html', demoLabel: 'Open it now', icon: icons.layers,
+    bullets: ['BOQ against actual, per site', 'Subcontractor and labour bills', 'Machinery and material logs'] },
 ];
 
 export const body = `
-<!-- ══════════ HERO — pick your business, use your software ══════════ -->
-<section class="sec" style="padding:clamp(84px,8vw,104px) 0 clamp(30px,3.5vw,48px);overflow:hidden">
-  <div class="wrap" style="position:relative;z-index:1">
-    <div class="center" style="max-width:820px;margin:0 auto">
-      <span class="pill rv">Custom software &middot; 5 businesses already run on it</span>
-      <h1 class="h-display rv rv2" style="margin-top:16px">
-        Your business deserves software<br>that <span class="gold">actually fits it.</span>
-      </h1>
-      <p class="lead rv rv3" style="margin:17px auto 0;max-width:590px">
-        Not another template you bend yourself around.
-        <b style="color:var(--t);font-weight:700">Pick your trade below and use the real thing</b> &mdash;
-        no sign-up, no install.
-      </p>
-    </div>
 
-    <div class="pick rv rv4">
-      <div class="pchips">
-        ${INDUSTRIES.map((x, i) => `
-        <button class="pchip${i === 0 ? ' on' : ''}" data-label="${x[0]}"
-          data-shot="${x[2]}" data-src="${x[3]}" data-url="${x[4]}" data-line="${x[5].replace(/"/g, '&quot;')}">
-          ${x[1]}<span>${x[0]}</span></button>`).join('')}
-      </div>
-      <p class="pline"></p>
-      <div class="pwrap">
-        <div class="pframe">
-          <div class="pbar"><i class="r"></i><i class="y"></i><i class="g"></i>
-            <span class="purl"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span class="purl-t"></span></span>
-          </div>
-          <div class="pscreen">
-            <img class="pshot" src="/assets/shots/school.webp" width="1500" height="940" alt="Live business software demo" fetchpriority="high">
-            <iframe id="pframe" title="Live demo" loading="lazy"></iframe>
-            <div class="plaunch" role="button" aria-label="Open the live demo">
-              <span class="ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
-              <b>Open the demo</b>
-              <small>Real software &middot; sample data &middot; no sign-up</small>
-            </div>
-          </div>
+<!-- ══════════ HERO ══════════ -->
+<section class="sec" style="padding-top:clamp(40px,7vw,86px);position:relative;overflow:hidden">
+  <div class="aurora" aria-hidden="true"></div>
+  <div class="wrap" style="position:relative;z-index:1">
+    <div class="grid g2" style="gap:clamp(30px,5vw,64px);align-items:center">
+
+      <div>
+        <span class="pill rv">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"><path d="M20 7 10 17l-5-5"/></svg>
+          Live today on a railway contract workforce
+        </span>
+        <h1 class="h-display wipe" style="margin-top:20px">
+          Every outsourced shift. <span class="em">Proven.</span>
+        </h1>
+        <p class="lead rv rv2" style="margin-top:20px;max-width:54ch">
+          Face and GPS proof that a man was where the contract says — and payroll
+          calculated from that proof, not from a wage sheet someone typed at month end.
+        </p>
+
+        <div class="rv rv3" style="display:flex;gap:11px;margin-top:28px;flex-wrap:wrap">
+          <a class="btn btn-em btn-big" href="#price">See your price</a>
+          <a class="btn btn-ghost btn-big" href="/workforce.html">How a duty is proven</a>
         </div>
+
+        <div class="rv rv4" style="display:grid;grid-template-columns:repeat(3,auto);gap:clamp(16px,3vw,38px);margin-top:34px;justify-content:start">
+          ${[['39', 'From ₹', ' per worker / month'],
+             ['0', '₹', ' of hardware to buy'],
+             ['3', '', ' years of maintenance']].map(([n, pre, suf]) => `
+          <div>
+            <b style="display:block;font-size:clamp(26px,3.4vw,38px);font-weight:800;letter-spacing:-.035em;color:var(--t);line-height:1">
+              <span style="font-size:.52em;font-weight:700;color:var(--m);vertical-align:.42em">${pre}</span><span data-count="${n}">0</span>
+            </b>
+            <span class="muted" style="font-size:12.5px;line-height:1.35;display:block;margin-top:5px;max-width:13ch">${suf}</span>
+          </div>`).join('')}
+        </div>
+
+        <p class="faint rv rv5" style="margin-top:26px;font-size:13px;max-width:48ch">
+          Works with no signal. Needs no attendance machine. Set up, enrolled and
+          taught to your supervisors at no charge.
+        </p>
       </div>
-      <p class="pnote">It runs entirely in your browser. Nothing you type is saved or sent anywhere.
-        &nbsp;·&nbsp; <a href="/software.html">See all software &rarr;</a></p>
+
+      <div class="rv rv2">
+        ${filmPhone(VID_V)}
+        <p class="faint center" style="margin-top:18px;font-size:12.5px;max-width:30ch;margin-left:auto;margin-right:auto">
+          The app a supervisor actually holds. No sound needed — tap for it.
+        </p>
+      </div>
+
     </div>
   </div>
 </section>
 
 <!-- ══════════ PROOF STRIP ══════════ -->
-<section class="sec-tight" style="padding:clamp(30px,4vw,50px) 0">
+<section style="padding:22px 0;border-block:1px solid var(--hair);background:var(--ink2)">
   <div class="wrap">
-    <p class="center faint rv" style="font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:20px">
-      Trusted by real businesses &middot; rated 5.0
+    <p class="faint center" style="margin:0 0 16px;font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase">
+      Businesses running software we built
+    </p>
+    ${marquee()}
+  </div>
+</section>
+
+<!-- ══════════ THE AUTO-RUNNING DECK ══════════ -->
+<section class="sec" id="story">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">The whole case, running by itself</span>
+      <h2 class="h1 rv">Nine years of circulars, in two minutes.</h2>
+      <p class="lead rv rv2">
+        It plays on its own. Hover to hold it, or click a bar to jump.
+      </p>
+    </div>
+    <div class="rv rv2">${deck({ secs: 8 })}</div>
+    <p class="faint rv rv3" style="margin-top:16px;font-size:12.5px;max-width:70ch">
+      Every figure on these slides comes from a public source named on the slide
+      itself — Railway Board letters, a Rajya Sabha answer, a CAG report, and
+      vendors&rsquo; own published price pages.
     </p>
   </div>
-  <div class="rv rv2">${marquee()}</div>
 </section>
 
-<!-- ══════════ SERVICES — what we can build ══════════ -->
-<section class="sec">
-  <div class="wrap">
-    <div class="sechead center">
-      <span class="eyebrow">What we build for you</span>
-      <h2 class="h1 rv">Everything your business runs on,<br>in one system that fits it.</h2>
-      <p class="lead rv rv2">Ready-made where it can be, custom where it must be. Open any of them live.</p>
-    </div>
-    <div class="svcs">
-      ${SERVICES.map(([href, ico, name, blurb, live], i) => `
-      <a class="svc rv ${i % 3 ? 'rv' + ((i % 3) + 1) : ''}" href="${href}">
-        ${live ? '<span class="live">● LIVE</span>' : ''}
-        <div class="ico">${ico}</div>
-        <h3>${name}</h3>
-        <p>${blurb}</p>
-        <span class="go">${live ? 'Try it live' : 'See how'} <span aria-hidden="true">&rarr;</span></span>
-      </a>`).join('')}
-    </div>
-  </div>
-</section>
-
-<!-- ══════════ BEFORE / AFTER ══════════ -->
+<!-- ══════════ FOUR BEATS ══════════ -->
 <section class="sec sec-alt">
   <div class="wrap">
-    <div class="sechead center">
-      <span class="eyebrow">The difference</span>
-      <h2 class="h1 rv">Your Monday morning,<br>before and after.</h2>
+    <div class="sechead">
+      <span class="eyebrow">What the software does</span>
+      <h2 class="h1 rv">Four things happen. Then he gets paid.</h2>
+      <p class="lead rv rv2">No forms to fill in. No register to sign. Four checks, and the month adds itself up.</p>
     </div>
-    ${beforeAfter(
-      { head: 'Nobody knows the real number',
-        sub: 'And finding out takes half a day.',
-        items: [
-          'Every branch keeps its own spreadsheet',
-          'The same figure typed in three places',
-          'One person understands the file &mdash; and they are on leave',
-          'Month-end takes a week and still does not tally',
-          'You hear about a problem after it cost you money',
-        ],
-        foot: 'You work around the software' },
-      { head: 'One screen. The real number.',
-        sub: 'Before your first cup of tea is finished.',
-        items: [
-          'Every branch on one live screen',
-          'Entered once, correct everywhere',
-          'Anyone in your team can run it',
-          'Books close on the first of the month',
-          'You get told the moment something goes wrong',
-        ],
-        foot: 'The software works the way you do' }
-    )}
-  </div>
-</section>
-
-<!-- ══════════ HOW IT WORKS — the pipeline ══════════ -->
-<section class="sec">
-  <div class="wrap">
-    <div class="sechead center">
-      <span class="eyebrow">How it works</span>
-      <h2 class="h1 rv">Four steps. No jargon.</h2>
-    </div>
-    <div class="pipe">
-      ${PIPE.map(([h, p], i) => `
-      <div class="pstep rv ${i ? 'rv' + (i + 1) : ''}">
-        <div class="pnum">${i + 1}</div>
-        <h3>${h}</h3>
-        <p>${p}</p>
+    <div class="grid g4">
+      ${BEATS.map(([i, t, b], n) => `
+      <div class="card edge lift spot rv rv${n + 1}" style="padding:24px">
+        <span class="ico">${i}</span>
+        <b style="display:block;margin-top:16px;font-size:16.5px;font-weight:800;color:var(--t)">${t}</b>
+        <p class="muted" style="margin:8px 0 0;font-size:13.5px;line-height:1.55">${b}</p>
       </div>`).join('')}
     </div>
-    <div class="center rv rv5" style="margin-top:44px">
-      <a class="btn btn-em btn-big" href="/contact.html">Tell us what you need</a>
-    </div>
   </div>
 </section>
 
-<!-- ══════════ TESTIMONIALS ══════════ -->
-<section class="sec sec-alt">
-  <div class="wrap">
+<!-- ══════════ THE WIDE FILM ══════════ -->
+<section class="sec" style="position:relative;overflow:hidden">
+  <div class="wrap-n">
     <div class="sechead center">
-      <span class="eyebrow">In their words</span>
-      <h2 class="h1 rv">Five owners. Five industries.<br>The same answer.</h2>
+      <span class="eyebrow">Watch it work</span>
+      <h2 class="h1 rv">A duty, from his face to his payslip.</h2>
+      <p class="lead rv rv2">No narration needed. It starts when you reach it.</p>
     </div>
-    <div class="tcards">
-      ${CLIENTS.map((c, i) => `<div class="rv ${i % 3 ? 'rv' + ((i % 3) + 1) : ''}"${c.feature ? ' style="grid-column:span 2"' : ''}>${tcard(c, c.feature)}</div>`).join('')}
+    <div class="rv rv2">${filmWide(VID_H)}</div>
+  </div>
+</section>
+
+<!-- ══════════ THE THREE PRODUCTS ══════════ -->
+<section class="sec sec-alt" id="products">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">What we sell</span>
+      <h2 class="h1 rv">Three products. One of them is the point.</h2>
+      <p class="lead rv rv2">
+        Workforce is what we are building the company around. The other two are
+        real, in use, and priced below — open either one and press buttons.
+      </p>
     </div>
-    <div class="center rv" style="margin-top:32px">
-      <a class="btn btn-ghost" href="/clients.html">See what we built for each &rarr;</a>
+
+    ${PRODUCTS.map((p, n) => p.hero ? `
+    <div class="card edge lift spot rv" style="padding:clamp(24px,3vw,38px);margin-bottom:18px;
+         background:linear-gradient(165deg,rgba(18,185,129,.11),rgba(18,185,129,.015) 48%,var(--surface))">
+      <div class="grid g2" style="gap:clamp(22px,3vw,44px);align-items:start">
+        <div>
+          <span class="pill">${p.tag}</span>
+          <h3 style="margin:16px 0 8px;font-size:clamp(22px,2.6vw,30px);font-weight:800;letter-spacing:-.02em">${p.name}</h3>
+          <p style="margin:0 0 12px;font-size:16px;font-weight:700;color:var(--em2)">${p.line}</p>
+          <p class="muted" style="margin:0;font-size:14.5px;line-height:1.6;max-width:50ch">${p.body}</p>
+          <p style="margin:18px 0 0;font-size:14.5px;font-weight:800;color:var(--t)">${p.price}</p>
+          <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+            <a class="btn btn-em" href="${p.href}">How it proves a shift</a>
+            <a class="btn btn-ghost" href="#price">See your price</a>
+          </div>
+        </div>
+        <ul style="list-style:none;margin:0;padding:0;display:grid;gap:10px">
+          ${p.bullets.map((b) => `<li style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;color:var(--t)">
+            <svg viewBox="0 0 24 24" style="width:15px;height:15px;flex:none;margin-top:3px;fill:none;stroke:var(--em2);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7 10 17l-5-5"/></svg>
+            <span>${b}</span></li>`).join('')}
+        </ul>
+      </div>
+    </div>` : '').join('')}
+
+    <div class="grid g2" style="gap:18px">
+      ${PRODUCTS.filter((p) => !p.hero).map((p, n) => `
+      <div class="card edge lift spot rv rv${n + 2}" style="padding:26px">
+        <span class="ico">${p.icon}</span>
+        <p class="eyebrow" style="margin-top:14px">${p.tag}</p>
+        <h3 style="margin:8px 0 7px;font-size:20px;font-weight:800">${p.name}</h3>
+        <p style="margin:0 0 10px;font-size:14.5px;font-weight:700;color:var(--em2)">${p.line}</p>
+        <p class="muted" style="margin:0 0 16px;font-size:13.5px;line-height:1.55">${p.body}</p>
+        <ul style="list-style:none;margin:0 0 16px;padding:0;display:grid;gap:8px">
+          ${p.bullets.map((b) => `<li style="display:flex;gap:9px;font-size:13px;line-height:1.4;color:var(--t)">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;flex:none;margin-top:2.5px;fill:none;stroke:var(--em2);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7 10 17l-5-5"/></svg>
+            <span>${b}</span></li>`).join('')}
+        </ul>
+        <p style="margin:0 0 16px;font-size:14px;font-weight:800;color:var(--t)">${p.price}</p>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:auto">
+          <a class="btn btn-em" href="${p.demo}">${p.demoLabel}</a>
+          <a class="btn btn-ghost" href="${p.href}">What it does</a>
+        </div>
+      </div>`).join('')}
     </div>
   </div>
 </section>
 
 <!-- ══════════ PRICING ══════════ -->
-<section class="sec">
+<section class="sec" id="price">
   <div class="wrap">
-    <div class="sechead center">
-      <span class="eyebrow">Simple commercials</span>
-      <h2 class="h1 rv">You set the budget.<br>We are honest about it.</h2>
-      <p class="lead rv rv2">No rate card. Tell us what it must do and what you can spend.</p>
+    <div class="sechead">
+      <span class="eyebrow">Pricing</span>
+      <h2 class="h1 rv">Move the dial. The price is the price.</h2>
+      <p class="lead rv rv2">
+        Per worker, per month. No setup fee, no hardware, no per-site licence.
+        Three years of maintenance in every figure you see.
+      </p>
     </div>
-    <div class="grid g3" style="max-width:1000px;margin:0 auto">
-      ${[
-        [icons.lock, 'Own it outright', 'A perpetual licence. Yours to keep and run for good, with no monthly fee.', true],
-        [icons.swap, 'Or subscribe', 'A monthly fee instead of a big payment, hosting and updates included.', false],
-        [icons.shield, '3 years AMC, free', 'Fixes, updates and small changes for three years. The industry charges 15–20% a year.', false],
-      ].map(([ico, h, p, gold], i) => `
-      <div class="card rv ${i ? 'rv' + (i + 1) : ''}">
-        <div class="ico ${gold ? 'ico-gold' : ''}">${ico}</div>
-        <h3 class="h3">${h}</h3>
-        <p class="muted" style="margin-top:9px;font-size:15px">${p}</p>
-      </div>`).join('')}
+    <div class="rv rv2">${priceEngine({ start: 200 })}</div>
+
+    <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
+      <span class="eyebrow gold">Or don’t rent it at all</span>
+      <h2 class="h2 rv">Own the licence instead.</h2>
     </div>
-    <div class="center rv rv4" style="margin-top:30px">
-      <a class="btn btn-em btn-big" href="/contact.html">Get a price for your business</a>
-      <p class="faint" style="margin-top:14px;font-size:13.5px">Already run something of ours? Adding a feature is a one-time charge, not a new plan.</p>
+    <div class="rv rv2">${ownOrRent()}</div>
+
+    <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
+      <span class="eyebrow">The other two, priced</span>
+      <h2 class="h2 rv">Lite Cashbook and ConstructPro.</h2>
+    </div>
+    <div class="rv rv2">${otherProducts()}</div>
+  </div>
+</section>
+
+<!-- ══════════ CLIENTS ══════════ -->
+<section class="sec sec-alt">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">Who we build for</span>
+      <h2 class="h1 rv">Five businesses, five different problems.</h2>
+      <p class="lead rv rv2">
+        Workforce came out of a railway contract. The rest of the Munimo line came
+        out of the others. Same people, same three-year maintenance promise.
+      </p>
+    </div>
+    <div class="tcards rv rv2">
+      ${tcard(CLIENTS[0], true)}
+    </div>
+    <div class="center rv rv3" style="margin-top:26px">
+      <a class="btn btn-ghost" href="/clients.html">Read what the other four say</a>
     </div>
   </div>
 </section>
 
 <!-- ══════════ FAQ ══════════ -->
-<section class="sec sec-alt">
+<section class="sec">
   <div class="wrap-n">
     <div class="sechead center"><span class="eyebrow">Questions</span><h2 class="h1 rv">Straight answers.</h2></div>
     <div class="rv rv2">${F.html}</div>
   </div>
 </section>
 
-${cta('Tell us what your business needs.',
-      'In plain words — what is slow, what is painful, what nobody can see. We will tell you if we are the right people for it, and if we are not, we will say so.')}
+${cta('Put one contract on it and compare the month.',
+      'Tell us the headcount, the sites and how you pay today. We will come back with the figure, set it up, and run it beside your existing method for one cycle.')}
 `;
