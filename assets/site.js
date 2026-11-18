@@ -104,7 +104,8 @@
         var t0 = performance.now(), dur = 1300;
         (function tick(now) {
           var p = Math.min(1, (now - t0) / dur), e2 = 1 - Math.pow(1 - p, 3);
-          el.textContent = pre + (to * e2).toFixed(dec) + suf;
+          var v = to * e2;
+          el.textContent = pre + (dec ? v.toFixed(dec) : Math.round(v).toLocaleString('en-IN')) + suf;
           if (p < 1) requestAnimationFrame(tick);
         })(t0);
       });

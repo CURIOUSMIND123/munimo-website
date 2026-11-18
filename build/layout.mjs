@@ -37,7 +37,7 @@ function head({ title, desc, path, keywords, schema, css, js }) {
 ${keywords ? `<meta name="keywords" content="${esc(keywords)}">` : ''}
 <link rel="canonical" href="${url}">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
-<meta name="theme-color" content="#070a09">
+<meta name="theme-color" content="#0b1220">
 <meta name="author" content="${esc(SITE.legal)}">
 
 <meta property="og:type" content="website">
@@ -187,7 +187,7 @@ export function cta(headline, sub) {
   return `
 <section class="sec" style="background:linear-gradient(180deg,var(--ink),#0c1a14)">
   <div class="wrap center">
-    <div class="glow" style="width:760px;height:400px;top:0;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(18,185,129,.16),transparent 65%)"></div>
+    <div class="glow" style="width:760px;height:400px;top:0;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(16,185,129,.16),transparent 65%)"></div>
     <div style="position:relative;z-index:1">
       <h2 class="h1 rv">${headline}</h2>
       <p class="lead rv rv2" style="margin:18px auto 0;max-width:620px">${sub}</p>

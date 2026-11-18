@@ -48,7 +48,7 @@ const ITEMS = [
 
 export const body = `
 <section class="sec" style="padding:clamp(102px,11vw,130px) 0 clamp(26px,3.4vw,42px)">
-  <div class="glow" style="width:880px;height:500px;top:-200px;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(18,185,129,.15),transparent 66%)"></div>
+  <div class="glow" style="width:880px;height:500px;top:-200px;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(16,185,129,.15),transparent 66%)"></div>
   <div class="wrap" style="position:relative;z-index:1">
     <div class="sechead center" style="margin-bottom:clamp(30px,4vw,46px)">
       <span class="pill rv">Everything here is live</span>
@@ -61,12 +61,12 @@ export const body = `
     </div>
 
     <div class="rv rv4" style="max-width:1080px;margin:0 auto;position:relative">
-      <div class="glow" style="width:80%;height:70%;top:10%;left:10%;background:radial-gradient(ellipse,rgba(18,185,129,.18),transparent 66%)"></div>
+      <div class="glow" style="width:80%;height:70%;top:10%;left:10%;background:radial-gradient(ellipse,rgba(16,185,129,.18),transparent 66%)"></div>
       <div style="position:relative">
         ${liveScreen({
           src: '/web-app/app.html',
           url: 'munimo.online/web-app',
-          poster: '/assets/web/cashbook-hero.png',
+          poster: '/assets/shots/app.webp',
           label: 'Start the live ERP',
           note: 'The full office system — click to use it',
         })}

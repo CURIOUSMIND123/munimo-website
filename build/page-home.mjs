@@ -241,7 +241,7 @@ export const body = `
 
     ${PRODUCTS.map((p, n) => p.hero ? `
     <div class="card edge lift spot rv" style="padding:clamp(24px,3vw,38px);margin-bottom:18px;
-         background:linear-gradient(165deg,rgba(18,185,129,.11),rgba(18,185,129,.015) 48%,var(--surface))">
+         background:linear-gradient(165deg,rgba(16,185,129,.11),rgba(16,185,129,.015) 48%,var(--surface))">
       <div class="grid g2" style="gap:clamp(22px,3vw,44px);align-items:start">
         <div>
           <span class="pill">${p.tag}</span>

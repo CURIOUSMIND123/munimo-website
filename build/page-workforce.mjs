@@ -177,7 +177,7 @@ export const body = `
             <span>${t}</span></li>`).join('')}
         </ul>
       </div>
-      <div class="card edge rv rv2" style="padding:26px;background:linear-gradient(170deg,rgba(18,185,129,.1),var(--surface))">
+      <div class="card edge rv rv2" style="padding:26px;background:linear-gradient(170deg,rgba(16,185,129,.1),var(--surface))">
         <p class="eyebrow">With Munimo Workforce</p>
         <ul style="list-style:none;margin:16px 0 0;padding:0;display:grid;gap:11px">
           ${['A live board of every man and every unit, right now',

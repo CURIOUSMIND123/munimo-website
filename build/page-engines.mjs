@@ -58,7 +58,7 @@ export const meta = {
 
 export const body = `
 <section class="sec" style="padding:clamp(102px,11vw,130px) 0 clamp(26px,3.4vw,42px)">
-  <div class="glow" style="width:900px;height:520px;top:-210px;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(18,185,129,.16),transparent 66%)"></div>
+  <div class="glow" style="width:900px;height:520px;top:-210px;left:50%;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(16,185,129,.16),transparent 66%)"></div>
   <div class="wrap" style="position:relative;z-index:1">
     <div style="max-width:820px">
       <span class="pill rv">Engines</span>

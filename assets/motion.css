@@ -77,7 +77,7 @@
 /* the seam that "welds" them together at the end */
 .eng-weld{position:absolute;inset:-9px;border:1px solid var(--em);border-radius:22px;pointer-events:none;
           opacity:calc(max(0, var(--p) - .72) * 3.6);
-          box-shadow:0 0 60px rgba(18,185,129,.28) inset}
+          box-shadow:0 0 60px rgba(16,185,129,.28) inset}
 .eng-label{text-align:center;margin-top:26px;font-size:13px;font-weight:700;color:var(--em2);
            opacity:calc(max(0, var(--p) - .78) * 4.5)}
 
@@ -89,13 +89,13 @@
 @media(max-width:760px){.ba{grid-template-columns:1fr}}
 .ba-col{border-radius:17px;overflow:hidden;border:1px solid var(--hair);display:flex;flex-direction:column}
 .ba-col.bad{background:linear-gradient(168deg,#171410,#100e0c);border-color:rgba(248,113,113,.24)}
-.ba-col.good{background:linear-gradient(168deg,#0e1a15,#0a1210);border-color:rgba(18,185,129,.3);
-             box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 70px rgba(18,185,129,.08)}
+.ba-col.good{background:linear-gradient(168deg,#0e1a15,#0f172a);border-color:rgba(16,185,129,.3);
+             box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 70px rgba(16,185,129,.08)}
 .ba-hd{padding:clamp(17px,2vw,23px) clamp(18px,2.2vw,25px);border-bottom:1px solid var(--hair)}
 .ba-tag{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.14em;
         text-transform:uppercase;padding:5px 12px;border-radius:100px;margin-bottom:13px}
 .ba-col.bad .ba-tag{background:rgba(248,113,113,.13);border:1px solid rgba(248,113,113,.36);color:#fca5a5}
-.ba-col.good .ba-tag{background:rgba(18,185,129,.13);border:1px solid rgba(18,185,129,.4);color:var(--em2)}
+.ba-col.good .ba-tag{background:rgba(16,185,129,.13);border:1px solid rgba(16,185,129,.4);color:var(--em2)}
 .ba-hd h3{font-size:clamp(19px,2.4vw,26px);font-weight:800;letter-spacing:-.024em;line-height:1.2}
 .ba-col.good .ba-hd h3{color:var(--em3)}
 .ba-hd p{font-size:13.5px;color:var(--m);margin-top:8px}
@@ -106,7 +106,7 @@
 .ba-ico{width:21px;height:21px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;
         justify-content:center;margin-top:1px}
 .ba-col.bad .ba-ico{background:rgba(248,113,113,.15)}
-.ba-col.good .ba-ico{background:rgba(18,185,129,.16)}
+.ba-col.good .ba-ico{background:rgba(16,185,129,.16)}
 .ba-ico svg{width:11px;height:11px;stroke-width:3.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .ba-col.bad .ba-ico svg{stroke:#fca5a5}
 .ba-col.good .ba-ico svg{stroke:var(--em2)}
@@ -116,7 +116,7 @@
 .ba-foot{padding:15px clamp(18px,2.2vw,25px);border-top:1px solid var(--hair);font-size:13px;
          font-weight:800;letter-spacing:-.01em}
 .ba-col.bad .ba-foot{color:#fca5a5;background:rgba(248,113,113,.05)}
-.ba-col.good .ba-foot{color:var(--em2);background:rgba(18,185,129,.06)}
+.ba-col.good .ba-foot{color:var(--em2);background:rgba(16,185,129,.06)}
 
 /* ── comparison table (legacy vs custom) ── */
 .vs{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:0;border:1px solid var(--hair);
@@ -127,7 +127,7 @@
 .vs .vh.old{color:#fca5a5}.vs .vh.new{color:var(--em2)}
 .vs .vq{font-weight:700;color:var(--t);background:rgba(255,255,255,.012)}
 .vs .vo{color:var(--m)}
-.vs .vn{color:var(--t);background:rgba(18,185,129,.045)}
+.vs .vn{color:var(--t);background:rgba(16,185,129,.045)}
 @media(max-width:760px){
   .vs .vh{display:none}
   .vs .vq{background:var(--s2);border-bottom:0}

@@ -43,7 +43,7 @@ function build(p) {
     </div>
 
     <div class="rv rv5" style="position:relative;max-width:${p.demoWide ? '1080px' : '420px'};margin:0 auto">
-      <div class="glow" style="width:80%;height:70%;top:10%;left:10%;background:radial-gradient(ellipse,rgba(18,185,129,.19),transparent 66%)"></div>
+      <div class="glow" style="width:80%;height:70%;top:10%;left:10%;background:radial-gradient(ellipse,rgba(16,185,129,.19),transparent 66%)"></div>
       <div style="position:relative">${p.demo}</div>
     </div>
     <p class="center faint rv rv6" style="margin-top:20px;font-size:13.5px">
@@ -127,7 +127,7 @@ const fullErp = {
   name: 'Full business ERP',
   category: 'BusinessApplication',
   os: 'Web, Windows',
-  tint: 'rgba(18,185,129,.16)',
+  tint: 'rgba(16,185,129,.16)',
   title: 'Custom ERP software for any business — try it live | Munimo',
   desc: 'A complete business ERP: invoicing and tax, purchases, stock, payroll, receivables and profit by branch. Try the real system live, then have it tailored.',
   keywords: 'custom ERP software, ERP for small and medium business, invoicing purchase stock payroll software, ERP with profit and loss by project, replace tally with custom ERP',
@@ -137,12 +137,14 @@ const fullErp = {
   demoWide: true,
   demoSrc: '/web-app/app.html',
   demo: liveScreen({ src: '/web-app/app.html', url: 'munimo.online/web-app',
-                     poster: '/assets/web/cashbook-hero.png', label: 'Start the live ERP',
+                     poster: '/assets/shots/app.webp', label: 'Start the live ERP',
                      note: 'Click anywhere to use the real system' }),
   galleryHead: 'Straight from the running product.',
-  gallery: [['invoices', 'Sales invoices with tax per line'], ['purchases', 'Purchase orders and vendor bills'],
-            ['reports', 'Reports that drill to the entry'], ['inventory', 'Stock across locations'],
-            ['employees', 'Employees and payroll'], ['gst', 'Tax returns from live books']],
+  gallery: [['sites', 'Every site, with its own money'], ['muster', 'The muster roll, a month at a glance'],
+            ['subcontractors', 'Subcontractors and running-account bills'], ['labour', 'Workers, trades and day rates'],
+            ['invoices', 'Sales invoices with tax per line'], ['purchases', 'Purchase orders and vendor bills'],
+            ['reports', 'Reports that drill to the entry'], ['gst', 'Tax returns from live books'],
+            ['askerp', 'Ask the books a question in plain words']],
   featuresHead: 'Everything the office does,<br>without the gaps between tools.',
   features: [
     [icons.ledger, 'Sales and invoicing', 'Quotations, invoices, credit notes, payment tracking and reminders. Tax applied correctly per line and per customer.'],
@@ -186,11 +188,11 @@ const cashBook = {
   demoWide: true,
   demoSrc: '/web-app/lite.html',
   demo: liveScreen({ src: '/web-app/lite.html', url: 'munimo.online/web-app/lite',
-                     poster: '/assets/web/cashbook-hero.png', label: 'Open the live Cash Book',
+                     poster: '/assets/shots/cashbook.webp', label: 'Open the live Cash Book',
                      note: 'Add an entry and watch the balance move' }),
   galleryHead: 'The book, on a screen and in a pocket.',
-  gallery: [['cashflow', 'Money in and out, by head'], ['cashbook', 'The simple cash book view'],
-            ['phone-home', 'The same book on a phone']],
+  gallery: [['cashbook', 'Cash in hand and every bank, live'], ['phone-attend', 'The book itself, entry by entry'],
+            ['cashflow', 'Money in and out, by head'], ['phone-home', 'The same book on a phone']],
   featuresHead: 'A book that stays honest<br>without anyone policing it.',
   features: [
     [icons.ledger, 'Money in, money out', 'Every receipt and payment against a head you choose, with the party, the mode and a note. Two taps on a phone, one line in the book.'],
@@ -286,8 +288,8 @@ const mobileApp = {
            <iframe src="/lite-app/?demo=1" title="Munimo mobile field app — live demo" loading="lazy"></iframe>
          </div>`,
   galleryHead: 'What the field sees, and what the office gets.',
-  gallery: [['phone-home', 'The field home screen'], ['phone-attend', 'Marking a crew present'],
-            ['labour', 'It lands in the office as wages']],
+  gallery: [['phone-home', 'The field screen, on a phone'], ['phone-attend', 'Entries as they are made'],
+            ['muster', 'It lands in the office as a muster roll'], ['labour', 'And becomes wages']],
   featuresHead: 'Built for a phone in a pocket,<br>not a laptop on a desk.',
   features: [
     [icons.offline, 'No signal, no problem', 'Everything works offline and queues up. When the phone finds a network it syncs quietly, with no duplicates and nothing lost.'],
