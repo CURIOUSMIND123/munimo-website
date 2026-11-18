@@ -8,7 +8,7 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var inr = function (n) { return '₹' + Math.round(n).toLocaleString('en-IN'); };
+  var money = function (n) { return '₹' + Math.round(n).toLocaleString('en-IN'); };
 
   /* ── 1. the deck ──────────────────────────────────────────────────────── */
   $$('[data-deck]').forEach(function (deck) {
@@ -127,122 +127,169 @@
     });
 
     if ('IntersectionObserver' in window) {
-      var io = new IntersectionObserver(function (es) {
+      new IntersectionObserver(function (es) {
         es.forEach(function (e) {
           if (e.isIntersecting) { load(); say('playVideo'); }
           else if (on) say('pauseVideo');
         });
-      }, { threshold: 0.25 });
-      io.observe(box);
+      }, { threshold: 0.25 }).observe(box);
     } else { load(); }
   });
 
   /* ── 3. the price engine ──────────────────────────────────────────────── */
   var eng = $('[data-prx]');
   if (eng) {
-    var CFG = {};
+    var CFG = null;
     try { CFG = JSON.parse(eng.getAttribute('data-prx')); } catch (_) { CFG = null; }
-    if (CFG) {
-      var range = $('#prx-range', eng);
-      var count = $('#prx-count', eng);
-      var annual = false;
+    var range = $('#prx-range', eng);
+
+    if (CFG && range) {
+      var mode = 'year';
 
       /* digits that roll, like a meter */
-      function odo(box, n) {
+      var odo = function (box, n) {
+        if (!box) return;
         var txt = Math.round(n).toLocaleString('en-IN');
-        if (box.getAttribute('data-shape') !== txt.replace(/\d/g, '#')) {
-          box.setAttribute('data-shape', txt.replace(/\d/g, '#'));
+        var shape = txt.replace(/[0-9]/g, '#');
+        if (box.getAttribute('data-shape') !== shape) {
+          box.setAttribute('data-shape', shape);
           box.innerHTML = txt.split('').map(function (ch) {
-            if (/\d/.test(ch)) {
-              return '<i><u>' + '0123456789'.split('').map(function (d) { return '<b>' + d + '</b>'; }).join('') + '</u></i>';
-            }
-            return '<i class="sep">' + ch + '</i>';
+            return /[0-9]/.test(ch)
+              ? '<i><u>' + '0123456789'.split('').map(function (d) { return '<b>' + d + '</b>'; }).join('') + '</u></i>'
+              : '<i class="sep">' + ch + '</i>';
           }).join('');
         }
         var cols = $$('u', box), k = 0;
         txt.split('').forEach(function (ch) {
-          if (!/\d/.test(ch)) return;
+          if (!/[0-9]/.test(ch)) return;
           var u = cols[k++];
           if (u) u.style.transform = 'translateY(-' + (+ch) + 'em)';
         });
-      }
+      };
 
-      function draw() {
-        var w = Math.max(CFG.min, +range.value);
-        count.textContent = w.toLocaleString('en-IN');
+      var slabFor = function (w) {
+        for (var n = 0; n < CFG.slabs.length; n++) {
+          if (CFG.slabs[n].max === null || w <= CFG.slabs[n].max) return CFG.slabs[n];
+        }
+        return CFG.slabs[CFG.slabs.length - 1];
+      };
+
+      var draw = function () {
+        var w = Math.max(1, +range.value);
+        $('#prx-count', eng).textContent = w.toLocaleString('en-IN');
         range.style.setProperty('--fill', ((w - +range.min) / (+range.max - +range.min) * 100) + '%');
 
-        var mult = annual ? CFG.annualMonths / 12 : 1;
+        var s = slabFor(w);
+        var monthly = Math.max(s.monthFloor, w * s.monthRate);
+        var yearly = Math.max(s.yearFloor, w * s.yearRate * 12);
 
-        /* each tier card */
-        CFG.tiers.forEach(function (t) {
-          var card = $('#pc-' + t.id, eng);
+        /* light up the slab this headcount falls into */
+        $$('.pc', eng).forEach(function (c) {
+          c.classList.toggle('on', c.getAttribute('data-slab') === s.id);
+        });
+
+        /* every slab card follows the chosen way of paying */
+        CFG.slabs.forEach(function (sl) {
+          var card = $('#pc-' + sl.id, eng);
           if (!card) return;
-          var per = t.price * mult;
-          odo($('.odo', card), per);
-          var tot = $('.pc-tot', card);
-          if (tot) {
-            var m = t.price * w * mult;
-            tot.innerHTML = '<b>' + inr(m) + '</b> a month for ' + w.toLocaleString('en-IN') + ' workers' +
-              (annual ? '<br><span class="save">' + inr(t.price * w * 12 - t.price * w * CFG.annualMonths) +
-                ' saved over the year</span>' : '');
+          odo($('.odo', card), mode === 'month' ? sl.monthFloor : mode === 'lic' ? sl.licence : sl.yearFloor);
+          var unit = $('.pc-unit', card), per = $('.pc-per', card), incl = $('.pc-inclw', card);
+          if (unit) {
+            unit.innerHTML = mode === 'month' ? 'a month<br>minimum'
+              : mode === 'lic' ? 'one-time<br>licence' : 'a year<br>minimum';
+          }
+          if (per) per.textContent = money(mode === 'lic' ? sl.amc : mode === 'month' ? sl.monthRate : sl.yearRate);
+          if (incl) {
+            incl.innerHTML = mode === 'lic'
+              ? 'a year from Year 2, Year 1 free'
+              : 'per worker a month above the minimum';
           }
         });
 
+        /* the quote panel */
+        var amount, unit, sub, note;
+        if (mode === 'month') {
+          amount = monthly; unit = 'a month';
+          sub = money(monthly / w) + ' per worker a month';
+          note = 'Paying yearly instead would save ' + money(monthly * 12 - yearly) + ' over the year.';
+        } else if (mode === 'lic') {
+          amount = s.licence; unit = 'one-time';
+          sub = money(s.amc) + ' a year from Year 2 · Year 1 maintenance free';
+          note = 'It does not expire and it does not phone home. Run it on your own server if you want.';
+        } else {
+          amount = yearly; unit = 'a year';
+          sub = money(yearly / 12 / w) + ' per worker a month · ' + money(yearly / 12) + ' a month equivalent';
+          note = 'Yearly advance saves ' + money(monthly * 12 - yearly) + ' against paying monthly.';
+        }
+        var first = s.setup + amount;
+
+        odo($('#prx-quote .odo', eng), amount);
+        $('#q-slab', eng).textContent = s.name;
+        $('#q-mode', eng).textContent = mode === 'month' ? 'monthly advance'
+          : mode === 'lic' ? 'one-time licence' : 'yearly advance';
+        $('#q-unit', eng).textContent = unit;
+        $('#q-sub', eng).textContent = sub;
+        $('#q-setup', eng).textContent = money(s.setup);
+        $('#q-first', eng).textContent = money(first);
+        $('#q-gst', eng).textContent = money(first * CFG.gst / 100);
+        $('#q-pay', eng).textContent = money(first * (1 + CFG.gst / 100));
+        $('#q-note', eng).textContent = note;
+
         /* what the same job costs bought in pieces */
-        var ours = CFG.tiers[CFG.compare] ? CFG.tiers[CFG.compare].price * w * mult : 0;
+        var ours = mode === 'month' ? monthly
+          : mode === 'lic' ? (s.licence / 36 + s.amc / 12)
+          : yearly / 12;
         var rows = $$('.vsr', eng), top = ours;
         var vals = rows.map(function (r) {
-          var v;
-          if (r.classList.contains('us')) v = ours;
-          else {
-            v = 0;
-            var pw = parseFloat(r.getAttribute('data-pwy')) || 0;
-            var pl = parseFloat(r.getAttribute('data-ply')) || 0;
-            var pm = parseFloat(r.getAttribute('data-pwm')) || 0;
-            v = (pw * w) / 12 + pl / 12 + pm * w;
-          }
+          if (r.classList.contains('us')) return ours;
+          var v = (parseFloat(r.getAttribute('data-pwy')) || 0) * w / 12
+                + (parseFloat(r.getAttribute('data-ply')) || 0) / 12
+                + (parseFloat(r.getAttribute('data-pwm')) || 0) * w;
           top = Math.max(top, v);
           return v;
         });
         rows.forEach(function (r, n) {
           $('.vsr-b', r).style.width = Math.max(2, (vals[n] / top) * 100) + '%';
-          $('.vsr-v', r).textContent = inr(vals[n]);
+          $('.vsr-v', r).textContent = money(vals[n]);
         });
 
         var save = $('#prx-save', eng);
         if (save) {
-          var stack = vals.reduce(function (a, v, n) { return rows[n].classList.contains('us') ? a : a + v; }, 0);
+          var stack = vals.reduce(function (acc, v, n) {
+            return rows[n].classList.contains('us') ? acc : acc + v;
+          }, 0);
           var diff = stack - ours;
           save.innerHTML = diff > 0
-            ? 'That is <b>' + inr(diff) + ' a month</b> less, and one system instead of three.'
-            : 'One system instead of three, with payroll already in it.';
+            ? 'That is <b>' + money(diff) + ' a month</b> less, and one system instead of three.'
+            : 'One system instead of three, with muster rolls and payroll already in it.';
+          if (mode === 'lic') {
+            save.innerHTML += ' <span class="muted">Licence spread over three years, with AMC.</span>';
+          }
         }
-      }
+      };
 
-      if (range) {
-        range.addEventListener('input', draw);
-        $$('.sw button', eng).forEach(function (b) {
-          b.addEventListener('click', function () {
-            $$('.sw button', eng).forEach(function (o) { o.classList.toggle('on', o === b); });
-            annual = b.getAttribute('data-bill') === 'year';
-            draw();
-          });
-        });
-        /* first paint once it scrolls into view, so the digits roll up from zero */
-        if ('IntersectionObserver' in window && !calm) {
-          var once = new IntersectionObserver(function (es) {
-            es.forEach(function (e) {
-              if (!e.isIntersecting) return;
-              once.disconnect();
-              $$('.odo', eng).forEach(function (o) { odo(o, 0); });
-              setTimeout(draw, 120);
-            });
-          }, { threshold: 0.2 });
-          once.observe(eng);
+      range.addEventListener('input', draw);
+      $$('.sw button', eng).forEach(function (b) {
+        b.addEventListener('click', function () {
+          $$('.sw button', eng).forEach(function (o) { o.classList.toggle('on', o === b); });
+          mode = b.getAttribute('data-bill');
           draw();
-        } else { draw(); }
+        });
+      });
+
+      /* first paint on scroll, so the digits roll up from zero */
+      if ('IntersectionObserver' in window && !calm) {
+        var once = new IntersectionObserver(function (es) {
+          es.forEach(function (e) {
+            if (!e.isIntersecting) return;
+            once.disconnect();
+            $$('.odo', eng).forEach(function (o) { odo(o, 0); });
+            setTimeout(draw, 140);
+          });
+        }, { threshold: 0.15 });
+        once.observe(eng);
       }
+      draw();
     }
   }
 
@@ -279,8 +326,9 @@
       el.appendChild(frag);
       $$('span', el).forEach(function (s, n) { s.style.transitionDelay = (n * 0.045) + 's'; });
     });
-    if (calm) { wipes.forEach(function (el) { el.classList.add('in'); }); }
-    else if ('IntersectionObserver' in window) {
+    if (calm) {
+      wipes.forEach(function (el) { el.classList.add('in'); });
+    } else if ('IntersectionObserver' in window) {
       var wio = new IntersectionObserver(function (es) {
         es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); wio.unobserve(e.target); } });
       }, { threshold: 0.25 });
@@ -293,6 +341,8 @@
           });
         }, 400);
       });
-    } else { wipes.forEach(function (el) { el.classList.add('in'); }); }
+    } else {
+      wipes.forEach(function (el) { el.classList.add('in'); });
+    }
   }
 })();

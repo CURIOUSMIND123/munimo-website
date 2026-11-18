@@ -17,10 +17,10 @@ export const CLIENTS = [
     feature: true,
   },
   {
-    name: 'Sangeeta Nath',
-    role: 'Babyscience IVF',
+    name: 'Amitabh',
+    role: 'Lab Director, Babyscience IVF',
     sector: 'Healthcare',
-    initials: 'SN',
+    initials: 'A',
     tint: 'linear-gradient(135deg,#a78bfa,#5b3fa8)',
     rating: 5,
     quote: 'They took on the whole clinic, not just the accounts. Patient bookings and doctor appointments sit in the same system as our payroll, inventory and finance — so nothing has to be typed twice and the day actually reconciles at the end of it.',

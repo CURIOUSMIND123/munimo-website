@@ -1,7 +1,8 @@
 import { SITE, cta, faq, ORG, icons } from './layout.mjs';
 import { CLIENTS, tcard, marquee, reviewSchema } from './clients-data.mjs';
-import { deck, filmPhone, filmWide, priceEngine, ownOrRent, otherProducts, ic } from './parts.mjs';
-import { WORKFORCE, MIN_WORKERS, money } from './pricing-data.mjs';
+import { deck, filmPhone, filmWide, priceEngine, constructProTable, comboTable,
+         addonsTerms, workforceContents, ic } from './parts.mjs';
+import { SLABS, CONSTRUCTPRO, ENTRY, CARD, money, lakh } from './pricing-data.mjs';
 
 const VID_V = 'TcsdlIyAut0';   // vertical, the app in a worker's hand
 const VID_H = 'RXZDZ7Rdojk';   // wide, the whole thing end to end
@@ -18,9 +19,9 @@ const F = faq([
   ['How is this different from a face-attendance machine?',
    'A machine proves he reached the gate. It cannot prove he stayed, cannot follow him onto a train or along a track, and it does not pay him. It also has to be bought and mounted at every site. Munimo needs no hardware, works anywhere the work happens, and pay comes out of the same system.'],
   ['What does it cost?',
-   `From ${money(WORKFORCE[0].price)} per worker a month, minimum ${MIN_WORKERS} workers, with annual billing costing two months less. Nothing to buy, setup and enrolment are free, and three years of maintenance is included. The dial on this page gives you the figure for your own headcount.`],
+   `It is priced in headcount slabs. Starter is ${money(SLABS[0].monthFloor)} a month, or ${money(SLABS[0].yearFloor)} a year, covering up to 100 workers, with a ${money(SLABS[0].setup)} one-time cloud setup. At a thousand workers the yearly rate works out at ${money(SLABS[3].yearRate)} per worker a month. Every figure excludes ${CARD.gst}% GST. Move the dial on this page for your own headcount.`],
   ['Can we own it instead of subscribing?',
-   'Yes. A perpetual licence is quoted one-time against your scope, runs on your own server, never expires and never phones home. What you have already paid on subscription usually counts towards it.'],
+   `Yes. A one-time perpetual licence starts at ${money(SLABS[0].licence)} on the Starter slab. It does not expire, does not phone home, and can sit on your own server. Year one maintenance is free; from year two the annual maintenance charge for that slab applies, which is what keeps cloud servers, Android compatibility, backups and support running.`],
   ['Is it only for railway contracts?',
    'That is where it was built and hardest tested, but the parts are general. Security posts, housekeeping, factory gates, sanitation beats, field technicians and plantation musters all use the same face checks, fences, random checks and payroll.'],
   ['How long until a contract is live?',
@@ -53,18 +54,29 @@ export const meta = {
       { '@type': 'WebSite', '@id': SITE.domain + '/#site', url: SITE.domain, name: SITE.name,
         publisher: { '@id': SITE.domain + '/#org' } },
       APP('Munimo Workforce',
-        'Face and GPS proof of duty for contract and field workforces, with payroll calculated from proven duty. Works offline, needs no attendance hardware.',
-        WORKFORCE.map((t) => ({
-          '@type': 'Offer', name: t.name, price: t.price, priceCurrency: 'INR',
+        'Face and GPS proof of duty for contract and field workforces, with statutory muster rolls, EPF and ESIC registers and bank payout sheets. Works offline, needs no attendance hardware.',
+        SLABS.map((t) => ({
+          '@type': 'Offer', name: t.name + ' slab', priceCurrency: 'INR',
+          description: t.band + '. Yearly advance from ' + money(t.yearFloor) +
+            ', monthly from ' + money(t.monthFloor) + ', one-time licence ' + money(t.licence) +
+            '. Excludes ' + CARD.gst + '% GST.',
+          price: t.yearFloor,
           priceSpecification: {
-            '@type': 'UnitPriceSpecification', price: t.price, priceCurrency: 'INR',
-            unitText: 'worker per month', referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'worker' },
+            '@type': 'UnitPriceSpecification', price: t.yearRate, priceCurrency: 'INR',
+            unitText: 'worker per month', valueAddedTaxIncluded: false,
+            referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'worker' },
           },
         })), '/workforce.html'),
-      APP('Munimo Lite Cashbook', 'Cash and bank book for small businesses, with parties, dues and GST-ready exports.',
-        [{ '@type': 'Offer', price: 0, priceCurrency: 'INR' }, { '@type': 'Offer', price: 199, priceCurrency: 'INR' }], '/cash-book.html'),
-      APP('Munimo ConstructPro', 'Site materials, labour and subcontractor bills, BOQ against actual, machinery logs and progress billing.',
-        [{ '@type': 'Offer', price: 1499, priceCurrency: 'INR' }], '/full-erp.html'),
+      APP('Munimo ConstructPro Khata & Site ERP',
+        'Financial, billing and compliance control for civil contractors and builders: project-wise cash flow and site P&L, RA bills and retention, contractor and supplier advances, TDS 194C and GSTN exports.',
+        CONSTRUCTPRO.map((c) => ({
+          '@type': 'Offer', name: c.name, price: c.yearly, priceCurrency: 'INR',
+          description: c.band + '. ' + money(c.monthly) + ' a month, ' + money(c.yearly) +
+            ' a year, or ' + money(c.licence) + ' one-time. Excludes ' + CARD.gst + '% GST.',
+        })), '/full-erp.html'),
+      APP('Munimo Lite Cashbook',
+        'Free cash and bank book for small businesses, with parties, dues and GST-ready exports.',
+        [{ '@type': 'Offer', price: 0, priceCurrency: 'INR' }], '/cash-book.html'),
       ...reviewSchema(SITE),
       F.schema,
     ],
@@ -83,7 +95,7 @@ const PRODUCTS = [
   { name: 'Munimo Workforce', tag: 'The main thing we do',
     line: 'Prove every shift. Pay from the proof.',
     body: 'Face and GPS proof of duty for contract and field workforces, and payroll calculated from it. Works with no signal. Needs no hardware.',
-    price: `From ${money(WORKFORCE[0].price)} per worker a month`,
+    price: `From ${money(SLABS[0].monthFloor)} a month, or ${money(SLABS[0].yearFloor)} a year`,
     href: '/workforce.html', demo: '/web-app/app.html', demoLabel: 'Open the office side',
     icon: ic.users, hero: true,
     bullets: ['Face check with a blink test', 'GPS fence per site, or per station and train',
@@ -130,9 +142,9 @@ export const body = `
         </div>
 
         <div class="rv rv4" style="display:grid;grid-template-columns:repeat(3,auto);gap:clamp(16px,3vw,38px);margin-top:34px;justify-content:start">
-          ${[['39', 'From ₹', ' per worker / month'],
-             ['0', '₹', ' of hardware to buy'],
-             ['3', '', ' years of maintenance']].map(([n, pre, suf]) => `
+          ${[[String(ENTRY.monthFloor), 'From ₹', ' a month, up to 100 workers'],
+             [String(ENTRY.bestPerWorker), '₹', ' per worker a month at 1,000'],
+             ['0', '₹', ' of attendance hardware']].map(([n, pre, suf]) => `
           <div>
             <b style="display:block;font-size:clamp(26px,3.4vw,38px);font-weight:800;letter-spacing:-.035em;color:var(--t);line-height:1">
               <span style="font-size:.52em;font-weight:700;color:var(--m);vertical-align:.42em">${pre}</span><span data-count="${n}">0</span>
@@ -283,23 +295,30 @@ export const body = `
       <span class="eyebrow">Pricing</span>
       <h2 class="h1 rv">Move the dial. The price is the price.</h2>
       <p class="lead rv rv2">
-        Per worker, per month. No setup fee, no hardware, no per-site licence.
-        Three years of maintenance in every figure you see.
+        Priced in headcount slabs: a minimum that covers the band, and a per-worker rate
+        above it. Pay monthly, pay yearly, or own the licence outright. No attendance
+        hardware at any site. Figures exclude ${CARD.gst}% GST.
       </p>
     </div>
-    <div class="rv rv2">${priceEngine({ start: 200 })}</div>
+    <div class="rv rv2">${priceEngine({ start: 180 })}</div>
 
     <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
-      <span class="eyebrow gold">Or don’t rent it at all</span>
-      <h2 class="h2 rv">Own the licence instead.</h2>
+      <span class="eyebrow">ConstructPro Khata &amp; Site ERP</span>
+      <h2 class="h2 rv">Priced by sites, not by workers.</h2>
     </div>
-    <div class="rv rv2">${ownOrRent()}</div>
+    <div class="rv rv2">${constructProTable()}</div>
 
     <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
-      <span class="eyebrow">The other two, priced</span>
-      <h2 class="h2 rv">Lite Cashbook and ConstructPro.</h2>
+      <span class="eyebrow gold">Take both</span>
+      <h2 class="h2 rv">25% off ConstructPro when it runs beside Workforce.</h2>
     </div>
-    <div class="rv rv2">${otherProducts()}</div>
+    <div class="rv rv2">${comboTable()}</div>
+
+    <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
+      <span class="eyebrow">The small print, in plain words</span>
+      <h2 class="h2 rv">Add-ons and terms.</h2>
+    </div>
+    <div class="rv rv2">${addonsTerms()}</div>
   </div>
 </section>
 
@@ -311,7 +330,7 @@ export const body = `
       <h2 class="h1 rv">Five businesses, five different problems.</h2>
       <p class="lead rv rv2">
         Workforce came out of a railway contract. The rest of the Munimo line came
-        out of the others. Same people, same three-year maintenance promise.
+        out of the others. Same people, same habit of fixing things the week you ask.
       </p>
     </div>
     <div class="tcards rv rv2">

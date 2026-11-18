@@ -1,7 +1,8 @@
 import { SITE, cta, faq, ORG, icons } from './layout.mjs';
 import { CLIENTS, tcard, reviewSchema } from './clients-data.mjs';
-import { deck, filmPhone, filmWide, priceEngine, ownOrRent, ic } from './parts.mjs';
-import { WORKFORCE, MIN_WORKERS, money } from './pricing-data.mjs';
+import { deck, filmPhone, filmWide, priceEngine, constructProTable, comboTable,
+         addonsTerms, workforceContents, ic } from './parts.mjs';
+import { SLABS, CARD, ENTRY, money, lakh } from './pricing-data.mjs';
 
 const VID_V = 'TcsdlIyAut0';
 const VID_H = 'RXZDZ7Rdojk';
@@ -24,9 +25,9 @@ const F = faq([
   ['Can payroll rules differ per contract?',
    'They must, and they do. Check windows, pay rates, overtime, what counts as a short day and the site’s closing hour are all set per contract, not once for the whole company.'],
   ['What does it cost?',
-   `From ${money(WORKFORCE[0].price)} per worker a month on the Attendance plan, ${money(WORKFORCE[1].price)} with payroll, ${money(WORKFORCE[2].price)} for railway and enterprise rules. Minimum ${MIN_WORKERS} workers. Annual billing costs two months less. No setup fee and no hardware.`],
+   `Four headcount slabs. Starter, up to 100 workers, is ${money(SLABS[0].monthFloor)} a month or ${money(SLABS[0].yearFloor)} a year. Growth, 101 to 250, is ${money(SLABS[1].monthFloor)} a month or ${money(SLABS[1].yearFloor)} a year. Scale and Enterprise go up from there, and the per-worker rate comes down as you grow — ${money(SLABS[3].yearRate)} a month each at a thousand workers. One-time setup is ${money(SLABS[0].setup)} on cloud for Starter. Everything excludes ${CARD.gst}% GST, which is input-tax-credit eligible.`],
   ['Can we run it on our own server?',
-   'Yes, on the Rail and Enterprise plan, or with a perpetual licence. A licence is quoted one-time against your scope, never expires and does not phone home.'],
+   `Yes. A dedicated-server setup is a higher one-time fee — ${money(SLABS[0].setupDedicated)} instead of ${money(SLABS[0].setup)} on Starter — and a private VPS is ₹12,000 a year. You can also buy the software outright: a one-time perpetual licence from ${money(SLABS[0].licence)}, which never expires and does not phone home. Year one maintenance is free, and the annual maintenance charge applies from year two.`],
 ]);
 
 export const meta = {
@@ -56,17 +57,20 @@ export const meta = {
           'GPS trail of the route actually walked',
           'Mock-location and code-sharing detection',
           'Supervisor phone used as a shared kiosk',
-          'Payroll, EPF and ESI calculated from proven duty',
+          'Automated statutory muster rolls, EPF and ESIC registers, bank payout sheets',
           'Per-contract rules, rates and check windows',
           'Hindi, Bengali, Assamese and English',
         ],
-        offers: WORKFORCE.map((t) => ({
-          '@type': 'Offer', name: t.name, price: t.price, priceCurrency: 'INR',
+        offers: SLABS.map((t) => ({
+          '@type': 'Offer', name: t.name + ' slab', price: t.yearFloor, priceCurrency: 'INR',
+          description: t.band + '. Yearly advance from ' + money(t.yearFloor) + ', monthly from ' +
+            money(t.monthFloor) + ', one-time licence ' + money(t.licence) + ' with ' + money(t.amc) +
+            ' annual maintenance from year two. One-time setup ' + money(t.setup) +
+            ' on cloud. Excludes ' + CARD.gst + '% GST.',
           priceSpecification: {
-            '@type': 'UnitPriceSpecification', price: t.price, priceCurrency: 'INR',
-            unitText: 'worker per month',
+            '@type': 'UnitPriceSpecification', price: t.yearRate, priceCurrency: 'INR',
+            unitText: 'worker per month', valueAddedTaxIncluded: false,
             referenceQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'worker' },
-            eligibleQuantity: { '@type': 'QuantitativeValue', minValue: MIN_WORKERS, unitText: 'worker' },
           },
         })),
       },
@@ -135,7 +139,7 @@ export const body = `
         <ul class="rv rv4" style="list-style:none;margin:30px 0 0;padding:0;display:grid;gap:9px;max-width:46ch">
           ${['Works with no signal — the face match runs on the phone',
              'No attendance machine to buy, at any site',
-             'Payroll, EPF and ESI out of the same system',
+             'Muster rolls, EPF and ESIC registers and bank payout sheets',
              'Running today on a live railway contract'].map((t) => `
           <li style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;color:var(--t)">
             <svg viewBox="0 0 24 24" style="width:15px;height:15px;flex:none;margin-top:3px;fill:none;stroke:var(--em2);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7 10 17l-5-5"/></svg>
@@ -214,8 +218,22 @@ export const body = `
   </div>
 </section>
 
-<!-- ══════════ THE WIDE FILM ══════════ -->
+<!-- ══════════ WHAT IS IN IT ══════════ -->
 <section class="sec sec-alt">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="eyebrow">What you get</span>
+      <h2 class="h1 rv">Two halves: the phone, and the office.</h2>
+      <p class="lead rv rv2">
+        Every plan includes both. There is no edition where the office side is missing.
+      </p>
+    </div>
+    <div class="rv rv2">${workforceContents()}</div>
+  </div>
+</section>
+
+<!-- ══════════ THE WIDE FILM ══════════ -->
+<section class="sec">
   <div class="wrap-n">
     <div class="sechead center">
       <span class="eyebrow">Watch it work</span>
@@ -337,16 +355,24 @@ export const body = `
       <span class="eyebrow">Pricing</span>
       <h2 class="h1 rv">Move the dial. The price is the price.</h2>
       <p class="lead rv rv2">
-        Per worker, per month. No setup fee, no hardware, no per-site licence, and
-        three years of maintenance inside every figure here.
+        Four headcount slabs. Each has a minimum that covers the band and a per-worker
+        rate above it, and the rate falls as you grow. Pay monthly, pay yearly, or own
+        the licence outright. Figures exclude ${CARD.gst}% GST.
       </p>
     </div>
     <div class="rv rv2">${priceEngine({ start: 300 })}</div>
+
     <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
-      <span class="eyebrow gold">Or don’t rent it at all</span>
-      <h2 class="h2 rv">Own the licence instead.</h2>
+      <span class="eyebrow gold">Take ConstructPro with it</span>
+      <h2 class="h2 rv">Field payroll straight into site P&amp;L, at 25% off.</h2>
     </div>
-    <div class="rv rv2">${ownOrRent()}</div>
+    <div class="rv rv2">${comboTable()}</div>
+
+    <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
+      <span class="eyebrow">The small print, in plain words</span>
+      <h2 class="h2 rv">Add-ons and terms.</h2>
+    </div>
+    <div class="rv rv2">${addonsTerms()}</div>
   </div>
 </section>
 

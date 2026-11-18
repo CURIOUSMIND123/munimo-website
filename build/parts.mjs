@@ -2,7 +2,9 @@
    parts.mjs — the three new pieces: the auto-running deck, the video frames
    with no player furniture, and the animated price engine.
    ────────────────────────────────────────────────────────────────────────── */
-import { WORKFORCE, OTHER, PERPETUAL, INCLUDED, MARKET, MIN_WORKERS, ANNUAL_MONTHS, money } from './pricing-data.mjs';
+import { icons } from './layout.mjs';
+import { SLABS, SLAB_POLICY, CONSTRUCTPRO, CP_WHAT, COMBOS, COMBO_RULE, ADDONS, TERMS,
+         MARKET, CARD, WF_WHAT, ENTRY, quote, slabFor, money, lakh } from './pricing-data.mjs';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -224,41 +226,61 @@ export function filmWide(id, poster = '/assets/film-wide.webp') {
 </div>`;
 }
 
+
 /* ── the price engine ────────────────────────────────────────────────────── */
 
 const tick = '<svg viewBox="0 0 24 24"><path d="M20 7 10 17l-5-5"/></svg>';
-const cross = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 
-/** Digits that roll. Rendered server-side at the starting figure so the card
-    reads correctly before any script runs. */
+/** Digits that roll, like a meter. Rendered server-side at the opening
+    figure, so the panel reads correctly before any script runs. */
 function odo(n) {
-  return `<span class="odo" data-shape="">${String(n).split('').map((ch) =>
+  return `<span class="odo" data-shape="">${String(Math.round(n)).split('').map((ch) =>
     /\d/.test(ch)
       ? `<i><u style="transform:translateY(-${+ch}em)">${'0123456789'.split('').map((d) => `<b>${d}</b>`).join('')}</u></i>`
       : `<i class="sep">${ch}</i>`).join('')}</span>`;
 }
 
-export function priceEngine({ start = 200 } = {}) {
+/**
+ * The dial, the quote panel, the four slabs and the market comparison.
+ * Every figure comes from pricing-data.mjs, which is the rate card.
+ */
+export function priceEngine({ start = 180 } = {}) {
   const cfg = {
-    min: MIN_WORKERS,
-    annualMonths: ANNUAL_MONTHS,
-    compare: 1,
-    tiers: WORKFORCE.map((t) => ({ id: t.id, price: t.price })),
+    gst: CARD.gst,
+    slabs: SLABS.map((s) => ({
+      id: s.id, name: s.name, max: s.max === Infinity ? null : s.max,
+      setup: s.setup, setupDedicated: s.setupDedicated,
+      monthFloor: s.monthFloor, monthRate: s.monthRate,
+      yearFloor: s.yearFloor, yearRate: s.yearRate,
+      licence: s.licence, amc: s.amc,
+    })),
+    market: MARKET.stack.map((m) => ({
+      pwy: m.perWorkerYear || 0, ply: m.platformYear || 0, pwm: m.perWorkerMonth || 0,
+    })),
   };
+  const q0 = quote(start);
 
-  const cards = WORKFORCE.map((t) => `
-  <div class="pc lift spot${t.popular ? ' hot' : ''}" id="pc-${t.id}">
-    ${t.popular ? '<span class="pc-flag">Most taken</span>' : ''}
-    <h3>${t.name}</h3>
-    <p class="pc-line">${t.line}</p>
+  const cards = SLABS.map((s) => `
+  <div class="pc lift spot${s.popular ? ' hot' : ''}" id="pc-${s.id}" data-slab="${s.id}">
+    ${s.popular ? '<span class="pc-flag">Most taken</span>' : ''}
+    <span class="pc-mine">Your slab</span>
+    <h3>${s.name}</h3>
+    <p class="pc-band">${s.band}</p>
     <div class="pc-fig">
-      <span class="cur">₹</span>${odo(t.price)}
-      <span class="unit">${t.unit.replace(' / ', '<br>a ').replace('per ', 'per&nbsp;')}</span>
+      <span class="cur">₹</span><span class="pc-amt">${odo(s.yearFloor)}</span>
+      <span class="unit pc-unit">a year<br>minimum</span>
     </div>
-    <p class="pc-tot"><b>${money(t.price * start)}</b> a month for ${start.toLocaleString('en-IN')} workers</p>
-    <p class="pc-for">${t.for}</p>
-    <ul>${t.feat.map(([f, y]) => `<li class="${y ? '' : 'no'}">${y ? tick : cross}<span>${f}</span></li>`).join('')}</ul>
-    <a class="btn ${t.popular ? 'btn-em' : 'btn-ghost'}" href="/contact.html" style="justify-content:center">Start with one contract</a>
+    <p class="pc-rate">
+      <b class="pc-per">${money(s.yearRate)}</b> per worker a month,
+      <span class="pc-inclw">${s.yearIncl.toLocaleString('en-IN')} included</span>
+    </p>
+    <dl class="pc-dl">
+      <div><dt>One-time setup</dt><dd>${money(s.setup)} <small>cloud</small></dd></div>
+      <div><dt>Dedicated server</dt><dd>${money(s.setupDedicated)} <small>one-time</small></dd></div>
+      <div><dt>Monthly advance</dt><dd>${money(s.monthFloor)} <small>min, then ${money(s.monthRate)}/worker</small></dd></div>
+      <div><dt>Own the licence</dt><dd>${money(s.licence)} <small>+ ${money(s.amc)}/yr from Yr 2</small></dd></div>
+    </dl>
+    <a class="btn ${s.popular ? 'btn-em' : 'btn-ghost'}" href="/contact.html" style="justify-content:center">Get this quoted</a>
   </div>`).join('');
 
   const rows = [
@@ -266,103 +288,167 @@ export function priceEngine({ start = 200 } = {}) {
     <div class="vsr" ${s.perWorkerYear ? `data-pwy="${s.perWorkerYear}"` : ''} ${s.platformYear ? `data-ply="${s.platformYear}"` : ''} ${s.perWorkerMonth ? `data-pwm="${s.perWorkerMonth}"` : ''}>
       <span class="vsr-n">${s.name}<small>${s.eg}</small></span>
       <span class="vsr-t"><i class="vsr-b"></i></span>
-      <span class="vsr-v">—</span>
+      <span class="vsr-v">&mdash;</span>
     </div>`),
     `<div class="vsr us">
-      <span class="vsr-n">Munimo Workforce<small>Both, and payroll with them</small></span>
+      <span class="vsr-n">Munimo Workforce<small>Both, with muster rolls and payroll</small></span>
       <span class="vsr-t"><i class="vsr-b"></i></span>
-      <span class="vsr-v">—</span>
+      <span class="vsr-v">&mdash;</span>
     </div>`,
   ].join('');
 
   return `
 <div data-prx='${JSON.stringify(cfg).replace(/'/g, '&#39;')}'>
 
-  <div class="dial" style="margin-bottom:26px">
+  <div class="dial">
     <div>
       <span class="dial-lab">How many workers</span>
-      <div class="dial-val"><span id="prx-count" style="font-size:inherit;font-weight:inherit;color:inherit;margin:0">${start}</span><span>on duty in a month</span></div>
-      <input id="prx-range" type="range" min="${MIN_WORKERS}" max="2000" step="5" value="${start}"
-             aria-label="Number of workers" style="--fill:${((start - MIN_WORKERS) / (2000 - MIN_WORKERS) * 100).toFixed(1)}%">
-      <div class="dial-ticks"><span>${MIN_WORKERS}</span><span>500</span><span>1,000</span><span>1,500</span><span>2,000+</span></div>
+      <div class="dial-val"><span id="prx-count">${start}</span><span>on duty in a month</span></div>
+      <input id="prx-range" type="range" min="25" max="1500" step="5" value="${start}"
+             aria-label="Number of workers" style="--fill:${((start - 25) / 1475 * 100).toFixed(1)}%">
+      <div class="dial-ticks"><span>25</span><span>250</span><span>500</span><span>1,000</span><span>1,500+</span></div>
     </div>
-    <div class="sw" role="group" aria-label="Billing period">
-      <button type="button" data-bill="month" class="on">Monthly</button>
-      <button type="button" data-bill="year">Annual <b>&minus;2 months</b></button>
+    <div class="sw sw3" role="group" aria-label="How you pay">
+      <button type="button" data-bill="year" class="on">Yearly <b>best</b></button>
+      <button type="button" data-bill="month">Monthly</button>
+      <button type="button" data-bill="lic">Own it</button>
+    </div>
+  </div>
+
+  <div class="quote edge" id="prx-quote">
+    <div class="quote-main">
+      <p class="quote-lab"><span id="q-slab">${q0.slab.name}</span> slab &middot; <span id="q-mode">yearly advance</span></p>
+      <div class="quote-fig">
+        <span class="cur">₹</span>${odo(q0.yearly)}
+        <span class="quote-unit" id="q-unit">a year</span>
+      </div>
+      <p class="quote-sub" id="q-sub">
+        ${money(q0.yearlyPerWorker)} per worker a month &middot; ${money(q0.yearlyPerMonth)} a month equivalent
+      </p>
+    </div>
+    <div class="quote-side">
+      <div class="qrow"><span>One-time setup</span><b id="q-setup">${money(q0.setup)}</b></div>
+      <div class="qrow"><span>First-year total</span><b id="q-first">${money(q0.setup + q0.yearly)}</b></div>
+      <div class="qrow"><span>Plus 18% GST</span><b id="q-gst">${money((q0.setup + q0.yearly) * 0.18)}</b></div>
+      <div class="qrow tot"><span>Payable, year one</span><b id="q-pay">${money((q0.setup + q0.yearly) * 1.18)}</b></div>
+      <p class="qnote" id="q-note">Yearly advance saves ${money(q0.saveYearly)} against paying monthly.</p>
     </div>
   </div>
 
   <div class="prx">${cards}</div>
 
+  <p class="prx-note" style="margin-top:16px">
+    ${SLAB_POLICY} GST at ${CARD.gst}% is extra on every figure here (SAC ${CARD.sac}) and is fully
+    input-tax-credit eligible for GST-registered contractors. ${CARD.schedule}, valid ${CARD.validityDays} days from issue.
+  </p>
+
   <div class="card" style="margin-top:26px;padding:24px">
-    <h3 style="margin:0 0 6px;font-size:17px;font-weight:800">What the same job costs if you buy it in pieces</h3>
+    <h3 style="margin:0 0 6px;font-size:17px;font-weight:800">What the same job costs bought in pieces</h3>
     <p class="muted" style="margin:0 0 18px;font-size:13.5px;max-width:64ch">
-      Attendance is one product, field tracking is another, and payroll from that
-      attendance is a third. Move the dial above and watch the three add up.
+      Attendance is one product, field tracking is another. Move the dial and watch them add up
+      against one system that already does both.
     </p>
     <div class="vs2">${rows}</div>
     <p id="prx-save" style="margin:18px 0 0;font-size:14.5px;color:var(--t)"></p>
     <p class="prx-note" style="margin-top:12px">
-      ${MARKET.missing} Rates are the vendors&rsquo; own published list prices as at
-      ${MARKET.asof}; a negotiated quote may be lower. Shown so you can check our figure
-      against something real, not to speak for anyone else&rsquo;s product.
+      ${MARKET.missing} Rates are the vendors&rsquo; own published list prices as at ${MARKET.asof};
+      a negotiated quote may be lower. Shown so you can check our figure against something real.
     </p>
   </div>
 </div>`;
 }
 
-/** Perpetual licence panel + what every plan includes. */
-export function ownOrRent() {
+/* ── ConstructPro, the combo, add-ons and the terms ──────────────────────── */
+
+export function constructProTable() {
+  return `
+<div class="rate edge">
+  <div class="rate-head">
+    <span>Edition</span><span>Setup</span><span>Monthly</span><span>Yearly</span><span>Own it</span><span>AMC, Yr 2+</span>
+  </div>
+  ${CONSTRUCTPRO.map((c) => `
+  <div class="rate-row">
+    <span class="rate-n"><b>${c.name}</b><small>${c.band}</small></span>
+    <span data-l="Setup">${money(c.setup)}</span>
+    <span data-l="Monthly">${money(c.monthly)}<small> / mo</small></span>
+    <span data-l="Yearly" class="good">${lakh(c.yearly)}<small> / yr</small></span>
+    <span data-l="Own it">${lakh(c.licence)}</span>
+    <span data-l="AMC, Yr 2+">${money(c.amc)}<small> / yr</small></span>
+  </div>`).join('')}
+</div>
+<p class="prx-note" style="margin-top:14px">
+  Yearly is two months free against the monthly rate. All figures exclude ${CARD.gst}% GST.
+  On a one-time licence, Year 1 AMC is free and the AMC shown applies from Year 2.
+</p>`;
+}
+
+export function comboTable() {
+  return `
+<p class="lead" style="margin:0 0 26px;max-width:72ch">${COMBO_RULE}</p>
+<div class="rate edge">
+  <div class="rate-head">
+    <span>Package</span><span>Setup</span><span>Monthly</span><span>Yearly</span><span>Own it</span><span>AMC, Yr 2+</span>
+  </div>
+  ${COMBOS.map((c) => `
+  <div class="rate-row${c.best ? ' best' : ''}">
+    <span class="rate-n"><b>${c.name}${c.best ? ' <i class="rate-flag">Best value</i>' : ''}</b><small>${c.band}</small></span>
+    <span data-l="Setup"><s>${money(c.setup[0])}</s> <b>${money(c.setup[1])}</b></span>
+    <span data-l="Monthly"><s>${money(c.monthly[0])}</s> <b>${money(c.monthly[1])}</b><small>${c.split.m}</small></span>
+    <span data-l="Yearly" class="good"><s>${lakh(c.yearly[0])}</s> <b>${lakh(c.yearly[1])}</b><small>${c.split.y}</small></span>
+    <span data-l="Own it"><s>${lakh(c.licence[0])}</s> <b>${lakh(c.licence[1])}</b></span>
+    <span data-l="AMC, Yr 2+"><s>${money(c.amc[0])}</s> <b>${money(c.amc[1])}</b></span>
+  </div>`).join('')}
+</div>`;
+}
+
+export function addonsTerms() {
   return `
 <div class="grid g2" style="gap:18px;align-items:start">
   <div class="card edge" style="padding:26px">
-    <p class="eyebrow gold">The other way</p>
-    <h3 style="margin:8px 0 6px;font-size:21px;font-weight:800">${PERPETUAL.name}</h3>
-    <p style="margin:0 0 16px;font-size:14.5px;color:var(--em2);font-weight:700">${PERPETUAL.line}</p>
-    <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px">
-      ${PERPETUAL.feat.map((f) => `<li style="display:flex;gap:9px;font-size:13.5px;line-height:1.45;color:var(--t)">
-        <svg viewBox="0 0 24 24" style="width:14px;height:14px;flex:none;margin-top:3px;fill:none;stroke:var(--gold);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7 10 17l-5-5"/></svg>
-        <span>${f}</span></li>`).join('')}
-    </ul>
-    <p class="muted" style="margin:16px 0 0;font-size:12.5px">
-      Priced one-time against your scope, because a licence figure for a workforce
-      of forty and a workforce of four thousand is not the same number.
-    </p>
-    <a class="btn btn-ghost" href="/contact.html" style="margin-top:16px">Get the licence figure</a>
+    <p class="eyebrow gold">Add-ons</p>
+    <h3 style="margin:8px 0 18px;font-size:19px;font-weight:800">Only if you need them.</h3>
+    <dl class="pc-dl">
+      ${ADDONS.map(([n, a, b]) => `<div><dt>${n}</dt><dd>${a} <small>${b}</small></dd></div>`).join('')}
+    </dl>
+    <p class="muted" style="margin:16px 0 0;font-size:12.5px">All add-on rates exclude ${CARD.gst}% GST.</p>
   </div>
   <div style="display:grid;gap:12px">
-    ${INCLUDED.map(([t, b]) => `<div class="card lift" style="padding:18px 20px">
+    ${TERMS.map(([t, b]) => `<div class="card lift" style="padding:18px 20px">
       <b style="font-size:14.5px;color:var(--t)">${t}</b>
-      <p class="muted" style="margin:5px 0 0;font-size:13px;line-height:1.5">${b}</p>
+      <p class="muted" style="margin:5px 0 0;font-size:13px;line-height:1.55">${b}</p>
     </div>`).join('')}
   </div>
 </div>`;
 }
 
-/** The two other products, priced. */
-export function otherProducts() {
+/** What the Workforce app and dashboard actually contain, per the rate card. */
+export function workforceContents() {
   return `
-<div class="grid g2" style="gap:18px;align-items:start">
-  ${OTHER.map((p) => `
+<div class="grid g2" style="gap:18px">
   <div class="card edge lift spot" style="padding:26px">
-    <p class="eyebrow">${p.tag}</p>
-    <h3 style="margin:8px 0 6px;font-size:21px;font-weight:800">${p.name}</h3>
-    <p style="margin:0 0 10px;font-size:14.5px;color:var(--em2);font-weight:700">${p.line}</p>
-    <p class="muted" style="margin:0 0 18px;font-size:13.5px;line-height:1.55">${p.body}</p>
-    <div class="grid g2" style="gap:10px">
-      ${p.plans.map((pl) => `<div class="mini${pl.popular ? ' hot' : ''}">
-        <b>${pl.name}</b>
-        <span class="amt">${pl.price === null ? 'Quoted' : pl.price === 0 ? 'Free' : money(pl.price)}<small>${pl.unit}</small></span>
-        <p>${pl.note}</p>
-      </div>`).join('')}
-    </div>
-    ${p.annual ? `<p class="muted" style="margin:12px 0 0;font-size:12.5px">Or ${money(p.annual)} a year — two months less than paying monthly.</p>` : ''}
-    <div style="display:flex;gap:9px;margin-top:18px;flex-wrap:wrap">
-      <a class="btn btn-em" href="${p.demo}">Open it now</a>
-      <a class="btn btn-ghost" href="${p.href}">What it does</a>
-    </div>
-  </div>`).join('')}
+    <span class="ico">${ic.face}</span>
+    <h3 style="margin:16px 0 4px;font-size:19px;font-weight:800">Supervisor Android app</h3>
+    <p class="muted" style="margin:0 0 16px;font-size:13.5px">One phone covers a whole crew.</p>
+    <ul style="list-style:none;margin:0;padding:0;display:grid;gap:9px">
+      ${WF_WHAT.app.map((f) => `<li style="display:flex;gap:9px;font-size:13.5px;line-height:1.45;color:var(--t)">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;flex:none;margin-top:3px;fill:none;stroke:var(--em2);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7 10 17l-5-5"/></svg>
+        <span>${f}</span></li>`).join('')}
+    </ul>
+  </div>
+  <div class="card edge lift spot" style="padding:26px">
+    <span class="ico">${icons.chart}</span>
+    <h3 style="margin:16px 0 4px;font-size:19px;font-weight:800">Cloud admin dashboard</h3>
+    <p class="muted" style="margin:0 0 16px;font-size:13.5px">The office side, and the month end.</p>
+    <ul style="list-style:none;margin:0;padding:0;display:grid;gap:9px">
+      ${WF_WHAT.dash.map((f) => `<li style="display:flex;gap:9px;font-size:13.5px;line-height:1.45;color:var(--t)">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;flex:none;margin-top:3px;fill:none;stroke:var(--em2);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7 10 17l-5-5"/></svg>
+        <span>${f}</span></li>`).join('')}
+    </ul>
+  </div>
 </div>`;
 }
 
-export { SLIDES };
+/** ConstructPro's feature list, for the product sections. */
+export function constructProWhat() {
+  return CP_WHAT;
+}

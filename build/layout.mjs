@@ -10,6 +10,8 @@ export const SITE = {
   wa: '919599942248',
   waPretty: '+91 95999 42248',
   email: 'hello@munimo.online',
+  udyam: 'UDYAM-BR-06-0068598',
+  addr: { street: 'Jaypee Aman, Sector 151', city: 'Noida', region: 'Uttar Pradesh', pin: '201310', country: 'IN' },
 };
 
 export const NAV = [
@@ -103,8 +105,8 @@ function footer() {
         </p>
         <p class="muted" style="margin-top:12px;font-size:14.5px;max-width:330px">
           Munimo Workforce proves every outsourced shift with face and GPS, and pays
-          from that proof. Lite Cashbook and ConstructPro sit beside it. Own the licence
-          or subscribe — three years of maintenance either way.
+          from that proof. ConstructPro and Lite Cashbook sit beside it. Subscribe
+          monthly or yearly, or own the licence outright.
         </p>
         <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
           <a class="btn btn-wa" href="https://wa.me/${SITE.wa}" target="_blank" rel="noopener">WhatsApp</a>
@@ -137,7 +139,7 @@ function footer() {
       </div>
     </div>
     <div class="ft-btm">
-      <span>&copy; <span data-year>2026</span> ${SITE.legal}. All rights reserved. Munimo is a product of ${SITE.legal}.</span>
+      <span>&copy; <span data-year>2026</span> ${SITE.legal}. All rights reserved. Munimo is a product of ${SITE.legal}. Udyam ${SITE.udyam}.</span>
       <span>Built for businesses worldwide.</span>
     </div>
   </div>

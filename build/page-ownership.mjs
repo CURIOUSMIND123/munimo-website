@@ -1,14 +1,15 @@
 import { SITE, cta, faq, ORG, icons } from './layout.mjs';
-import { priceEngine, otherProducts } from './parts.mjs';
+import { priceEngine, constructProTable, comboTable, addonsTerms } from './parts.mjs';
+import { SLABS, CONSTRUCTPRO, CARD, money } from './pricing-data.mjs';
 
 const F = faq([
   ['What does a perpetual licence actually give us?',
-   'The right to keep running the software indefinitely, with no monthly fee. You can host it on your own server or let us host it. If you stop paying us anything at all after the three included maintenance years, the software carries on working — it does not phone home and it does not expire.'],
+   'The right to keep running the software indefinitely, with no subscription. You can host it on your own server or let us host it. Year one maintenance is included; from year two the annual maintenance charge for your slab applies, and that is what keeps cloud servers, Android compatibility, backups and support running. The software itself does not phone home and does not expire.'],
   ['And if we choose the subscription instead?',
    'You pay monthly, and hosting, updates, backups and support are part of it. It suits businesses that would rather not spend capital up front, or that want the freedom to stop. There is no minimum lock-in period beyond the current month.'],
   ['Can we start on subscription and buy the licence later?',
    'Yes, and it is a common path. We agree the licence figure at the start so there is no surprise, and a portion of what you have already paid usually counts towards it.'],
-  ['What exactly is covered in the three years of maintenance?',
+  ['What exactly is covered by annual maintenance?',
    'Bug fixes, security updates, compatibility updates, small changes and adjustments, and support for your team. What it does not cover is a whole new module — that is quoted separately, usually as a one-time charge rather than an increase to a recurring fee.'],
   ['What happens after the three years?',
    'You can take an annual maintenance contract at that point, or not. If you own the licence and the software is doing its job, plenty of clients simply carry on. We will not switch anything off.'],
@@ -23,7 +24,7 @@ const F = faq([
 export const meta = {
   path: 'ownership.html',
   title: 'Pricing — Munimo Workforce, Lite Cashbook and ConstructPro',
-  desc: 'Munimo Workforce from \u20b939 per worker a month, Lite Cashbook free for one user, ConstructPro \u20b91,499 per site. Or own the licence outright. Three years of maintenance either way.',
+  desc: 'Munimo Workforce from \u20b96,500 a month or \u20b965,000 a year for up to 100 workers. ConstructPro from \u20b910,000 a month. Own the licence outright from \u20b91,35,000. All rates exclude 18% GST.',
   css: ['saas.css'],
   js: ['saas.js'],
   keywords: 'manpower tracking software price India, contract labour attendance app pricing, perpetual licence business software, own your software outright, software subscription vs perpetual licence, free annual maintenance contract software, source code escrow custom software',
@@ -32,7 +33,7 @@ export const meta = {
     '@graph': [ORG, {
       '@type': 'Service', serviceType: 'Software licensing and maintenance',
       provider: { '@id': SITE.domain + '/#org' },
-      description: 'Custom business software licensed either as a perpetual licence with outright ownership or as a monthly subscription, both including three years of maintenance.',
+      description: 'Munimo Workforce and ConstructPro licensed either as a one-time perpetual licence with outright ownership, or as a monthly or yearly subscription with hosting, updates and support included. Rates exclude 18% GST.',
     }, F.schema],
   },
 };
@@ -71,7 +72,7 @@ export const body = `
         <ul style="margin-top:20px;list-style:none;display:grid;gap:11px">
           ${['No monthly fee after the build', 'Runs indefinitely — no expiry, no phone-home',
              'Host it yourself if you want to', 'Source escrow or handover available on request',
-             'Three years of maintenance included']
+             'Year one maintenance included']
             .map((x) => `<li style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:var(--m)">
               <svg viewBox="0 0 24 24" style="width:16px;height:16px;flex-shrink:0;margin-top:4px;stroke:var(--gold);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7 10 17l-5-5"/></svg>
               <span>${x}</span></li>`).join('')}
@@ -88,7 +89,7 @@ export const body = `
         <ul style="margin-top:20px;list-style:none;display:grid;gap:11px">
           ${['No large payment up front', 'Hosting, backups and updates included',
              'No minimum term beyond the current month', 'Convert to a perpetual licence later',
-             'Three years of maintenance included']
+             'Hosting, updates and support in the fee']
             .map((x) => `<li style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:var(--m)">
               <svg viewBox="0 0 24 24" style="width:16px;height:16px;flex-shrink:0;margin-top:4px;stroke:var(--em2);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7 10 17l-5-5"/></svg>
               <span>${x}</span></li>`).join('')}
@@ -102,19 +103,18 @@ export const body = `
 <section class="sec sec-alt">
   <div class="wrap">
     <div class="sechead center">
-      <span class="eyebrow">Included either way</span>
-      <h2 class="h1 rv">Three years of maintenance,<br>at no extra charge.</h2>
+      <span class="eyebrow">Maintenance</span>
+      <h2 class="h1 rv">Year one free, then a flat figure<br>you can see in advance.</h2>
       <p class="lead rv rv2">
         The industry standard is an annual maintenance contract at fifteen to twenty per cent of
-        the licence value, every year, starting the day you go live. We do not charge it for the
-        first three years — because software that needs constant paid attention in its first
-        three years was not built properly.
+        the licence value, every year, starting the day you go live, and usually not quoted until
+        after you have signed. Ours is a fixed rupee figure printed against every slab, and year
+        one is free. On a subscription it is not a separate charge at all — it is in the fee.
       </p>
-    </div>
     <div class="grid g4" style="max-width:1060px;margin:0 auto">
       ${[
-        [icons.wrench, 'Fixes', 'Anything that is not working as agreed gets fixed, at no cost, for three years.'],
-        [icons.shield, 'Security updates', 'Patches and dependency updates applied as they are needed, not when you ask.'],
+        [icons.wrench, 'Fixes', 'Anything not working as agreed gets fixed. Free in year one, then inside the annual charge.'],
+        [icons.shield, 'Security updates', 'Cloud servers, backups and Android compatibility kept current as they need it, not when you ask.'],
         [icons.bolt, 'Small changes', 'Adjustments, new fields, new reports and tweaks as your business shifts.'],
         [icons.people, 'Support', 'Your team talks to the people who wrote the software, on WhatsApp or a call.'],
       ].map(([ico, h, p], i) => `
@@ -133,17 +133,30 @@ export const body = `
       <span class="eyebrow">Munimo Workforce</span>
       <h2 class="h1 rv">Move the dial. The price is the price.</h2>
       <p class="lead rv rv2">
-        Per worker, per month. No setup fee, no hardware, no per-site licence, and
-        three years of maintenance inside every figure here.
+        Four headcount slabs, each with a minimum that covers the band and a per-worker
+        rate above it. Pay monthly, pay yearly, or own the licence. Figures exclude
+        ${CARD.gst}% GST, which is input-tax-credit eligible.
       </p>
     </div>
     <div class="rv rv2">${priceEngine({ start: 200 })}</div>
 
     <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
-      <span class="eyebrow">The other two, priced</span>
-      <h2 class="h2 rv">Lite Cashbook and ConstructPro.</h2>
+      <span class="eyebrow">ConstructPro Khata &amp; Site ERP</span>
+      <h2 class="h2 rv">Priced by sites, not by workers.</h2>
     </div>
-    <div class="rv rv2">${otherProducts()}</div>
+    <div class="rv rv2">${constructProTable()}</div>
+
+    <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
+      <span class="eyebrow gold">Take both</span>
+      <h2 class="h2 rv">25% off ConstructPro when it runs beside Workforce.</h2>
+    </div>
+    <div class="rv rv2">${comboTable()}</div>
+
+    <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
+      <span class="eyebrow">The small print, in plain words</span>
+      <h2 class="h2 rv">Add-ons and terms.</h2>
+    </div>
+    <div class="rv rv2">${addonsTerms()}</div>
 
     <div class="sechead" style="margin-top:clamp(50px,7vw,86px)">
       <span class="eyebrow gold">Anything we build from scratch</span>
